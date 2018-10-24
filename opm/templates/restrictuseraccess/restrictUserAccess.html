@@ -1,0 +1,43 @@
+{% extends "home/userHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+        <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
+    <div class="col s12 m12 l12  white">
+
+            <div class="row center">
+                <div class="section"></div>
+                <div class="col s3"></div>
+                <div class="col s6">
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">highlight_off</i>&nbsp;&nbsp; Restrict Access</h3>
+                </div>
+                <div class="col s3"></div>
+            </div>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+
+
+            <div class = "row">
+                <form method="post">
+                <div class="col s3 white"></div>
+                <div class="col s6 white left">
+                        <h5><B>Doctor</B> can:</h5>
+                        <p><label><input type="checkbox" class="filled-in" checked="checked" /><span>View Medical Information</span></label></p>
+                        <p><label><input type="checkbox" class="filled-in" checked="checked" /><span>View Historical Records</span></label></p>
+
+                </div>
+                <div class="col s3 white"></div>
+                <div class="col s12 white">
+                    <div class="row center">
+                    <button class="btn btn-large waves-effect red lighten-2 center" type="submit">Save</button>
+                    </div>
+                </div>
+                </form>
+            </div>
+    </div>
+
+
+
+{% endblock %}

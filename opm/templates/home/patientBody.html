@@ -1,0 +1,98 @@
+{% extends "home/userHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+    <div class="row white">
+
+                <div class="col s12 m12 l12 center">
+
+                    <div class="section"></div>
+
+                    <h3 id="greeting">Good day, Patient!</h3>
+                    What do you want to do today?<br/>
+                    <div class="section"></div>
+                    <div class="divider"></div>
+                    <div class="section"></div>
+
+                </div>
+
+                <div class="col s4 m4 l4 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
+
+                    <A href="{% url 'viewcurrentvitals' %}"><img class="responsive-image" src="{% static 'img/currentvitals.PNG' %}" height="200px;"/></A>
+                    <div class="section"></div>
+                    <h6 id="greeting">View Current Vitals</h6>
+                    <p align="justify">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                    </p>
+
+                </div>
+
+                <div class="col s4 m4 l4 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
+
+                    <a href="{% url 'viewhistoryofvitals' %}"><img class="responsive-image" src="{% static 'img/history_currentvitals.png' %}" height="200px;"/></a>
+                    <div class="section"></div>
+                    <h6 id="greeting">View History of Vitals</h6>
+                    <p align="justify">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                    </p>
+
+
+                </div>
+
+                <div class="col s4 m4 l4 center teal lighten-4" style="padding: 30px 20px 20px 20px;">
+
+                    <a href="{% url 'restrictuseraccess' %}"><img class="responsive-image" src="{% static 'img/restrictuseraccess.PNG' %}" height="200px;"/></a>
+                    <div class="section"></div>
+                    <h6 id="greeting">Restrict User Access</h6>
+                    <p align="justify">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                    </p>
+
+                </div>
+
+                    <!------------------------------------- ROW2- Guide on Knowing ------------------------------------------->
+
+                <div class="row">
+
+                    <div class="col s12 center white" style="padding: 30px 20px 20px 20px;">
+                        <div class="divider"></div>
+                        <div class="section"></div>
+                        <h3 class="center" id="greeting">A Guide on Knowing if Your Vitals are Normal</h3>
+
+                        <div class="row">
+
+                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
+                                <p align="justify">
+                                1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+
+                                </p>
+                            </div>
+
+                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
+                                <p align="justify">
+                                2. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+
+                                </p>
+                            </div>
+
+                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
+                                <p align="justify">
+                                3. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+
+                                </p>
+                            </div>
+
+                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
+                                <p align="justify">
+                                4. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    </div>
+
+
+{% endblock %}
+

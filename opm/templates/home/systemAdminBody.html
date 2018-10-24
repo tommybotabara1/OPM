@@ -1,0 +1,55 @@
+{% extends "home/adminHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+    <div class="row white">
+
+                <div class="col s12 m12 l12 center">
+
+                    <div class="section"></div>
+
+                    <h3 id="greeting">Good day, System Admin!</h4>
+                    What do you want to do today?<br/>
+                    <div class="section"></div>
+                    <div class="divider"></div>
+                    <div class="section"></div>
+
+                </div>
+
+                <div class="col s4 m4 l4 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
+
+                    <a href="{% url 'createuser' %}"><img class="responsive-image" src="{% static 'img/createuseraccount.PNG' %}" height="200px;"/></a>
+                    <div class="section"></div>
+                    <h6 id="greeting">Create User Accounts</h6>
+                    <p align="justify">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                    </p>
+
+                </div>
+
+                <div class="col s4 m4 l4 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
+
+                    <a href="{% url 'listofusers' %}"><img class="responsive-image" src="{% static 'img/viewlistofusers.png' %}" height="200px;"/></a>
+                    <div class="section"></div>
+                    <h6 id="greeting">View List of Users</h6>
+                    <p align="justify">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                    </p>
+
+
+                </div>
+
+                <div class="col s4 m4 l4 center teal lighten-4" style="padding: 30px 20px 20px 20px;">
+
+                    <a href="{% url 'archiving' %}"><img class="responsive-image" src="{% static 'img/archiving.PNG' %}" height="200px;"/></a>
+                    <div class="section"></div>
+                    <h6 id="greeting">Archiving</h6>
+                    <p align="justify">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                    </p>
+
+                </div>
+        </div>
+
+{% endblock %}
+

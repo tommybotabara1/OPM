@@ -1,0 +1,161 @@
+{% extends "home/adminHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+        <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
+        <div class="col s12 m12 l12 center white">
+            <div class="row">        
+                <div class="section"></div>
+                <div class="col s3"></div>
+                <div class="col s6">        
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View List of Users</h3>
+                </div>
+                <div class="col s3" style ="padding: 0px 40px 0px 20px">
+                        <div class="input-field grey lighten-3">
+                          <input id="search" type="search" required>
+                          <label class="label-icon" for="search"><i class="material-icons" id="searchIcon">search</i></label>
+                          <i class="material-icons">close</i>
+                        </div>
+                </div>
+            </div>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+                    
+        </div>
+        <div id='view-users' class="col s12 m12 l12 white" style="padding: 0px 20px 0px 30px">
+
+                    <table class="striped centered">
+                        <thead>
+                          <tr>
+                              <th>Username</th>
+                              <th>First Name</th>
+                              <th>Last Name</th>
+                              <th>Email</th>
+                              <th>User Type</th>
+                              <th>Status</th>
+                              <th>Action</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                         {% for user in user_list %}
+                             <tr>
+                                <td>{{ user.username }}</td>
+                                 <td>{{ user.first_name }}</td>
+                                 <td>{{ user.last_name }}</td>
+                                 <td>{{ user.email }}</td>
+                                 {% for userdetails in user_details_list %}
+                                     {% if userdetails.userid == user.id %}
+                                         <td>{{ userdetails.usertype.type }}</td>
+                                     {% endif %}
+                                 {% endfor %}
+
+
+                                 {% if user.is_active == 0 %}
+                                 <td>Inactive</td>
+                                 {% else  %}
+                                 <td>Active</td>
+                                 {% endif %}
+                                {% for userdetails in user_details_list %}
+                                     {% if userdetails.userid == user.id %}
+                                         {% if current_user_type == 2 %}
+                                             {% if userdetails.usertype.usertypeid > 2 %}
+                                               <td><a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;<a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a></td>
+                                             {% else %}
+                                                 <td></td>
+                                             {% endif %}
+                                         {% else %}
+                                              <td><a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;<a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a></td>
+                                         {% endif %}
+
+                                     {% endif %}
+                                 {% endfor %}
+
+                             </tr>
+
+                         {% endfor %}
+                        </tbody>
+                      </table>
+
+            <div class="section"></div>
+            <!--<ul class="pagination center">
+                <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+                <li class="active"><a href="#!">1</a></li>
+                <li class="waves-effect"><a href="#!">2</a></li>
+                <li class="waves-effect"><a href="#!">3</a></li>
+                <li class="waves-effect"><a href="#!">4</a></li>
+                <li class="waves-effect"><a href="#!">5</a></li>
+                <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+            </ul>
+                -->
+                
+        </div>
+
+    <script>
+
+    $("#search").keyup(function () {
+      var search = $(this).val();
+
+      $.ajax({
+        url: '{% url 'search_user' %}',
+        data: {
+          'search': search
+        },
+        dataType: 'json',
+        success: function (data) {
+          var searched_data = " <table class=\"striped centered\">" +
+              "                        <thead>" +
+              "                          <tr>" +
+              "                              <th>Username</th>" +
+              "                              <th>First Name</th>" +
+              "                              <th>Last Name</th>" +
+              "                              <th>Email</th>" +
+              "                              <th>User Type</th>" +
+              "                              <th>Status</th>" +
+              "                              <th>Action</th>" +
+              "                          </tr>\n" +
+              "                        </thead>\n" +
+              "\n" +
+              "                        <tbody>\n" +
+              "                          \n";
+
+          for(let i = 0; i < data.length; i++){
+              searched_data += "<tr>";
+              searched_data += "<td>" + data[i].userName + "</td>";
+              searched_data += "<td>" + data[i].firstname + "</td>";
+              searched_data += "<td>" + data[i].lastname + "</td>";
+              searched_data += "<td>" + data[i].email + "</td>";
+              searched_data += "<td>" + data[i].usertype + "</td>";
+              if(data[i].status == true)
+                searched_data += "<td>Active</td>";
+              else
+                  searched_data += "<td>Inactive</td>";
+
+              let link = '/listofusers/' + data[i].id + '/edituser/';
+              {% if current_user_type == 2 %}
+                  if(data[i].usertype == "Patient" || data[i].usertype == "Patient") {
+                      searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a></td>";
+                  }
+                  else {
+                      searched_data += "<td></td>";
+                  }
+              {% else %}
+                  searched_data +="<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a></td>";
+              {% endif %}
+
+              searched_data += "</tr>";
+          }
+
+          searched_data += "</tbody>";
+          searched_data += "</table>";
+          searched_data += "<div class='section'></div>";
+
+          console.log(searched_data);
+          $("#view-users").html(searched_data);
+        }
+      });
+
+    });
+    </script>
+{% endblock %}

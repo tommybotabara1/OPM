@@ -1,0 +1,121 @@
+{% extends "home/adminHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+        <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
+
+        <div class="col s12 m12 l12 center white">
+
+            <div class="section"></div>
+<a href="{% url 'listofusers' %}">Back</a>
+            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">person_add</i>&nbsp;&nbsp;Edit User {{ user.username    }}</h3>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+        </div>
+      <div class="col s12 m12 l12  white">
+              <div class="row">
+                <form action="{% url 'edituser' user.id %}" class="col s12 white" style="padding: 0px 50px 0px 50px;" method="post">
+                    {% csrf_token %}
+                  <div class="row">
+
+                    <div class="input-field col s4">
+                      {{ form.username }}
+                      <label for="first_name">Username</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      {{ form.password }}
+                      <label for="first_name">Password</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      {{ form.repeatPassword }}
+                      <label for="first_name">Repeat Password</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      {{ form.firstname }}
+                      <label for="first_name">First Name</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      {{ form.middlename }}
+                      <label for="middle_name">Middle Name</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      {{ form.lastname }}
+                      <label for="last_name">Last Name</label>
+                    </div>
+
+                      <div class="input-field col s4">
+                      {{ form.birthday }}
+                      <label for="age">Birthday</label>
+                      </div>
+
+                      <div class="input-field col s4">
+                      {{ form.email }}
+                      <label for="reason">Email</label>
+                      </div>
+
+                      <div class="input-field col s4">
+                      {{ form.contactno }}
+                      <label for="reason">Contact Number</label>
+                      </div>
+
+                      <div class="col s4">
+                          Type of User
+                          {% for radio in form.usertype %}
+                              <p>
+                               <label>
+                                {{ radio.tag }}
+                                   <span>{{ radio.choice_label }}</span>
+                               </label>
+                              </p>
+                          {% endfor %}
+                      </div>
+                  <div id="chooseDoctor">
+                      {{ form.doctorid }}
+                  </div>
+                  </div>
+                    <center>
+
+                        <div class='row center'>
+                            <div class="col s5"></div>
+                            <button id='submitButton' type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Submit</button>
+                            <div class="col s5"></div>
+                        </div>
+
+                    </center>
+                </form>
+              </div>
+        </div>
+
+    <style>
+
+
+
+    #chooseDoctor{
+        display:none;
+    }
+
+</style>
+<script>
+    function show(){
+        if(document.getElementById('id_usertype_0').checked){
+            document.getElementById('chooseDoctor').style.display ='none';
+        }
+        else{
+            document.getElementById('chooseDoctor').style.display = 'block';
+        }
+
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('select');
+    var instances = M.FormSelect.init(elems, options);
+  });
+</script>
+
+{% endblock %}

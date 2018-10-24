@@ -1,0 +1,71 @@
+{% extends "home/userHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+        <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
+            
+        <div class="col s12 white"><div class="col s12 m12 l12 center white">
+
+            <div class="section"></div>
+
+            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">stop</i>&nbsp;&nbsp; Stop Recording</h3>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+        </div>
+        <div class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
+            <form method=post>
+            <div class="row">
+
+                <div class="col s3"></div>
+                <div class = "col s3 center">
+                    <h5 class="">Enter Device ID</h5>
+                        <div class="input-field center">
+                        <input id="device_ID" type="text" class="validate">
+                        <label for="device_ID">Device ID</label>
+                        </div>
+                        <div class='row center'>
+                            <button id='deviceID' class='btn btn-small waves-effect'>Load</button>
+                        </div>
+
+                </div>
+
+                <div class="col s3 center">
+                    <h5 class="">Patient/s using the Device</h5>
+                    <script>
+                        $(document).ready(function(){
+                        $("#deviceID").click(function(){
+                        $("#device_ID").val("123");
+                        $("#namesofUser").append('<label><input type="checkbox" class="filled-in" checked="checked" /><span>Tommy Botabara</span>');
+                        event.preventDefault();
+                        });
+                    });
+                    </script>
+
+                    <p id="namesofUser"></p>
+
+                </div>
+                <div class="col s3"></div>
+
+            </div>
+
+            <DIV class="row">
+
+                <div class="col s3"></div>
+                <div class="col s6 center">
+
+                    <button class="btn btn-large waves-effect red lighten-2" type="submit">Stop Recording</button>
+
+                </div>
+                <div class="col s3"></div>
+
+            </DIV>
+            </form>
+        </div>
+        <section></section>
+        <section></section>
+        </div>
+
+
+{% endblock %}
