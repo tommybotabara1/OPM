@@ -279,8 +279,6 @@ def edituser(request, user_id):
 
 #########################AJAX############################
 
-#hi
-
 
 def validate_username(request):
     username = request.GET.get('username', None)
