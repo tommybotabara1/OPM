@@ -2,12 +2,14 @@ from django.shortcuts import render, HttpResponse, redirect, get_object_or_404, 
 
 from .models import Userdetails, Patient, Doctor, RefUsertype, PatientDevice, Temperature, Ecg, Heartrate, Device
 from .forms import *
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import *
 from django.http import JsonResponse
+from django.db.models.functions import Lower
+
 
 
 
@@ -147,9 +149,11 @@ def archiving(request):
 def changeuserofdevice(request):
     patient_device_list = PatientDevice.objects.order_by('device_deviceid').all()
     device_list = Device.objects.order_by('deviceid').all()
+    patient_list = Patient.objects.filter(userid__auth_user_id__is_active=1)
 
     context = {'patient_device_list': patient_device_list,
-               'device_list': device_list
+               'device_list': device_list,
+               'patient_list': patient_list
                }
 
     return render(request, 'changeuserofdevice/changeUserOfDevice.html', context)
@@ -291,7 +295,8 @@ def validate_username(request):
 def search_user(request):
     search = request.GET.get('search', None)
 
-    user_list = User.objects.filter(username__contains=search)
+    user_list = User.objects.filter(Q(last_name__contains=search) | Q(first_name__contains=search) |
+                                    Q(username__contains=search) | Q(email__contains=search))
     user_array=[]
 
     for user in user_list:
@@ -306,6 +311,7 @@ def search_user(request):
         })
 
     return JsonResponse(user_array, safe=False)
+
 
 def add_device(request):
     if Device.objects.count() == 0:
@@ -336,3 +342,59 @@ def add_device(request):
             })
 
     return JsonResponse(device_array, safe=False)
+
+
+def get_patients(request):
+    patient_list = Patient.objects.filter(userid__auth_user_id__is_active=1)
+    patient_array = []
+
+    for patient in patient_list:
+        patient_array.append({
+            'patientid': patient.patientid,
+            'patientname': patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name
+        })
+    return JsonResponse(patient_array, safe=False)
+
+
+def search_patients(request):
+    search = request.GET.get('search', None)
+
+    patient_list = Patient.objects.filter((Q(userid__auth_user_id__first_name__contains=search) | Q(userid__auth_user_id__last_name__contains=search)) & Q(userid__auth_user_id__is_active=1))
+    patient_array = []
+
+    for patient in patient_list:
+        patient_array.append({
+            'patientid': patient.patientid,
+            'patientname': patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name
+        })
+    return JsonResponse(patient_array, safe=False)
+
+
+def set_patient_to_device(request):
+    deviceid = request.GET.get('deviceID', None)
+    patientid = request.GET.get('patientID', None)
+
+    response = []
+
+    if PatientDevice.objects.filter(device_deviceid=deviceid, inuse=1).exists():
+        if PatientDevice.objects.filter(patient_patientid=patientid, device_deviceid=deviceid, inuse=1).exists():
+            response.append({'outcome': "Patient is currently using the device"})
+        else:
+            response.append({'outcome': "Device is currently in use"})
+        return JsonResponse(response, safe=False)
+    elif PatientDevice.objects.filter(patient_patientid=patientid, device_deviceid=deviceid, inuse=0).exists():
+        PatientDevice.objects.get(patient_patientid=patientid, device_deviceid=deviceid, inuse=0).inuse = 1
+        response.append({'outcome': "Patient is set to device"})
+        return JsonResponse(response, safe=False)
+    elif PatientDevice.objects.filter(patient_patientid=patientid, inuse=1).exists():
+        response.append({'outcome': "Patient is currently using another device"})
+        return JsonResponse(response, safe=False)
+    else:
+        newPatientDevice = PatientDevice(
+            patient_patientid=Patient.objects.get(patientid=patientid),
+            device_deviceid=Device.objects.get(deviceid=deviceid),
+            inuse=1
+        )
+        newPatientDevice.save()
+        response.append({'outcome': "Patient is set to a new device"})
+        return JsonResponse(response, safe=False)

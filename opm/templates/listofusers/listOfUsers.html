@@ -94,7 +94,7 @@
 
     <script>
 
-    $("#search").keyup(function () {
+    $("#search").keypress(function () {
       var search = $(this).val();
 
       $.ajax({
@@ -134,7 +134,7 @@
 
               let link = '/listofusers/' + data[i].id + '/edituser/';
               {% if current_user_type == 2 %}
-                  if(data[i].usertype == "Patient" || data[i].usertype == "Patient") {
+                  if(data[i].usertype == "Doctor" || data[i].usertype == "Patient") {
                       searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a></td>";
                   }
                   else {

@@ -20,5 +20,8 @@ urlpatterns = [
     path('ajax/validate_username/', views.validate_username, name='validate_username'),
     path('ajax/search_user/', views.search_user, name='search_user'),
     path('ajax/add_device/', views.add_device, name='add_device'),
+    path('ajax/get_patients/', views.get_patients, name='get_patients'),
+    path('ajax/search_patients/', views.search_patients, name='search_patients'),
+    path('ajax/set_patient_to_device/', views.set_patient_to_device, name='set_patient_to_device'),
 ]
 

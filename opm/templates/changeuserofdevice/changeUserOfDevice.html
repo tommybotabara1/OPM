@@ -44,57 +44,48 @@
                 </div>
                 <div class = "col s1 center"></div>
                 <div class = "col s4 center">
-                    <h5 class="">Enter Device ID</h5>
-                    <form method="post">
+                    <h5 class="">Select Device ID</h5>
                         <div class="input-field center">
-                        <input id="device_ID" type="text" class="validate">
-                        <label for="device_ID">Device ID</label>
+
+                        <div id="chooseDevice">
+                      <select name="device" class="browser-default col s7" id="deviceid">
+                          {% if device_list.count == 0 %}
+                              No devices
+                          {% else %}
+                              {% for device in device_list %}
+                                 <option value="{{ device.deviceid }}">{{ device.deviceid }}</option>
+                             {% endfor %}
+                          {% endif %}
+                      </select>
                         </div>
-                        <div class='row center'>
-                            <button id='deviceID' class='btn btn-small waves-effect'>Load</button>
+
                         </div>
-                    </form>
+
                 </div>
 
                 <div class="col s4 center">
-                    <h5 class="green lighten-5">Patient/s using the Device 1</h5>
+                <div id="patients">
+                    <h5 class="green lighten-5">Select patient</h5>
                     <div style="height: 130px;border:1px solid #ccc; overflow:auto;">
-                        <p>
-                          <label>
-                            <input type="radio" class="filled-in" checked="checked" />
-                            <span>Tommy Botabara</span>
-                          </label>
-                        </p><p>
-                          <label>
-                            <input type="checkbox" class="filled-in" checked="checked" />
-                            <span>Tommy Botabara</span>
-                          </label>
-                        </p><p>
-                          <label>
-                            <input type="checkbox" class="filled-in" checked="checked" />
-                            <span>Tommy Botabara</span>
-                          </label>
-                        </p><p>
-                          <label>
-                            <input type="checkbox" class="filled-in" checked="checked" />
-                            <span>Tommy Botabara</span>
-                          </label>
-                        </p><p>
-                          <label>
-                            <input type="checkbox" class="filled-in" checked="checked" />
-                            <span>Tommy Botabara</span>
-                          </label>
-                        </p><p>
-                          <label>
-                            <input type="checkbox" class="filled-in" checked="checked" />
-                            <span>Tommy Botabara</span>
-                          </label>
-                        </p>
+                        {% for patient in patient_list %}
+                            <p>
+                                <label>
+                                    <input name="patientID" type="radio" class="filled-in" value="{{ patient.patientid }}">
+                                    <span>{{ patient.userid.auth_user_id.first_name }} {{ patient.userid.auth_user_id.last_name }}</span>
+                                </label>
+                            </p>
+                        {% endfor %}
                     </div>
-                <div class='input-field col m12 s7'>
+                </div>
+                <br>
+                    <button id='setDeviceToPatient' class='btn btn-small waves-effect'>Set Device to Patient</button>
+
+                    <br>
+                 <div class='input-field col m12 s7'>
                     <i class="material-icons iconis prefix">person_add</i>
-                    <input class='validate' type='text' name='text' id='text' />
+                    <input class='validate' type='text' name='text' id='searchPatient' />
               </div>
+
             </div>
         </div>
         <section></section>
@@ -111,8 +102,8 @@
         dataType: 'json',
         success: function (data) {
             var devices = " <h6 class=\"center green lighten-4\">Devices</h6>\n";
+            var selectbox = "<select name=\"doctorid\" class=\"browser-default col s7\" id=\"id_doctorid\">\n";
 
-            console.log(data)
             for(var i = 0; i < data.length; i++){
                 if(i == 0){
                     devices += "<b>Device " + data[i].deviceid + "</b>\n";
@@ -121,6 +112,8 @@
                     if(data[i].patient != "none"){
                         devices += "<li>" + data[i].patient + "</li>\n";
                     }
+
+                    selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
                 }
                 else if(data[i - 1].deviceid == data[i].deviceid){
                     devices += "<li>" + data[i].patient + "</li>\n";
@@ -134,11 +127,69 @@
                         devices += "<li>" + data[i].patient + "</li>\n";
                     }
 
+                    selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
                 }
             }
-            console.log(devices);
-            $("#devices").html(devices);
 
+            selectbox += "</select>";
+
+            $("#devices").html(devices);
+            $("#chooseDevice").html(selectbox);
+
+        }
+      });
+    });
+
+    $("#searchPatient").keyup(function () {
+        var search = $(this).val();
+
+      $.ajax({
+        url: '{% url 'search_patients' %}',
+        data: {
+            'search': search
+        },
+        dataType: 'json',
+        success: function (data) {
+            var patients = "<h5 class=\"green lighten-5\">Select patient</h5>\n";
+
+            patients += "<div style=\"height: 130px;border:1px solid #ccc; overflow:auto;\">\n";
+
+            for(var i = 0; i < data.length; i++){
+                patients += "<p>\n";
+                patients += "<label>\n";
+                patients += "<input name='patientID' type='radio' class='filled-in' value='" + data[i].patientid + "'/>\n";
+                patients += "<span>" + data[i].patientname + "</span>\n";
+                patients += "</label>\n";
+                patients += "</p>\n";
+            }
+
+            patients += "</div>";
+            console.log(patients);
+            $("#patients").html(patients);
+        }
+      });
+    });
+
+    $("#setDeviceToPatient").click(function () {
+        var deviceID = $("#deviceid").val();
+        var patientID = $("input[name='patientID']:checked").val();
+
+        console.log("Device: " + deviceID);
+        console.log("Patient: " + patientID);
+
+      $.ajax({
+        url: '{% url 'set_patient_to_device' %}',
+        data: {
+            'deviceID': deviceID,
+            'patientID': patientID
+        },
+        dataType: 'json',
+        success: function (data) {
+            var message = data[0].outcome
+            alert(message);
+            console.log(message);
+            location.reload();
+            //$("#patients").html(patients);
         }
       });
     });
