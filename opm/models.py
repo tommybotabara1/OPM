@@ -48,6 +48,7 @@ class Doctor(models.Model):
         db_table = 'doctor'
         unique_together = (('doctorid', 'userid'),)
 
+
 class Patient(models.Model):
     patientid = models.AutoField(db_column='patientID', primary_key=True)  # Field name made lowercase.
     doctorid = models.ForeignKey(Doctor, models.DO_NOTHING, db_column='doctorID')  # Field name made lowercase.
@@ -59,6 +60,20 @@ class Patient(models.Model):
         unique_together = (('patientid', 'userid'),)
 
 
+class PatientMedicalHistory(models.Model):
+    patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patientID', primary_key=True)  # Field name made lowercase.
+    bloodtype = models.CharField(db_column='bloodType', max_length=45)  # Field name made lowercase.
+    presentcomplaint = models.TextField(db_column='presentComplaint')  # Field name made lowercase.
+    historyofpresentcomplaint = models.TextField(db_column='historyOfPresentComplaint')  # Field name made lowercase.
+    pastmedicalhistory = models.TextField(db_column='pastMedicalHistory', blank=True, null=True)  # Field name made lowercase.
+    drughistory = models.TextField(db_column='drugHistory', blank=True, null=True)  # Field name made lowercase.
+    familyhistory = models.TextField(db_column='familyHistory', blank=True, null=True)  # Field name made lowercase.
+    socialhistory = models.TextField(db_column='socialHistory', blank=True, null=True)  # Field name made lowercase.
+
+    class Meta:
+        managed = False
+        db_table = 'patient_medical_history'
+
 
 class PatientDevice(models.Model):
     patient_patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patient_patientID', primary_key=True)  # Field name made lowercase.
@@ -69,6 +84,7 @@ class PatientDevice(models.Model):
         managed = False
         db_table = 'patient_device'
         unique_together = (('patient_patientid', 'device_deviceid'),)
+
 
 class Ecg(models.Model):
     ecgid = models.AutoField(db_column='ecgID', primary_key=True)

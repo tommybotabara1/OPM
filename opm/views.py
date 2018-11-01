@@ -71,6 +71,9 @@ def listofusers(request):
                'current_user_type': current_user_type}
     return render(request, 'listofusers/listOfUsers.html', context)
 
+def filloutmedicalform(request):
+    return render(request, 'filloutmedicalform/medicalForm.html')
+
 
 def createuser(request):
     if request.method == 'POST':
