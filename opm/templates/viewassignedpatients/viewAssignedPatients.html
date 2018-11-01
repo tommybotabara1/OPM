@@ -1,5 +1,6 @@
 {% extends "home/userHeaderFooter.html" %}
 {% load staticfiles%}
+{% load extras %}
 
 {% block content %}
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
@@ -30,7 +31,6 @@
                     <table class="striped centered">
                         <thead>
                           <tr>
-                              <th>ID</th>
                               <th>First Name</th>
                               <th>Middle Name</th>
                               <th>Last Name</th>
@@ -43,11 +43,11 @@
                         <tbody>
                         {% for patient in patient_list %}
                             <tr>
-                            <td>{{ patient.patientid }}</td>
-                            <td>{{ patient.userid.firstname }}</td>
+                            <td>{{ patient.userid.auth_user_id.first_name }}</td>
                             <td>{{ patient.userid.middlename }}</td>
-                            <td>{{ patient.userid.lastname }}</td>
-                            <td>{{ patient.userid.age }}</td>
+                            <td>{{ patient.userid.auth_user_id.last_name}}</td>
+                            {% now "Y" as current_year %}
+                            <td>{{ patient.userid.birthday.year|subtract:current_year }}</td>
                             {% if patient.userid.status == 0 %}
                                  <td>Inactive</td>
                             {% else  %}
@@ -60,6 +60,7 @@
                       </table>
 
             <div class="section"></div>
+        <!--
             <ul class="pagination center">
                 <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
                 <li class="active"><a href="#!">1</a></li>
@@ -69,7 +70,7 @@
                 <li class="waves-effect"><a href="#!">5</a></li>
                 <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
             </ul>
-
+-->
 
         </div>
 

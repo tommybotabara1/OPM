@@ -15,7 +15,6 @@
 
         </div>
         <div class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
-            <form method=post>
             <div class="row">
 
                 <div class="col s3"></div>
@@ -50,22 +49,38 @@
 
             </div>
 
-            <DIV class="row">
+            <div class="row">
 
                 <div class="col s3"></div>
                 <div class="col s6 center">
 
-                    <button class="btn btn-large waves-effect red lighten-2" type="submit">Stop Recording</button>
+                    <button id="stop" value="1" class="btn btn-large waves-effect red lighten-2" type="submit">Stop Recording</button>
 
                 </div>
                 <div class="col s3"></div>
 
-            </DIV>
-            </form>
+            </div>
         </div>
         <section></section>
         <section></section>
         </div>
 
+<script>
+    $("#stop").click(function () {
+        var deviceid = $(this).val();
 
+        $.ajax({
+        url: '{% url 'stop_recording' %}',
+        data: {
+          'deviceid': deviceid
+        },
+        dataType: 'json',
+        success: function (data) {
+            for(let i = 0; i < data.length; i++){
+                console.log(data[i].response);
+            }
+        }
+      });
+    });
+</script>
 {% endblock %}

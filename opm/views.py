@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import *
 from django.http import JsonResponse
-from django.db.models.functions import Lower
+import paho.mqtt.client as mqtt
 
 
 
@@ -312,6 +312,39 @@ def search_user(request):
 
     return JsonResponse(user_array, safe=False)
 
+def get_user_details(request):
+    userid = request.GET.get('userid', None)
+
+    user_details = Userdetails.objects.get(userid=userid)
+    user_details_array = []
+
+    extra = ""
+
+    if user_details.usertype.usertypeid == 3:
+        patient_list = Patient.objects.filter(doctorid=user_details.doctor_set.get(userid=user_details.userid))
+
+        if patient_list.count() == 0:
+            extra += "No patients assigned"
+        else:
+            for patient in patient_list:
+                extra += patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + "|"
+    elif user_details.usertype.usertypeid == 4:
+        patient = Patient.objects.get(patientid=user_details.patient_set.get(userid=user_details.userid).patientid)
+        doctor = patient.doctorid.userid.auth_user_id.first_name + " " + patient.doctorid.userid.auth_user_id.last_name
+        extra += doctor
+    else:
+        extra = 1
+
+    user_details_array.append({
+        'name': user_details.auth_user_id.first_name + " " + user_details.middlename + " " + user_details.auth_user_id.last_name,
+        'birthday': user_details.birthday,
+        'contactno': user_details.contactno,
+        'usertype': user_details.usertype.usertypeid,
+        'extra': extra,
+    })
+
+
+    return JsonResponse(user_details_array, safe=False)
 
 def add_device(request):
     if Device.objects.count() == 0:
@@ -398,3 +431,16 @@ def set_patient_to_device(request):
         newPatientDevice.save()
         response.append({'outcome': "Patient is set to a new device"})
         return JsonResponse(response, safe=False)
+
+def stop_recording(request):
+    deviceid = request.GET.get('deviceid', None)
+
+    data = deviceid
+    mqttc = mqtt.Client("Device 1")
+    mqttc.connect("192.168.1.17", 1883, 60)
+    mqttc.publish("/devices/" + data + "/stop", str(data))
+
+    response = []
+    response.append({'response': "Published"})
+    return JsonResponse(response, safe=False)
+

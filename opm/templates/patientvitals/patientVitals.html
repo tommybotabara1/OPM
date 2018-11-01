@@ -158,8 +158,10 @@
 
 
         <div class="col s12 m12 l12  white">
-
+        
             <div class="row center">
+
+            <a href="{% url 'viewassignedpatients' %}">Back</a>
                 <div class="section"></div>
                 <div class="col s3"></div>
                 <div class="col s6">
@@ -176,7 +178,7 @@
             <div class="row white" style="margin: 10px">
 
                             <div class="col s12 white center">
-                                    <h5 class="center"><b>{{ patient.userid.lastname }}, {{ patient.userid.firstname }}</b></h5>
+                                    <h5 class="center"><b>{{ patient.userid.auth_user_id.last_name }}, {{ patient.userid.auth_user_id.first_name }}</b></h5>
                                     As of 4:00 PM
                                     <h6 class="center green lighten-4">ECG</h6>
                                     <div id="chartdiv2"></div>

@@ -61,12 +61,19 @@
                                      {% if userdetails.userid == user.id %}
                                          {% if current_user_type == 2 %}
                                              {% if userdetails.usertype.usertypeid > 2 %}
-                                               <td><a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;<a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a></td>
+                                               <td><a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;
+                                                   <a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a>&nbsp;&nbsp;
+                                                   <button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button>
+                                               </td>
                                              {% else %}
-                                                 <td></td>
+                                                 <td><button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button></td>
                                              {% endif %}
                                          {% else %}
-                                              <td><a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;<a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a></td>
+                                              <td>
+                                                  <a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;
+                                                  <a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a>&nbsp;&nbsp;
+                                                  <button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button>
+                                              </td>
                                          {% endif %}
 
                                      {% endif %}
@@ -92,7 +99,109 @@
                 
         </div>
 
+      <!--------------------------------------- ALL MODALS ARE HERE ---------------------------------------------------->
+            <div id="infoUser" class="modal">
+                <div class="modal-content">
+                  <h4>User Details</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+
+                    <div class="input-field col s4">
+                      <input type="text" class="validate" value="Panis" disabled>
+                      <label>Name</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      <input type="text" class="validate" value="May 27, 1998" disabled>
+                      <label>Birthday</label>
+                    </div>
+
+                    <div class="input-field col s4">
+                      <input type="text" class="validate" value="09157730969" disabled>
+                      <label>Contact No</label>
+                    </div>
+                      </div>
+
+                      <div class="row">
+                        <div class="input-field col s4">
+                          <input type="text" class="validate" value="Mark" disabled>
+                          <label>Assigned Doctor</label>
+                    </div>
+                      </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                </div>
+            </div>
+
+            <!---------------------------------------------------------------------------------------------------------------->
+
+
     <script>
+
+    $(document).ready(function(){
+        $('.modal').modal();
+      });
+
+    $("button[id*='info']").click(function () {
+        var userid = $(this).val();
+
+        console.log(userid);
+
+        $.ajax({
+        url: '{% url 'get_user_details' %}',
+        data: {
+          'userid': userid
+        },
+        dataType: 'json',
+        success: function (data) {
+            var check = "";
+            for(let i = 0; i < data.length; i++){
+                check += data[i].extra;
+            }
+
+            console.log(check);
+            var info = "<div class=\"modal-content\">\n" +
+            "                  <h4>User Details</h4>\n" +
+            "                  <div class=\"col s12 m12 l12 \">\n" +
+            "                    <div class=\"row\">\n" +
+            "\n" +
+            "                    <div class=\"input-field col s4\">\n" +
+            "                      <input type=\"text\" class=\"validate\" value=\"Panis\" disabled>\n" +
+            "                      <label>Name</label>\n" +
+            "                    </div>\n" +
+            "\n" +
+            "                    <div class=\"input-field col s4\">\n" +
+            "                      <input type=\"text\" class=\"validate\" value=\"May 27, 1998\" disabled>\n" +
+            "                      <label>Birthday</label>\n" +
+            "                    </div>\n" +
+            "\n" +
+            "                    <div class=\"input-field col s4\">\n" +
+            "                      <input type=\"text\" class=\"validate\" value=\"09157730969\" disabled>\n" +
+            "                      <label>Contact No</label>\n" +
+            "                    </div>\n" +
+            "                      </div>\n" +
+            "\n" +
+            "                      <div class=\"row\">\n" +
+            "                        <div class=\"input-field col s4\">\n" +
+            "                          <input type=\"text\" class=\"validate\" value=\"Mark\" disabled>\n" +
+            "                          <label>Assigned Doctor</label>\n" +
+            "                    </div>\n" +
+            "                      </div>\n" +
+            "\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "                <div class=\"modal-footer\">\n" +
+            "                    <a href=\"#!\" class=\"modal-close waves-effect waves-green btn-flat\">Back</a>\n" +
+            "                </div>";
+
+            $('.modal').modal('open');
+        }
+      });
+
+    });
 
     $("#search").keypress(function () {
       var search = $(this).val();
@@ -135,13 +244,19 @@
               let link = '/listofusers/' + data[i].id + '/edituser/';
               {% if current_user_type == 2 %}
                   if(data[i].usertype == "Doctor" || data[i].usertype == "Patient") {
-                      searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a></td>";
+                      searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a>&nbsp;&nbsp;";
+                      searched_data += "<button id='info" + data[i].id + "' class='btn-floating btn-small waves-effect waves-light green lighten-2' value='" + data[i].id + "'><i class='material-icons'>info_outline</i></button>";
+                      searched_data += "</td>";
                   }
                   else {
-                      searched_data += "<td></td>";
+                      searched_data += "<td>";
+                      searched_data += "<button id='info" + data[i].id + "' class='btn-floating btn-small waves-effect waves-light green lighten-2' value='" + data[i].id + "'><i class='material-icons'>info_outline</i></button>";
+                      searched_data += "</td>";
                   }
               {% else %}
-                  searched_data +="<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a></td>";
+                      searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a>&nbsp;&nbsp;";
+                      searched_data += "<button id='info" + data[i].id + "' class='btn-floating btn-small waves-effect waves-light green lighten-2' value='" + data[i].id + "'><i class='material-icons'>info_outline</i></button>";
+                      searched_data += "</td>";
               {% endif %}
 
               searched_data += "</tr>";
@@ -151,7 +266,7 @@
           searched_data += "</table>";
           searched_data += "<div class='section'></div>";
 
-          console.log(searched_data);
+//          console.log(searched_data);
           $("#view-users").html(searched_data);
         }
       });
