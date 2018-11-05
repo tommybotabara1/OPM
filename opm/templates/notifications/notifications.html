@@ -1,0 +1,66 @@
+{% extends "home/doctorHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+<div class="col s12 m12 l12  white">
+
+            <div class="row center">
+                <div class="section"></div>
+                <div class="col s3"></div>
+                <div class="col s6">
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">notification_important</i>&nbsp;&nbsp; Notifications</h3>
+                     Date: <b>September 30, 2018</b> | 11:30 PM
+                <!-- Maglalagay ako ng realtime clock dito -->
+                </div>
+                <div class="col s3"></div>
+            </div>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+            <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px">
+
+
+
+                    <table class="centered">
+                        <thead>
+                          <tr>
+                              <th>Patient ID</th>
+                              <th>First Name</th>
+                              <th>Last Name</th>
+                              <th>Time</th>
+                              <th>Status</th>
+                              <th></th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+
+                          <tr>
+                            <td>12347</td>
+                            <td>Tommy</td>
+                            <td>Botabara</td>
+                            <td>2:00 AM</td>
+                            <td>Abnormal</td>
+                            <td> <a class="btn-small waves-effect waves-light green lighten-2" href=""> View History of Vitals
+                                    <i class="material-icons left">person_outline</i>
+                                  </a></td>
+                          </tr>
+                            <tr>
+                            <td>12345</td>
+                            <td>Jhoana Marie</td>
+                            <td>dela Cruz</td>
+                            <td>4:30 PM</td>
+                            <td>Abnormal</td>
+                            <td> <a class="btn-small waves-effect waves-light green lighten-2" href=""> View History of Vitals
+                                    <i class="material-icons left">person_outline</i>
+                                  </a></td>
+                        </tbody>
+                      </table>
+        </div>
+            <div class="section"></div>
+            <div class="section"></div><div class="section"></div>
+        </div>
+
+{% endblock %}
+

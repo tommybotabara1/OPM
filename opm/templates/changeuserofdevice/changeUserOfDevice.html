@@ -12,55 +12,50 @@
 
         </div>
 
-            <div class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
-            <div class="row">
-
-                <div class="col green lighten-5">
-                <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>
-                </div>
-            </div>
-            </div>
-
         <div class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
             <div class="row">
 
-                <div id="devices" class="col s3 green lighten-5">
-
-                    <h6 class="center green lighten-4">Devices</h6>
-                    {% if device_list.count == 0 %}
-                        <b>No devices</b>
-                    {% else %}
-                        {% for device in device_list %}
-                        <b>Device {{ device.deviceid }}</b>
-                        <ol>
-                            {% for patient in patient_device_list %}
-                                {% if patient.device_deviceid.deviceid == device.deviceid and patient.inuse == 1 %}
-                                    <li>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</li>
-                                {% endif %}
+                <div id="devices" class="col s4">
+                    <h5 class="center light-green lighten-4">Devices Currently In Use</h5>
+                    <div style="height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;">
+                        {% if device_list.count == 0 %}
+                            <b>No devices</b>
+                        {% else %}
+                            {% for device in device_list %}
+                            <b>Device {{ device.deviceid }}</b>
+                            <ol>
+                                {% for patient in patient_device_list %}
+                                    {% if patient.device_deviceid.deviceid == device.deviceid and patient.inuse == 1 %}
+                                        <li>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ol>
                             {% endfor %}
-                        </ol>
-                        {% endfor %}
-                    {% endif %}
+                        {% endif %}
+                    </div>
+                    <br />
+                    <div class='row center'>
+                        <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>
+                    </div>
                 </div>
-                <div class = "col s1 center"></div>
+
                 <div class = "col s4 center">
-                    <h5 class="">Select Device ID</h5>
-                        <div class="input-field center">
-
-                        <div id="chooseDevice">
-                      <select name="device" class="browser-default col s7" id="deviceid">
-                          {% if device_list.count == 0 %}
-                              No devices
-                          {% else %}
-                              {% for device in device_list %}
-                                 <option value="{{ device.deviceid }}">{{ device.deviceid }}</option>
-                             {% endfor %}
-                          {% endif %}
-                      </select>
-                        </div>
-
-                        </div>
-
+                    <h5 class="">Choose Device ID</h5>
+                      <div id="chooseDevice">
+                          <select name="device" class="browser-default" id="deviceid">
+                              {% if device_list.count == 0 %}
+                                  No devices
+                              {% else %}
+                                  {% for device in device_list %}
+                                     <option value="{{ device.deviceid }}">{{ device.deviceid }}</option>
+                                 {% endfor %}
+                              {% endif %}
+                          </select>
+                      </div>
+                    <br />
+                    <div class='row center'>
+                        <button id='unassignPatient' class='btn btn-small waves-effect'>Unassign Patient (if any)</button>
+                    </div>
                 </div>
 
                 <div class="col s4 center">
@@ -101,8 +96,9 @@
         },
         dataType: 'json',
         success: function (data) {
-            var devices = " <h6 class=\"center green lighten-4\">Devices</h6>\n";
-            var selectbox = "<select name=\"doctorid\" class=\"browser-default col s7\" id=\"id_doctorid\">\n";
+            var devices = "<h5 class=\"center light-green lighten-4\">Devices Currently In Use</h5>\n";
+            devices += "<div style=\"height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;\">";
+            var selectbox = "<select name=\"device\" class=\"browser-default\" id=\"deviceid\">";
 
             for(var i = 0; i < data.length; i++){
                 if(i == 0){
@@ -130,6 +126,12 @@
                     selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
                 }
             }
+
+            devices += "</div>\n" +
+                "                    <br />\n" +
+                "                    <div class='row center'>\n" +
+                "                        <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>\n" +
+                "                    </div>";
 
             selectbox += "</select>";
 
@@ -193,5 +195,25 @@
         }
       });
     });
+
+
+    $("#unassignPatient").click(function () {
+      var deviceID = $("#deviceid").val();
+
+      $.ajax({
+        url: '{% url 'unassign_patient' %}',
+        data: {
+            'deviceID': deviceID,
+        },
+        dataType: 'json',
+        success: function (data) {
+            var message = data[0].outcome
+            alert(message);
+            console.log(message);
+            location.reload();
+        }
+      });
+    });
+
     </script>
 {% endblock %}

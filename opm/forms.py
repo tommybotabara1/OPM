@@ -25,6 +25,10 @@ class CreateUserForm(forms.Form):
     if Doctor.objects.all().count() == 0:
         DOCTOR_CHOICES.extend([(-1, "No doctor users!")])
 
+    BLOOD_TYPE_CHOICES = []
+
+    BLOOD_TYPE_CHOICES.extend([('O', 'Type O'), ('B', 'Type B'), ('A', 'Type A'), ('AB', 'Type AB'), ])
+
     username = forms.CharField(max_length=45)
     firstname = forms.CharField(max_length=45, widget=forms.TextInput(attrs={'placeholder': 'ex: Juan', "onChange":'show()'}))
     middlename = forms.CharField(max_length=45, widget=forms.TextInput(attrs={'placeholder': 'ex: Flores'}))
@@ -35,7 +39,8 @@ class CreateUserForm(forms.Form):
     birthday = forms.DateField(widget=forms.DateInput(attrs={'placeholder': 'ex: 1998-05-27'}))
     contactno = forms.CharField(max_length=45, widget=forms.NumberInput)
     usertype= forms.ChoiceField(widget=forms.RadioSelect(attrs={"onChange":'show()'}), choices=USERTYPE_CHOICES)
-    doctorid = forms.ChoiceField(choices=DOCTOR_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s7'}))
+    doctorid = forms.ChoiceField(choices=DOCTOR_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s4'}))
+    bloodtype = forms.ChoiceField(choices=BLOOD_TYPE_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s4'}))
 
 
 class EditUserForm(forms.Form):
@@ -72,6 +77,9 @@ class EditUserForm(forms.Form):
 
     USERTYPE_CHOICES.extend([(3, 'Doctor'), (4, 'Patient')])
 
+    BLOOD_TYPE_CHOICES = []
+
+    BLOOD_TYPE_CHOICES.extend([('O', 'Type O'), ('B', 'Type B'), ('A', 'Type A'), ('AB', 'Type AB'), ])
 
 
     username = forms.CharField(max_length=45)
@@ -85,4 +93,39 @@ class EditUserForm(forms.Form):
     birthday = forms.DateField(widget=forms.DateInput(attrs={'placeholder': 'ex: 1998-05-27'}))
     contactno = forms.CharField(max_length=45, widget=forms.NumberInput)
     usertype = forms.ChoiceField(widget=forms.RadioSelect(attrs={"onChange": 'show()'}), choices=USERTYPE_CHOICES)
-    doctorid = forms.ChoiceField(widget=forms.Select(attrs={"class": 'browser-default col s7'}))
+    doctorid = forms.ChoiceField(widget=forms.Select(attrs={"class": 'browser-default col s4'}))
+    bloodtype = forms.ChoiceField(choices=BLOOD_TYPE_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s4'}))
+
+
+class MedicalHistoryForm(forms.Form):
+
+    BLOOD_TYPE_CHOICES=[]
+
+    BLOOD_TYPE_CHOICES.extend([('O', 'Type O'),('B', 'Type B'),('A', 'Type A'),('AB', 'Type AB'),])
+
+    PATIENT_CHOICES=[]
+
+    for patient in Patient.objects.all():
+        PATIENT_CHOICES.extend([(patient.patientid, patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name)])
+
+    if Patient.objects.all().count() == 0:
+        PATIENT_CHOICES.extend([(-1, "No patient users!")])
+
+    patientid = forms.ChoiceField(choices=PATIENT_CHOICES, widget=forms.Select(attrs={"class": 'browser-default', "style": 'width: 40%;'}))
+    presentcomplaint = forms.CharField(max_length=1000,
+                                widget=forms.Textarea(attrs={'placeholder': "What's the problem based on the patient. Ex: difficulty with breathing", 'class': 'materialize-textarea'}))
+    historyofpresentcomplaint = forms.CharField(max_length=1000,
+                                       widget=forms.Textarea(attrs={
+                                           'placeholder': "Where and when the pain started, what is the pain like, how severe is the pain, etc.", 'class': 'materialize-textarea'}))
+    pastmedicalhistory = forms.CharField(max_length=1000,
+                                                widget=forms.Textarea(attrs={
+                                                    'placeholder': "Medical problems that occured before.", 'class': 'materialize-textarea'}))
+    drughistory = forms.CharField(max_length=1000,
+                                         widget=forms.Textarea(attrs={
+                                             'placeholder': "Medication/s being taken by the patient.", 'class': 'materialize-textarea'}))
+    familyhistory = forms.CharField(max_length=1000,
+                                  widget=forms.Textarea(attrs={
+                                      'placeholder': "Patient's family history (ex: diabetes)", 'class': 'materialize-textarea'}))
+    socialhistory = forms.CharField(max_length=1000,
+                                    widget=forms.Textarea(attrs={
+                                        'placeholder': "Patient's background. (ex: if patient smokes)", 'class': 'materialize-textarea'}))

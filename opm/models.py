@@ -53,6 +53,7 @@ class Patient(models.Model):
     patientid = models.AutoField(db_column='patientID', primary_key=True)  # Field name made lowercase.
     doctorid = models.ForeignKey(Doctor, models.DO_NOTHING, db_column='doctorID')  # Field name made lowercase.
     userid = models.ForeignKey(Userdetails, models.DO_NOTHING, db_column='userID')  # Field name made lowercase.
+    bloodtype = models.CharField(db_column='bloodType', max_length=45)  # Field name made lowercase.
 
     class Meta:
         managed = False
@@ -61,8 +62,9 @@ class Patient(models.Model):
 
 
 class PatientMedicalHistory(models.Model):
-    patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patientID', primary_key=True)  # Field name made lowercase.
-    bloodtype = models.CharField(db_column='bloodType', max_length=45)  # Field name made lowercase.
+    patient_medical_historyid = models.IntegerField(db_column='patient_medical_historyID', primary_key=True)  # Field name made lowercase.
+    patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patientID')  # Field name made lowercase.
+    date = models.DateField()
     presentcomplaint = models.TextField(db_column='presentComplaint')  # Field name made lowercase.
     historyofpresentcomplaint = models.TextField(db_column='historyOfPresentComplaint')  # Field name made lowercase.
     pastmedicalhistory = models.TextField(db_column='pastMedicalHistory', blank=True, null=True)  # Field name made lowercase.
@@ -76,14 +78,14 @@ class PatientMedicalHistory(models.Model):
 
 
 class PatientDevice(models.Model):
-    patient_patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patient_patientID', primary_key=True)  # Field name made lowercase.
+    patientdeviceid = models.IntegerField(db_column='patientDeviceID', primary_key=True)  # Field name made lowercase.
+    patient_patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patient_patientID')  # Field name made lowercase.
     device_deviceid = models.ForeignKey(Device, models.DO_NOTHING, db_column='device_deviceID')  # Field name made lowercase.
     inuse = models.IntegerField(db_column='inUse')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'patient_device'
-        unique_together = (('patient_patientid', 'device_deviceid'),)
 
 
 class Ecg(models.Model):
@@ -100,28 +102,24 @@ class Ecg(models.Model):
 
 
 class Heartrate(models.Model):
-    heartrateid = models.AutoField(db_column='heartrateID', primary_key=True)
-    patientid = models.ForeignKey(PatientDevice, models.DO_NOTHING, db_column='patientID')  # Field name made lowercase.
-    deviceid = models.ForeignKey(PatientDevice, related_name='heartratedevices', db_column='deviceID', on_delete=models.CASCADE)  # Field name made lowercase.
+    heartrateid = models.IntegerField(db_column='heartrateID', primary_key=True)  # Field name made lowercase.
+    patientdeviceid = models.ForeignKey('PatientDevice', models.DO_NOTHING, db_column='patientDeviceID')  # Field name made lowercase.
     timestamp = models.DateTimeField()
     data = models.FloatField()
 
     class Meta:
         managed = False
         db_table = 'heartrate'
-        unique_together = (('patientid', 'deviceid'),)
 
 
 class Temperature(models.Model):
-    temperatureid = models.AutoField(db_column='temperatureID', primary_key=True)
-    patientid = models.ForeignKey(PatientDevice, models.DO_NOTHING, db_column='patientID')  # Field name made lowercase.
-    deviceid = models.ForeignKey(PatientDevice, related_name='temperaturedevices', db_column='deviceID', on_delete=models.CASCADE)  # Field name made lowercase.
+    temperatureid = models.IntegerField(db_column='temperatureID', primary_key=True)  # Field name made lowercase.
+    patientdeviceid = models.ForeignKey(PatientDevice, models.DO_NOTHING, db_column='patientDeviceID')  # Field name made lowercase.
     timestamp = models.DateTimeField()
     data = models.FloatField()
 
     class Meta:
         managed = False
         db_table = 'temperature'
-        unique_together = (('patientid', 'deviceid'),)
 
 

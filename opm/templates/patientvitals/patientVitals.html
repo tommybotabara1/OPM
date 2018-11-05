@@ -1,4 +1,4 @@
-{% extends "home/userHeaderFooter.html" %}
+{% extends "home/doctorHeaderFooter.html" %}
 {% load staticfiles%}
 
 {% block content %}
@@ -184,7 +184,7 @@
                                     <div id="chartdiv2"></div>
                                     <div class="col s6 center green lighten-4">
                                         <h6 class="center">Temperature</h6>
-                                        <h4 class="center">{{ temperature.data__avg }}°C</h4>
+                                        <h4 class="center">{{ temperature.rounded_avg_price }}°C</h4>
                                     </div>
                                     <div class="col s6 center green lighten-5">
                                         <h6 class="center">Heartrate</h6>

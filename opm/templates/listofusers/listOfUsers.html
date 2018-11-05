@@ -102,37 +102,43 @@
       <!--------------------------------------- ALL MODALS ARE HERE ---------------------------------------------------->
             <div id="infoUser" class="modal">
                 <div class="modal-content">
-                  <h4>User Details</h4>
+                  <h4>Edit User Details</h4>
                   <div class="col s12 m12 l12 ">
                     <div class="row">
 
-                    <div class="input-field col s4">
-                      <input type="text" class="validate" value="Panis" disabled>
-                      <label>Name</label>
-                    </div>
+                        <table>
 
-                    <div class="input-field col s4">
-                      <input type="text" class="validate" value="May 27, 1998" disabled>
-                      <label>Birthday</label>
-                    </div>
+                            <tr>
 
-                    <div class="input-field col s4">
-                      <input type="text" class="validate" value="09157730969" disabled>
-                      <label>Contact No</label>
-                    </div>
-                      </div>
+                                <th>Name</th>
+                                <td>Tommy Botabara</td>
 
-                      <div class="row">
-                        <div class="input-field col s4">
-                          <input type="text" class="validate" value="Mark" disabled>
-                          <label>Assigned Doctor</label>
-                    </div>
-                      </div>
+                            </tr>
+                            <tr>
 
+                                <th>Age</th>
+                                <td>19</td>
+
+                            </tr>
+                            <tr>
+
+                                <th>Contact Number</th>
+                                <td>001</td>
+
+                            </tr>
+                            <tr>
+
+                                <th>Blood Type</th>
+                                <td>O</td>
+
+                            </tr>
+
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
                 </div>
             </div>
 
@@ -148,8 +154,6 @@
     $("button[id*='info']").click(function () {
         var userid = $(this).val();
 
-        console.log(userid);
-
         $.ajax({
         url: '{% url 'get_user_details' %}',
         data: {
@@ -161,41 +165,54 @@
             for(let i = 0; i < data.length; i++){
                 check += data[i].extra;
             }
-
-            console.log(check);
             var info = "<div class=\"modal-content\">\n" +
-            "                  <h4>User Details</h4>\n" +
-            "                  <div class=\"col s12 m12 l12 \">\n" +
-            "                    <div class=\"row\">\n" +
-            "\n" +
-            "                    <div class=\"input-field col s4\">\n" +
-            "                      <input type=\"text\" class=\"validate\" value=\"Panis\" disabled>\n" +
-            "                      <label>Name</label>\n" +
-            "                    </div>\n" +
-            "\n" +
-            "                    <div class=\"input-field col s4\">\n" +
-            "                      <input type=\"text\" class=\"validate\" value=\"May 27, 1998\" disabled>\n" +
-            "                      <label>Birthday</label>\n" +
-            "                    </div>\n" +
-            "\n" +
-            "                    <div class=\"input-field col s4\">\n" +
-            "                      <input type=\"text\" class=\"validate\" value=\"09157730969\" disabled>\n" +
-            "                      <label>Contact No</label>\n" +
-            "                    </div>\n" +
-            "                      </div>\n" +
-            "\n" +
-            "                      <div class=\"row\">\n" +
-            "                        <div class=\"input-field col s4\">\n" +
-            "                          <input type=\"text\" class=\"validate\" value=\"Mark\" disabled>\n" +
-            "                          <label>Assigned Doctor</label>\n" +
-            "                    </div>\n" +
-            "                      </div>\n" +
-            "\n" +
-            "                    </div>\n" +
-            "                </div>\n" +
-            "                <div class=\"modal-footer\">\n" +
-            "                    <a href=\"#!\" class=\"modal-close waves-effect waves-green btn-flat\">Back</a>\n" +
-            "                </div>";
+                "                  <h4>Edit User Details</h4>\n" +
+                "                  <div class=\"col s12 m12 l12 \">\n" +
+                "                    <div class=\"row\">\n" +
+                "\n" +
+                "                        <table>\n" +
+                "\n" +
+                "                            <tr>\n" +
+                "\n" +
+                "                                <th>Name</th>\n" +
+                "                                <td>"+data[0].name+"</td>\n" +
+                "\n" +
+                "                            </tr>\n" +
+                "                            <tr>\n" +
+                "\n" +
+                "                                <th>Birthday</th>\n" +
+                "                                <td>"+data[0].birthday+"</td>\n" +
+                "\n" +
+                "                            </tr>\n" +
+                "                            <tr>\n" +
+                "\n" +
+                "                                <th>Contact Number</th>\n" +
+                "                                <td>"+data[0].contactno+"</td>\n" +
+                "\n" +
+                "                            </tr>\n"
+                "                            <tr>\n";
+
+            if(data[0].usertype == 3){
+                info+= "<th>Assigned Patients</th>";
+                info+= "<td>" + data[0].extra + "</td>";
+            }
+            else if(data[0].usertype == 4){
+                info+= "<th>Assigned Doctor</th>";
+                info+= "<td>" + data[0].extra + "</td>";
+            }
+            info +=
+                "\n" +
+                "                            </tr>\n" +
+                "\n" +
+                "                        </table>\n" +
+                "                    </div>\n" +
+                "                    <div class=\"modal-footer\">\n" +
+                "                      <a href=\"#!\" class=\"modal-close waves-effect waves-green btn-flat\">Back</a>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "                </div>\n";
+
+            $("#infoUser").html(info);
 
             $('.modal').modal('open');
         }

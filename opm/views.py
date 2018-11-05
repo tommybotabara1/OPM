@@ -1,6 +1,6 @@
 from django.shortcuts import render, HttpResponse, redirect, get_object_or_404, HttpResponseRedirect, Http404
 
-from .models import Userdetails, Patient, Doctor, RefUsertype, PatientDevice, Temperature, Ecg, Heartrate, Device
+from .models import *
 from .forms import *
 from django.db.models import Avg, Q
 from django.contrib.auth import authenticate, login, logout
@@ -9,8 +9,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import *
 from django.http import JsonResponse
 import paho.mqtt.client as mqtt
-
-
+import datetime
+from django.db.models import F, Func
 
 
 # Create your views here.
@@ -72,7 +72,40 @@ def listofusers(request):
     return render(request, 'listofusers/listOfUsers.html', context)
 
 def filloutmedicalform(request):
-    return render(request, 'filloutmedicalform/medicalForm.html')
+    if request.method == 'POST':
+        form = MedicalHistoryForm(request.POST)
+        if form.is_valid():
+            if PatientMedicalHistory.objects.count() == 0:
+                patientmedicalhistoryid = 1
+            else:
+                patientmedicalhistoryid = PatientMedicalHistory.objects.latest('patient_medical_historyid').patient_medical_historyid + 1
+
+            patientobject = Patient.objects.get(patientid=request.POST['patientid'])
+
+            newPatientMedicalHistory = PatientMedicalHistory(
+                patient_medical_historyid=patientmedicalhistoryid,
+                patientid=patientobject,
+                date=datetime.date.today(),
+                presentcomplaint=request.POST['presentcomplaint'],
+                historyofpresentcomplaint=request.POST['historyofpresentcomplaint'],
+                pastmedicalhistory=request.POST['pastmedicalhistory'],
+                drughistory=request.POST['drughistory'],
+                familyhistory=request.POST['familyhistory'],
+                socialhistory=request.POST['socialhistory'],
+            )
+
+            newPatientMedicalHistory.save()
+            form = MedicalHistoryForm()
+            context = {'form': form,
+                       'message': "Medical Form Created",
+                       }
+            return render(request, 'filloutmedicalform/medicalForm.html', context)
+    else:
+        form = MedicalHistoryForm()
+        context = {'form': form,
+                   'message': "Create",
+                   }
+        return render(request, 'filloutmedicalform/medicalForm.html', context)
 
 
 def createuser(request):
@@ -131,7 +164,8 @@ def createuser(request):
                 newPatient = Patient(
                     patientid=patientid,
                     doctorid=doctor,
-                    userid=latestpatientuser
+                    userid=latestpatientuser,
+                    bloodtype=request.POST['bloodtype'],
                 )
 
                 newPatient.save()
@@ -164,10 +198,10 @@ def changeuserofdevice(request):
 
 def viewassignedpatients(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
-    patient_list = Patient.objects.order_by('userid').filter(doctorid=doctorid)
+    patient_device_list = PatientDevice.objects.filter(patient_patientid__doctorid=doctorid, inuse=1)
 
     context = {'doctorid': doctorid,
-               'patient_list': patient_list,
+               'patient_device_list': patient_device_list,
                }
     return render(request, 'viewassignedpatients/viewAssignedPatients.html', context)
 
@@ -175,19 +209,34 @@ def viewassignedpatients(request):
 def assignedpatientvitals(request, patient_id):
     patient = Patient.objects.get(patientid=patient_id)
     patient_device = PatientDevice.objects.filter(patient_patientid_id=patient_id)
-    temperature_list = Temperature.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
-    temperature = temperature_list.aggregate(Avg('data'))
-    heartrate_list = Heartrate.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
-    heartrate = heartrate_list.aggregate(Avg('data'))
-    ecg_list = Ecg.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
+    temperature_list = Temperature.objects.filter(patientdeviceid__in=patient_device)
+
+    class Round(Func):
+        function = 'ROUND'
+        template = '%(function)s(%(expressions)s, 2)'
+
+    temperature = temperature_list.aggregate(rounded_avg_price= Round(Avg('data')))
+    #heartrate_list = Heartrate.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
+    #heartrate = heartrate_list.aggregate(Avg('data'))
+    #ecg_list = Ecg.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature': temperature,
-               'heartrate': heartrate,
-               'ecg_list': ecg_list
+    #           'heartrate': heartrate,
+     #          'ecg_list': ecg_list
                }
 
     return render(request, 'patientvitals/patientVitals.html', context)
+
+
+def assignedpatientmedicalinfo(request, patient_id):
+    patient = Patient.objects.get(patientid=patient_id)
+    patientmedicalinfo = PatientMedicalHistory.objects.filter(patientid=patient.patientid).latest('date')
+    context = {'patient': patient,
+               'patientmedicalinfo': patientmedicalinfo,
+               }
+
+    return render(request, 'patientmedicalinfo/patientMedicalInfo.html', context)
 
 
 def changerecordinginterval(request):
@@ -195,7 +244,18 @@ def changerecordinginterval(request):
 
 
 def stoprecording(request):
-    return render(request, 'stoprecording/stopRecording.html')
+    doctorid = Doctor.objects.get(userid=request.session['user_id'])
+    patient_device_list = PatientDevice.objects.filter(patient_patientid__doctorid=doctorid, inuse=1)
+
+    context = {
+        'patient_device_list': patient_device_list
+    }
+
+    return render(request, 'stoprecording/stopRecording.html', context)
+
+@login_required()
+def notifications(request):
+    return render(request, 'notifications/notifications.html')
 
 
 def viewcurrentvitals(request):
@@ -282,8 +342,6 @@ def edituser(request, user_id):
 
 
 
-
-
 #########################AJAX############################
 
 
@@ -293,7 +351,6 @@ def validate_username(request):
         'is_taken': User.objects.filter(username__iexact=username).exists()
     }
     return JsonResponse(data)
-
 
 def search_user(request):
     search = request.GET.get('search', None)
@@ -330,7 +387,7 @@ def get_user_details(request):
             extra += "No patients assigned"
         else:
             for patient in patient_list:
-                extra += patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + "|"
+                extra += patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + " | "
     elif user_details.usertype.usertypeid == 4:
         patient = Patient.objects.get(patientid=user_details.patient_set.get(userid=user_details.userid).patientid)
         doctor = patient.doctorid.userid.auth_user_id.first_name + " " + patient.doctorid.userid.auth_user_id.last_name
@@ -419,31 +476,79 @@ def set_patient_to_device(request):
             response.append({'outcome': "Device is currently in use"})
         return JsonResponse(response, safe=False)
     elif PatientDevice.objects.filter(patient_patientid=patientid, device_deviceid=deviceid, inuse=0).exists():
-        PatientDevice.objects.get(patient_patientid=patientid, device_deviceid=deviceid, inuse=0).inuse = 1
+        patientdevice = PatientDevice.objects.get(patient_patientid=patientid, device_deviceid=deviceid, inuse=0)
+        patientdevice.inuse = 1
+        patientdevice.save()
         response.append({'outcome': "Patient is set to device"})
+
+        mqttc = mqtt.Client("Device " + str(deviceid))
+        mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
+        mqttc.connect("192.168.1.13", 8883)  # Change
+        mqttc.publish("/devices/" + str(deviceid) + "/patient", patientid)
+
         return JsonResponse(response, safe=False)
     elif PatientDevice.objects.filter(patient_patientid=patientid, inuse=1).exists():
         response.append({'outcome': "Patient is currently using another device"})
         return JsonResponse(response, safe=False)
     else:
+        if PatientDevice.objects.count() == 0:
+            patientdevice_id = 1
+        else:
+            patientdevice_id = PatientDevice.objects.latest('patientdeviceid').patientdeviceid + 1
+
         newPatientDevice = PatientDevice(
+            patientdeviceid=patientdevice_id,
             patient_patientid=Patient.objects.get(patientid=patientid),
             device_deviceid=Device.objects.get(deviceid=deviceid),
             inuse=1
         )
         newPatientDevice.save()
         response.append({'outcome': "Patient is set to a new device"})
+
+        mqttc = mqtt.Client("Device " + str(deviceid))
+        mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
+        mqttc.connect("192.168.1.13", 8883)  # Change
+        mqttc.publish("/devices/" + str(deviceid) + "/patient", patientid)
+
         return JsonResponse(response, safe=False)
 
-def stop_recording(request):
-    deviceid = request.GET.get('deviceid', None)
 
-    data = deviceid
-    mqttc = mqtt.Client("Device 1")
-    mqttc.connect("192.168.1.17", 1883, 60)
-    mqttc.publish("/devices/" + data + "/stop", str(data))
+def stop_recording(request):
+    data = request.GET.get('data', None)
+    deviceId = request.GET.get('deviceid', None)
+    mqttc = mqtt.Client("Device " + str(deviceId))
+    mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
+    mqttc.connect("192.168.1.13", 8883)  # Change
+    mqttc.publish("/devices/" + str(deviceId) + "/stop", data)
 
     response = []
     response.append({'response': "Published"})
     return JsonResponse(response, safe=False)
 
+
+def unassign_patient(request):
+    deviceid = request.GET.get('deviceID', None)
+
+    is_assigned = PatientDevice.objects.filter(device_deviceid=deviceid, inuse=1).exists()
+
+    response = []
+
+    if is_assigned:
+        patientdevice = PatientDevice.objects.get(device_deviceid=deviceid, inuse=1)
+        patientdevice.inuse = 0
+
+        patientdevice.save()
+
+        response.append({'outcome': "Patient unassigned"})
+
+        mqttc = mqtt.Client("Device " + str(deviceid))
+        mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
+        mqttc.connect("192.168.1.13", 8883)  # Change
+        mqttc.publish("/devices/" + str(deviceid) + "/patient", 0)
+
+        return JsonResponse(response, safe=False)
+
+    else:
+        response.append({'outcome': "No patients assigned"})
+
+        return JsonResponse(response, safe=False)

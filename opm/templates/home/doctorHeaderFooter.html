@@ -32,7 +32,7 @@
                     </a>
 
                     <ul class="right hide-on-med-and-down" id="deets" style="">
-                        <li><a href="D_Notification.html" class="black-text"><i class="material-icons left black-text">notification_important</i>Notifications</a></li>
+                        <li><a href="{% url 'notifications' %}" class="black-text"><i class="material-icons left black-text">notification_important</i>Notifications</a></li>
                         <li><a href="#" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
                         <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
                     </ul>
@@ -40,7 +40,7 @@
             </nav>
 
             <ul class="sidenav" id="mobile-nav">
-                <li><a href="D_Notification.html" class="black-text"><i class="material-icons left black-text">notification_important</i>Notifications</a></li>
+                <li><a href="{% url 'notifications' %}" class="black-text"><i class="material-icons left black-text">notification_important</i>Notifications</a></li>
                 <li><a href="#" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
                 <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
             </ul>
@@ -52,51 +52,6 @@
 
         {% block content %}
         {% endblock %}
-
-                    <!------------------------------------- ROW2- Guide on Knowing ------------------------------------------
-
-                <div class="row">
-
-                    <div class="col s12 center white" style="padding: 30px 20px 20px 20px;">
-                        <div class="divider"></div>
-                        <div class="section"></div>
-                        <h3 class="center" id="greeting">A Guide on Knowing if Your Vitals are Normal</h3>
-
-                        <div class="row">
-
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-
-                                </p>
-                            </div>
-
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                2. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-
-                                </p>
-                            </div>
-
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                3. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-
-                                </p>
-                            </div>
-
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                4. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-        </div>
-
-        -->
 
         <!----------------------------------------------------- FOOTER STARTS HERE ----------------------------------------------------------->
             <footer class="page-footer" style="background-color: rgba(255, 255, 255, 0.3);">

@@ -3,7 +3,7 @@
 
 {% block content %}
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
-        <div class="col s12 white">
+        <div class="white">
             <div class="col s12 m12 l12 center white">
 
                 <div class="section"></div>
@@ -15,54 +15,45 @@
                 <div class="section"></div>
 
             </div>
-            <form class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px" method="post">
+            <form action="{% url 'filloutmedicalform' %}" style="padding: 0px 20px 0px 30px" method="post">
+                {% csrf_token %}
 
-                <div class="row">
-                    <div class="col s2"></div>
-                    <div class="input-field col s4">
+                <center>
+                    <div class="row">
+                        <label style="text-align: left;">Patient Name</label>
+                          {{ form.patientid }}
+                    </div>
+                </center>
 
-                      <label for="patientID">Patient ID</label>
-                      <input id="patientID" placeholder="Enter patient's ID" type="text" class="validate">
-                    </div>
 
-                    <div class="col s4">
-                        <label>Patient's Blood Type</label>
-                          <select class="browser-default">
-                            <option value="" disabled selected>Choose blood type</option>
-                            <option value="1">Type O</option>
-                            <option value="2">Type B</option>
-                            <option value="3">Type A</option>
-                            <option value="3">Type AB</option>
-                          </select>
+                <div class="col s12 m12 l12 white">
+                    <div class="row">
+                        <div class="input-field col s6">
+                            {{ form.presentcomplaint }}
+                          <label for="presentComplaint">Present Complaint</label>
+                        </div>
+                        <div class="input-field col s6">
+                            {{ form.historyofpresentcomplaint }}
+                          <label for="historyPresentComplaint">History of Present Complaint</label>
+                        </div>
                     </div>
-                    <div class="col s2"></div>
-                </div>
-                <div class="row">
-                    <div class="input-field col s6">
-                      <input placeholder="What's the problem based on the patient. Ex: difficulty with breathing" id="presentComplaint" type="text" class="validate">
-                      <label for="presentComplaint">Present Complaint</label>
-                    </div>
-                    <div class="input-field col s6">
-                      <textarea placeholder="Where and when the pain started, what is the pain like, how severe is the pain, etc." id="historyPresentComplaint" class="materialize-textarea"></textarea>
-                      <label for="historyPresentComplaint">History of Present Complaint</label>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="input-field col s3">
-                      <textarea placeholder="Medical problems that occured before." id="pastMedicalHistory" class="materialize-textarea"></textarea>
-                      <label for="pastMedicalHistory">Past Medical History (if any)</label>
-                    </div>
-                    <div class="input-field col s3">
-                      <textarea placeholder="Medication/s being taken by the patient." id="drugHistory" class="materialize-textarea"></textarea>
-                      <label for="drugHistory">Drug History (if any)</label>
-                    </div>
-                    <div class="input-field col s3">
-                      <textarea placeholder="Patient's family history (ex: diabetes)" id="familyHistory" class="materialize-textarea"></textarea>
-                      <label for="familyHistory">Family History (if any)</label>
-                    </div>
-                    <div class="input-field col s3">
-                      <textarea placeholder="Patient's background. (ex: if patient smokes)" id="socialHistory" class="materialize-textarea"></textarea>
-                      <label for="socialHistory">Social History (if any)</label>
+                    <div class="row">
+                        <div class="input-field col s3">
+                            {{ form.pastmedicalhistory }}
+                          <label for="pastMedicalHistory">Past Medical History (if any)</label>
+                        </div>
+                        <div class="input-field col s3">
+                            {{ form.drughistory }}
+                          <label for="drugHistory">Drug History (if any)</label>
+                        </div>
+                        <div class="input-field col s3">
+                            {{ form.familyhistory }}
+                          <label for="familyHistory">Family History (if any)</label>
+                        </div>
+                        <div class="input-field col s3">
+                            {{ form.socialhistory }}
+                          <label for="socialHistory">Social History (if any)</label>
+                        </div>
                     </div>
                 </div>
                 <br />
@@ -75,4 +66,13 @@
             <section></section>
             <section></section>
             </div>
+
+<script>
+    $( document ).ready(function() {
+        var message = "";
+        message = "{{ message }}";
+        if(message == "Medical Form Created")
+            alert(message);
+});
+</script>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "home/userHeaderFooter.html" %}
+{% extends "home/doctorHeaderFooter.html" %}
 {% load staticfiles%}
 {% load extras %}
 
@@ -28,36 +28,39 @@
         </div>
         <div class="col s12 m12 l12 white" style="padding: 0px 20px 0px 30px">
 
-                    <table class="striped centered">
+        {% if not patient_device_list.exists %}
+            <center>
+                <h5>No assigned patients!</h5>
+            </center>
+        {% else %}
+            <table class="striped centered">
                         <thead>
                           <tr>
                               <th>First Name</th>
                               <th>Middle Name</th>
                               <th>Last Name</th>
-                              <th>Age</th>
-                              <th>Status</th>
+                              <th>Device Using</th>
                               <th>Action</th>
                           </tr>
                         </thead>
 
                         <tbody>
-                        {% for patient in patient_list %}
+                        {% for patient in patient_device_list %}
                             <tr>
-                            <td>{{ patient.userid.auth_user_id.first_name }}</td>
-                            <td>{{ patient.userid.middlename }}</td>
-                            <td>{{ patient.userid.auth_user_id.last_name}}</td>
-                            {% now "Y" as current_year %}
-                            <td>{{ patient.userid.birthday.year|subtract:current_year }}</td>
-                            {% if patient.userid.status == 0 %}
-                                 <td>Inactive</td>
-                            {% else  %}
-                                 <td>Active</td>
-                            {% endif %}
-                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patientid %}">Vitals</a>&nbsp;&nbsp;<a class="waves-effect waves-light btn-small" href="">Medical Info</a>&nbsp;&nbsp;<a class="waves-effect waves-light btn-small" href="">Records</a></td>
+                            <td>{{ patient.patient_patientid.userid.auth_user_id.first_name }}</td>
+                            <td>{{ patient.patient_patientid.userid.middlename }}</td>
+                            <td>{{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
+                            <td>{{ patient.device_deviceid.deviceid }}</td>
+                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Vitals</a>&nbsp;&nbsp;
+                                <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patient_patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
+                                <a class="waves-effect waves-light btn-small" href="">Records</a></td>
                           </tr>
                         {% endfor %}
                         </tbody>
                       </table>
+        {% endif %}
+
+
 
             <div class="section"></div>
         <!--
