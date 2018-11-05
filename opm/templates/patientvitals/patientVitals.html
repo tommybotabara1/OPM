@@ -166,7 +166,7 @@
                 <div class="col s3"></div>
                 <div class="col s6">
                     <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View Current Vitals</h3>
-                     Date: <b>September 30, 2018</b> | 11:30 PM | Records every <b>4</b> hours.
+                     Date: <b>{% now "F j Y" %}</b> | 11:30 PM | Records every <b>4</b> hours.
                 <!-- Maglalagay ako ng realtime clock dito -->
                 </div>
                 <div class="col s3"></div>
@@ -188,7 +188,7 @@
                                     </div>
                                     <div class="col s6 center green lighten-5">
                                         <h6 class="center">Heartrate</h6>
-                                        <h4 class="center">{{ heartrate.data__avg }} bpm</h4>
+                                        <h4 class="center">{{ heartrate.rounded_avg_price }} bpm</h4>
                                     </div>
                 </div></div>
 

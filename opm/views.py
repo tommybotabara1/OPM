@@ -13,6 +13,7 @@ import datetime
 from django.db.models import F, Func
 
 
+
 # Create your views here.
 def index(request):
     logout(request)
@@ -207,22 +208,23 @@ def viewassignedpatients(request):
 
 
 def assignedpatientvitals(request, patient_id):
+    currentdate = datetime.date.today()
     patient = Patient.objects.get(patientid=patient_id)
-    patient_device = PatientDevice.objects.filter(patient_patientid_id=patient_id)
-    temperature_list = Temperature.objects.filter(patientdeviceid__in=patient_device)
+    patient_device = PatientDevice.objects.filter(patient_patientid_id=patient_id, inuse=1)
+    temperature_list = Temperature.objects.order_by(F('temperatureid').desc()).filter(patientdeviceid__in=patient_device, timestamp__date=currentdate)[:1]
+    heartrate_list = Heartrate.objects.order_by(F('heartrateid').desc()).filter(patientdeviceid__in=patient_device, timestamp__date=currentdate)[:5]
 
     class Round(Func):
         function = 'ROUND'
         template = '%(function)s(%(expressions)s, 2)'
 
     temperature = temperature_list.aggregate(rounded_avg_price= Round(Avg('data')))
-    #heartrate_list = Heartrate.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
-    #heartrate = heartrate_list.aggregate(Avg('data'))
+    heartrate = heartrate_list.aggregate(rounded_avg_price= Round(Avg('data')))
     #ecg_list = Ecg.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature': temperature,
-    #           'heartrate': heartrate,
+               'heartrate': heartrate,
      #          'ecg_list': ecg_list
                }
 
