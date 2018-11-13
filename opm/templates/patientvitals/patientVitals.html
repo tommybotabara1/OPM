@@ -10,13 +10,12 @@
     <link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-
     <style>
-#chartdiv3 {
-	width	: 90%;
-	height	: 150px;
-}
 #chartdiv2 {
+	width	: 100%;
+	height	: 300px;
+}
+#chartdiv3 {
 	width	: 100%;
 	height	: 300px;
 }
@@ -29,13 +28,13 @@
     "marginRight": 70,
     "autoMarginOffset": 20,
     "dataProvider": [
-        {% for ecg in ecg_list %}
+        {% for temperature_record in temperature_list.reverse %}
             {
-                "year": "{{ ecg.timestamp.year }}",
-                "value": {{ ecg.data }}
+            "time": "{{ temperature_record.timestamp|date:"h:i:s A" }}",
+            "value": {{ temperature_record.data }}
             },
         {% endfor %}
-   ],
+        ],
     "balloon": {
         "cornerRadius": 6
     },
@@ -43,7 +42,7 @@
         "axisAlpha": 0
     }],
     "graphs": [{
-        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] C</span></b>",
+        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]]°C</span></b>",
         "bullet": "round",
         "bulletSize": 6,
         "connect": false,
@@ -53,7 +52,6 @@
         "valueField": "value"
     }],
     "chartCursor": {
-        "categoryBalloonDateFormat": "YYYY",
         "cursorAlpha": 0.1,
         "cursorColor": "#000000",
         "fullWidth": true,
@@ -61,11 +59,9 @@
     },
     "chartScrollbar": {},
     "dataDateFormat": "YYYY",
-    "categoryField": "year",
+    "categoryField": "time",
     "categoryAxis": {
-        "minPeriod": "YYYY",
-        "parseDates": true,
-        "minorGridEnabled": true
+		"gridPosition": "start"
     },
     "export": {
         "enabled": true
@@ -77,40 +73,14 @@
     "theme": "light",
     "marginRight": 70,
     "autoMarginOffset": 20,
-    "dataProvider": [{
-        "year": "1995",
-        "value": 0.177
-    }, {
-        "year": "1996",
-        "value": 0.104
-    }, {
-        "year": "1997",
-        "value": 0.255
-    }, {
-        "year": "1998",
-        "value": 0.21
-    }, {
-        "year": "1999",
-        "value": 0.065
-    }, {
-        "year": "2000",
-        "value": 0.11
-    }, {
-        "year": "2001",
-        "value": 0.172
-    }, {
-        "year": "2002",
-        "value": 0.462
-    }, {
-        "year": "2003",
-        "value": 0.47
-    }, {
-        "year": "2004",
-        "value": 0.445
-    }, {
-        "year": "2005",
-        "value": 0.47
-    }],
+    "dataProvider": [
+        {% for heartrate_record in heartrate_list.reverse %}
+            {
+            "time": "{{ heartrate_record.timestamp|date:"h:i:s A" }}",
+            "value": {{ heartrate_record.data }}
+            },
+        {% endfor %}
+        ],
     "balloon": {
         "cornerRadius": 6
     },
@@ -118,7 +88,7 @@
         "axisAlpha": 0
     }],
     "graphs": [{
-        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] C</span></b>",
+        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] bpm</span></b>",
         "bullet": "round",
         "bulletSize": 6,
         "connect": false,
@@ -128,7 +98,6 @@
         "valueField": "value"
     }],
     "chartCursor": {
-        "categoryBalloonDateFormat": "YYYY",
         "cursorAlpha": 0.1,
         "cursorColor": "#000000",
         "fullWidth": true,
@@ -136,11 +105,9 @@
     },
     "chartScrollbar": {},
     "dataDateFormat": "YYYY",
-    "categoryField": "year",
+    "categoryField": "time",
     "categoryAxis": {
-        "minPeriod": "YYYY",
-        "parseDates": true,
-        "minorGridEnabled": true
+		"gridPosition": "start"
     },
     "export": {
         "enabled": true
@@ -156,17 +123,98 @@
   });
 </script>
 
+<script type="text/javascript" src="{% static 'js/canvasjs.min.js' %}"></script>
+
+<script type ="text/javascript">
+                window.onload = function () {
+                    var xAxisStripLinesArray = [];
+                    var yAxisStripLinesArray = [];
+                    var dps = [];
+                    var dataPointsArray = [
+                        {% for ecg_data in ecg_list %}
+                            {{ ecg_data.data }},
+                        {% endfor %}
+                    ];
+
+
+                    var chart = new CanvasJS.Chart("ecgChart",
+                        {
+                            title:{
+                            text:"ECG",
+                          },
+                          subtitles:[{
+                              text: "As of {{ latest_ecg.timestamp|date:"F j, Y" }}",
+                              horizontalAlign: "center",
+                            },
+                                ],
+                          axisY:{
+                            stripLines:yAxisStripLinesArray,
+                            gridThickness: 2,
+                            gridColor:"#DC74A5",
+                            lineColor:"#DC74A5",
+                            tickColor:"#DC74A5",
+                            labelFontColor:"#DC74A5",
+                          },
+                          axisX:{
+                            stripLines:xAxisStripLinesArray,
+                            gridThickness: 2,
+                            gridColor:"#DC74A5",
+                            lineColor:"#DC74A5",
+                            tickColor:"#DC74A5",
+                            labelFontColor:"#DC74A5",
+                          },
+                          data: [
+                          {
+                            type: "spline",
+                            color:"black",
+                            dataPoints: dps
+                          }
+                          ]
+                        });
+
+                    addDataPointsAndStripLines();
+                    chart.render();
+
+                    function addDataPointsAndStripLines(){
+                            //dataPoints
+                        for(var i=0; i<dataPointsArray.length;i++){
+                            dps.push({y: dataPointsArray[i]});
+                        }
+                        //StripLines
+                        for(var i=0;i<3000;i=i+50){
+                          if(i%1000 != 0)
+                              yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                        }
+                        for(var i=0;i<1400;i=i+5){
+                          if(i%200 != 0)
+                              xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                        }
+                    }
+            }
+</script>
+
 
         <div class="col s12 m12 l12  white">
         
             <div class="row center">
 
-            <a href="{% url 'viewassignedpatients' %}">Back</a>
+                {% if pagefrom == 1 %}
+                    <a href="{% url 'viewassignedpatients' %}">Back</a>
+                {% else %}
+                    <a href="{% url 'patientrecords' patient.patientid %}">Back</a>
+                {% endif %}
+
                 <div class="section"></div>
                 <div class="col s3"></div>
                 <div class="col s6">
-                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View Current Vitals</h3>
-                     Date: <b>{% now "F j Y" %}</b> | 11:30 PM | Records every <b>4</b> hours.
+
+                    {% if pagefrom == 1 %}
+                        <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View Latest Vitals</h3>
+                    {% else %}
+                        <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; {{ date }} Vitals</h3>
+                    {% endif %}
+
+
                 <!-- Maglalagay ako ng realtime clock dito -->
                 </div>
                 <div class="col s3"></div>
@@ -176,47 +224,30 @@
             <div class="section"></div>
 
             <div class="row white" style="margin: 10px">
+                <div class="col s12 white center">
+                    <h5 class="center"><b>{{ patient.userid.auth_user_id.last_name }}, {{ patient.userid.auth_user_id.first_name }}</b></h5>
+                    {% if pagefrom == 1 %}
+                        Date: <b> {% now "F j, Y" %} </b>
+                    {% endif %}
 
-                            <div class="col s12 white center">
-                                    <h5 class="center"><b>{{ patient.userid.auth_user_id.last_name }}, {{ patient.userid.auth_user_id.first_name }}</b></h5>
-                                    As of 4:00 PM
-                                    <h6 class="center green lighten-4">ECG</h6>
-                                    <div id="chartdiv2"></div>
-                                    <div class="col s6 center green lighten-4">
-                                        <h6 class="center">Temperature</h6>
-                                        <h4 class="center">{{ temperature.rounded_avg_price }}°C</h4>
-                                    </div>
-                                    <div class="col s6 center green lighten-5">
-                                        <h6 class="center">Heartrate</h6>
-                                        <h4 class="center">{{ heartrate.rounded_avg_price }} bpm</h4>
-                                    </div>
-                </div></div>
-
-            <div class="divider"></div>
-            <div class="section"></div>
-                <div class="row white" style="margin: 10px">
-                    <table>
-                        <thead>
-                          <tr>
-                              <th>Time</th>
-                              <th>ECG</th>
-                              <th>Temperature</th>
-                              <th>Heart Rate</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr>
-                            <td>10:00PM</td>
-                            <td><div id="chartdiv3"></div></td>
-                            <td>37.4°C</td>
-                            <td>72 bpm</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    <h6 class="center green lighten-4">ECG</h6>
+                    <div id="ecgChart" style="height: 400px; width: 100%;"></div>
+                    <div class="col s12 center green lighten-4">
+                        <h6 class="center">Temperature</h6>
+                        As of <b>{{ latest_temperature.timestamp|date:"F j, Y" }}</b>
+                        <div id="chartdiv2" style="background-color: #fff;"></div>
+                        <br>
+                    </div>
+                    <div class="col s12 center green lighten-5">
+                        <h6 class="center">Heartrate</h6>
+                        As of <b>{{ latest_heartrate.timestamp|date:"F j, Y" }}</b>
+                        <div id="chartdiv3" style="background-color: #fff;"></div>
+                        <br>
+                    </div>
+                </div>
             </div>
+
         </div>
-            <div class="section"></div>
             <div class="section"></div><div class="section"></div>
 
 

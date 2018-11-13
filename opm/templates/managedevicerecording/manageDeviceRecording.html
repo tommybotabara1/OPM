@@ -1,0 +1,208 @@
+{% extends "home/doctorHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+
+    <style>
+
+
+        .options{
+            display:none;
+        }
+
+    </style>
+    <script>
+
+        $(function() {
+            $('#typeofManage').change(function(){
+            $('.options').hide();
+            $('#' + $(this).val()).show();
+            });
+        });
+
+        $(document).ready(function(){
+            $('.sidenav').sidenav();
+        })
+
+
+        $(document).ready(function() {
+            var x = 1;
+              $("#stopresume").click(function() {
+                if ((x % 2) != 0) {
+                  $(this).html('Resume Recording');
+                    x++;
+                } else{
+                  $(this).html('Start Recording');
+                    x++;
+                }
+          });
+        });
+
+         $(document).ready(function(){
+        $('.timepicker').timepicker();
+      });
+
+    </script>
+
+
+                    <div class="col s12 white"><div class="col s12 m12 l12 center white">
+
+            <div class="section"></div>
+
+            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">ballot</i>&nbsp;&nbsp; Manage Device Recording</h3>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+        </div>
+        <div class="col s12 m12 l12 white center" style="padding: 0px 20px 0px 30px">
+            <div class="row">
+                <div class="col s3"></div>
+                <div class="col s3">
+                        <h5>Choose Patient's Name:</h5><br />
+                          <select class="browser-default center col s12" id="patientID">
+                            {% if patient_device_list.count == 0 %}
+                                <option value="" disabled selected>No current patients is using a device</option>
+                              {% else %}
+                                  {% for patientdevice in patient_device_list %}
+                                    <option value="{{ patientdevice.patientdeviceid }}">{{ patientdevice.patient_patientid.userid.auth_user_id.first_name }} {{ patientdevice.patient_patientid.userid.auth_user_id.last_name }}</option>
+                                  {% endfor %}
+                              {% endif %}
+                        </select>
+                </div>
+                <div class="col s3">
+                    <h5>Choose Action:</h5><br />
+                    <select class="browser-default center col s12" id="typeofManage">
+                        <option value="" disabled selected>Choose what to manage</option>
+                        <option value="setstartend">Set Start and End date</option>
+                        <option value="setinterval">Set Interval per Recording</option>
+                        <option value="startstopresume">Start or Stop Recording</option>
+                    </select>
+                </div>
+                <div class="col s3"></div>
+            </div>
+        </div><br />
+
+        <div class="col s12 m12 l12 white center" style="padding: 0px 20px 0px 30px">
+
+            <!------------------------------------- SET START AND END DATE ------------------------------------------->
+
+            <div id ="setstartend" class="options startend">
+            <div class="divider"></div>
+                <div class="row">
+                    <h5>Set Start and End Date</h5><br />
+                    <div class="input-field col s3"></div>
+                    <div class="input-field col s3">
+                        <input id="startDate" type="date" class="validate">
+                        <label for="startDate">Start Date</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <input id="endDate" type="date" class="validate">
+                        <label for="endDate">End Date</label>
+                    </div>
+                    <div class="input-field col s3"></div><br /><br />
+                </div>
+                 <div class="row">
+                    <center>
+                        <div class="input-field center" style="width:30%;">
+                            <input id="startTime" type="text" class="timepicker">
+                            <label for="startTime">Start Time</label>
+                        </div>
+                     </center>
+                </div><br />
+
+                <center>
+                    <button class="btn-large" id="setdates">Set Dates</button>
+                </center>
+
+            </div>
+
+
+            <!------------------------------------- SET INTERVAL PER RECORDDING ------------------------------------------->
+
+            <div id="setinterval" class="options setinterval">
+            <div class="divider"></div>
+                <div class="row">
+                    <h5>Set Interval per Recording</h5><br />
+                    <div class="input-field col s3"></div>
+                    <div class="input-field col s2">
+                        <input id="hours" type="number" class="validate" min="0" max="23">
+                        <label for="hours">Hours</label>
+                    </div>
+                    <div class="input-field col s2">
+                        <input id="minutes" type="number" class="validate" min="0" max="59">
+                        <label for="minutes">Minutes</label>
+                    </div>
+                    <div class="input-field col s2">
+                        <input id="seconds" type="number" class="validate" min="0" max="59">
+                        <label for="seconds">Seconds</label>
+                    </div>
+                    <div class="input-field col s3s"></div>
+                </div><br />
+
+                 <center>
+                    <button class="btn-large" id="setinterval">Set Interval</button>
+                </center>
+
+            </div>
+
+
+            <!------------------------------------- START / STOP / RESUME ------------------------------------------->
+
+            <div id ="startstopresume" class="options startstopresume">
+            <div class="divider"></div><br />
+
+                <div id ="manageRecord" class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
+                <center>
+                    {% with patient_device_list.all|first as patientdevice %}
+                      {% if patient_device_list.count == 0 %}
+                          <button class="btn-large" id="stopresume" value=1 disabled>Stop Recording</button>
+                      {% elif patientdevice.isrecording == 1 %}
+                          <button class="btn-large" id="stopresume" value=1>Stop Recording</button>
+                      {% else %}
+                          <button class="btn-large" id="stopresume" value=0>Start Recording</button>
+                      {% endif %}
+                    {% endwith %}
+
+                </center>
+
+            </div>
+            </div>
+        </div>
+        <br />
+        <section></section>
+        <section></section>
+        </div>
+
+
+<script>
+      $("#stopresume").click(function() {
+          var data = $(this).val();
+          var deviceid = $("#deviceID").val();
+        if ($(this).attr('value') == '1') {
+          $(this).html('Start Recording');
+          $(this).val(0);
+        } else{
+          $(this).html('Stop Recording');
+          $(this).val(1);
+        }
+
+        $.ajax({
+        url: '{% url 'stop_recording' %}',
+        data: {
+          'deviceid': deviceid,
+          'data': data,
+        },
+        dataType: 'json',
+        success: function (data) {
+            for(let i = 0; i < data.length; i++){
+                alert(data[i].response);
+                }
+            }
+        });
+
+      });
+
+</script>
+
+{% endblock %}

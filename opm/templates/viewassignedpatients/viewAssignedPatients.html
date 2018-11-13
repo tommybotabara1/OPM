@@ -51,9 +51,9 @@
                             <td>{{ patient.patient_patientid.userid.middlename }}</td>
                             <td>{{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
                             <td>{{ patient.device_deviceid.deviceid }}</td>
-                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Vitals</a>&nbsp;&nbsp;
+                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Latest Vitals</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patient_patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
-                                <a class="waves-effect waves-light btn-small" href="">Records</a></td>
+                                <a class="waves-effect waves-light btn-small" href="{% url 'patientrecords' patient.patient_patientid.patientid %}">Records</a></td>
                           </tr>
                         {% endfor %}
                         </tbody>

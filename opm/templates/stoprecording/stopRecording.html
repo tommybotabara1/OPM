@@ -22,18 +22,24 @@
                           <option value="" disabled selected>No current patients is using a device</option>
                       {% else %}
                           {% for patientdevice in patient_device_list %}
-                            <option value="{{ patientdevice.device_deviceid.deviceid }}">{{ patientdevice.patient_patientid.userid.auth_user_id.first_name }} {{ patientdevice.patient_patientid.userid.auth_user_id.last_name }}</option>
+                            <option value="{{ patientdevice.patientdeviceid }}">{{ patientdevice.patient_patientid.userid.auth_user_id.first_name }} {{ patientdevice.patient_patientid.userid.auth_user_id.last_name }}</option>
                           {% endfor %}
                       {% endif %}
 
                     </select>
                 <br />
                 <br />
+                {% with patient_device_list.all|first as patientdevice %}
+
                   {% if patient_device_list.count == 0 %}
                       <button class="btn-large" id="stopresume" value=1 disabled>Stop Recording</button>
-                  {% else %}
+                  {% elif patientdevice.isrecording == 1 %}
                       <button class="btn-large" id="stopresume" value=1>Stop Recording</button>
+                  {% else %}
+                      <button class="btn-large" id="stopresume" value=0>Start Recording</button>
                   {% endif %}
+
+                {% endwith %}
                 </center>
             <br />
             <br />
@@ -48,7 +54,7 @@
           var data = $(this).val();
           var deviceid = $("#deviceID").val();
         if ($(this).attr('value') == '1') {
-          $(this).html('Resume Recording');
+          $(this).html('Start Recording');
           $(this).val(0);
         } else{
           $(this).html('Stop Recording');
@@ -64,30 +70,12 @@
         dataType: 'json',
         success: function (data) {
             for(let i = 0; i < data.length; i++){
-                console.log(data[i].response);
+                alert(data[i].response);
                 }
             }
         });
 
       });
 
-
-
-    $("#stop").click(function () {
-        var deviceid = $(this).val();
-
-        $.ajax({
-        url: '{% url 'stop_recording' %}',
-        data: {
-          'deviceid': deviceid
-        },
-        dataType: 'json',
-        success: function (data) {
-            for(let i = 0; i < data.length; i++){
-                console.log(data[i].response);
-            }
-        }
-      });
-    });
 </script>
 {% endblock %}

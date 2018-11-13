@@ -82,6 +82,8 @@ class PatientDevice(models.Model):
     patient_patientid = models.ForeignKey(Patient, models.DO_NOTHING, db_column='patient_patientID')  # Field name made lowercase.
     device_deviceid = models.ForeignKey(Device, models.DO_NOTHING, db_column='device_deviceID')  # Field name made lowercase.
     inuse = models.IntegerField(db_column='inUse')  # Field name made lowercase.
+    isrecording = models.IntegerField(db_column='isRecording')  # Field name made lowercase.
+
 
     class Meta:
         managed = False
@@ -89,16 +91,16 @@ class PatientDevice(models.Model):
 
 
 class Ecg(models.Model):
-    ecgid = models.AutoField(db_column='ecgID', primary_key=True)
-    patientid = models.ForeignKey(PatientDevice, models.DO_NOTHING, db_column='patientID')  # Field name made lowercase.
-    deviceid = models.ForeignKey(PatientDevice, related_name='ecgdevices', db_column='deviceID', on_delete=models.CASCADE)  # Field name made lowercase.
+    ecgid = models.IntegerField(db_column='ecgID', primary_key=True)  # Field name made lowercase.
+    patientdeviceid = models.ForeignKey('PatientDevice', models.DO_NOTHING,
+                                        db_column='patientDeviceID')  # Field name made lowercase.
     timestamp = models.DateTimeField()
     data = models.FloatField()
+    batchid = models.IntegerField(db_column='batchID')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'ecg'
-        unique_together = (('patientid', 'deviceid'),)
 
 
 class Heartrate(models.Model):
@@ -106,6 +108,7 @@ class Heartrate(models.Model):
     patientdeviceid = models.ForeignKey('PatientDevice', models.DO_NOTHING, db_column='patientDeviceID')  # Field name made lowercase.
     timestamp = models.DateTimeField()
     data = models.FloatField()
+    batchid = models.IntegerField(db_column='batchID')  # Field name made lowercase.
 
     class Meta:
         managed = False
@@ -117,6 +120,8 @@ class Temperature(models.Model):
     patientdeviceid = models.ForeignKey(PatientDevice, models.DO_NOTHING, db_column='patientDeviceID')  # Field name made lowercase.
     timestamp = models.DateTimeField()
     data = models.FloatField()
+    batchid = models.IntegerField(db_column='batchID')  # Field name made lowercase.
+
 
     class Meta:
         managed = False

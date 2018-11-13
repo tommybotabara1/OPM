@@ -1,0 +1,253 @@
+{% extends "home/patientHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+        <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
+<div class="col s12 m12 l12 center white">
+    <a href="{% url 'viewassignedpatients' %}">Back</a>
+            <div class="row">
+                <div class="section"></div>
+                <div class="col s3"></div>
+                <div class="col s6">
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; History of Records</h3>
+                    Medical history and past recorded vitals of the patient.
+                </div>
+                <div class="col s3"></div>
+            </div>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+        </div>
+            <div class="white" style="padding: 0px 20px 0px 30px">
+                <div class="row center">
+                    <div class="col s6">
+                        <H5>Search for:</H5><br/>
+                        <p>
+                          <label>
+                            <input class="with-gap" name="searchFor" value="0" type="radio"  />
+                            <span>Medical Forms</span>
+                          </label>&nbsp;&nbsp;&nbsp;
+                          <label>
+                            <input class="with-gap" name="searchFor" value="1" type="radio"  />
+                            <span>Past Vital Records</span>
+                          </label>
+                          <label>
+                            <input class="with-gap" name="searchFor" value="2" type="radio"  />
+                            <span>All</span>
+                          </label>
+                        </p>
+                    </div>
+                    <div class ="col s6">
+                        <H5>Search by:</H5>
+                        <div id="selectDateMonthYear">
+                            <br />
+                            <div class="col s3"></div>
+                            <select class="browser-default center col s6" id="typeofSearch">
+                                <option value="" disabled selected>Choose by Date or Month and Year</option>
+                                <option value="date">Search by date</option>
+                                <option value="month">Search by month and year</option>
+                                <!--<option value="year">Search by year</option>-->
+                            </select>
+                            <div class="col s3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row center">
+                    <div id="date" class="optionx date" style="display: none;">
+                        <h5>Search by Date</h5>
+                        <label>
+                            <input id = "day" type="date" style="width:35%;" class="dateonly">
+                            <br /><span>Enter Date</span>
+                        </label>
+                    </div>
+                    <div id="month" class="optionx month" style="display: none;">
+                        <h5>Search by Month and Year</h5>
+                        <label>
+                            <input id = "monthandyear" type="month" style="width:35%; height:8%;">
+                            <br /><span>Enter Date</span>
+                        </label>
+                    </div>
+                </div>
+                <div class='row center'>
+                    <div class="col s5"></div>
+                        <button id="search" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Search</button>
+                    <div class="col s5"></div>
+                </div>
+                <div class="section"></div>
+            </div>
+
+    <div class="divider"></div>
+    <br>
+    <div class="col s12 white" style="display: block;">
+
+            <div class ="row">
+
+            <div id="medicalForms">
+                <div class="col s6" style="padding: 0px 30px 0px 30px">
+                    <center><b class="teal-text text-darken-2"><big><big>Medical Forms</big></big></b></center>
+                    <br />
+                    <table class="striped">
+                        {% for patient_medical_history in patient_medical_history_list.reverse %}
+                            <tr>
+                                <th>{{ patient_medical_history.date|date:"F d, Y" }}</th>
+                                <td style="padding-right:3%;"><a href="{% url 'assignedpatientrecordsmedicalhistory' patient.patientid patient_medical_history.patient_medical_historyid %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
+
+                            </tr>
+                        {% endfor %}
+                    </table>
+
+                </div>
+            </div>
+
+            <div id="vitalRecords">
+                <div class="col s6" style="padding: 0px 30px 0px 30px">
+                    <center><b class="teal-text text-darken-2"><big><big>Vital Records</big></big></b></center>
+                    <br />
+                    <table class="striped">
+                        {% for temperature_record in temperature_distinct_date_records %}
+                            <tr>
+                                <th>{{ temperature_record.timestamp|date:"F d, Y" }}</th>
+                                <td style="padding-right:3%;"><a href="{% url 'assignedpatientrecordsvitalrecords' patient.patientid temperature_record.timestamp|date:"Y-m-d" %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
+
+                            </tr>
+                        {% endfor %}
+                    </table>
+
+                </div>
+            </div>
+
+            </div>
+
+        </div>
+
+
+    <script>
+        $(function() {
+          $('#typeofSearch').change(function(){
+            $('.optionx').hide();
+            $('#' + $(this).val()).show();
+          });
+        });
+
+    $(document).ready(function(){
+        $('.sidenav').sidenav();
+    });
+
+    $("#search").click(function () {
+        var searchBy = $('#typeofSearch').val();
+        var searchFor = $('input[name=searchFor]:checked').val();
+        var date = "";
+        var patientID = {{ patient.patientid }};
+
+        if(searchBy == "date"){
+            date = $('#day').val();
+        }
+        else{
+            date = $('#monthandyear').val();
+        }
+
+        if(searchFor == null)
+            alert("Choose what to search for!");
+        else if(searchBy == null)
+            alert("Choose how to search by!");
+        else if(date == "")
+            alert("Enter a date!");
+
+
+        $.ajax({
+        url: '{% url 'get_records' %}',
+        data: {
+            'searchBy': searchBy,
+            'searchFor': searchFor,
+            'date': date,
+            'patientID': patientID
+        },
+        dataType: 'json',
+        success: function (data) {
+            var medicalForms = "";
+            var vitalRecords = "";
+
+            console.log(data);
+
+            if(searchFor == 2){
+                medicalForms += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Medical Forms</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+                vitalRecords += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Vital Records\n</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+
+            }
+            else if(searchFor == 1){
+                medicalForms += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px; display: none\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Medical Forms</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+                vitalRecords += "<div class=\"col s12\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Vital Records\n</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+            }
+            else{
+                medicalForms += "<div class=\"col s12\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Medical Forms</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+                vitalRecords += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px; display: none\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Vital Records\n</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+            }
+
+            for(var i = 0; i < data.length; i++){
+                    if(data[i].recordtype == 1){
+                        let link = '/viewassignedpatients/2/records/'+data[i].data+'/medicalform';
+                        if(data[i].date == "No past medical forms from this date!")
+                            medicalForms += "<tr><th>No past medical forms from this date!</th></tr>";
+                        else{
+                            medicalForms += "<tr>";
+                            medicalForms += "<th>"+ data[i].date +"</th>\n";
+                            medicalForms += "<td style=\"padding-right:3%;\"><a href="+link+" class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
+                            medicalForms += "</tr>";
+                        }
+                    }
+                    else{
+                        if(data[i].date == "No past vital records from this date!")
+                            vitalRecords += "<tr><th>No past vital records from this date!!</th></tr>";
+                        else{
+                            vitalRecords += "<tr>";
+                            vitalRecords += "<th>"+ data[i].date +"</th>\n";
+                            vitalRecords += "<td style=\"padding-right:3%;\"><a class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
+                            vitalRecords += "</tr>";
+                        }
+                    }
+                }
+                medicalForms += "</table>\n" +
+                            "\n" +
+                            "                </div>\n" +
+                            "            </div>";
+
+                vitalRecords += "</table>\n" +
+                            "\n" +
+                            "                </div>\n" +
+                            "            </div>";
+
+                $("#medicalForms").html(medicalForms);
+                $("#vitalRecords").html(vitalRecords);
+
+        }
+      });
+    });
+
+
+    </script>
+
+{% endblock %}

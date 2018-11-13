@@ -11,6 +11,8 @@ from django.http import JsonResponse
 import paho.mqtt.client as mqtt
 import datetime
 from django.db.models import F, Func
+import time
+import serial
 
 
 
@@ -41,6 +43,8 @@ def loginuser(request):
             else:
                 return redirect('index')
 
+
+@login_required()
 def home(request):
     if request.session['user_id'] is not None:
         userdetails = Userdetails.objects.get(auth_user_id=request.session['user_id'])
@@ -62,6 +66,7 @@ def home(request):
         return redirect('index')
 
 
+@login_required()
 def listofusers(request):
     current_user_type = Userdetails.objects.get(auth_user_id=request.user.id).usertype_id
     user_list = User.objects.order_by('id')
@@ -72,6 +77,8 @@ def listofusers(request):
                'current_user_type': current_user_type}
     return render(request, 'listofusers/listOfUsers.html', context)
 
+
+@login_required()
 def filloutmedicalform(request):
     if request.method == 'POST':
         form = MedicalHistoryForm(request.POST)
@@ -109,6 +116,7 @@ def filloutmedicalform(request):
         return render(request, 'filloutmedicalform/medicalForm.html', context)
 
 
+@login_required()
 def createuser(request):
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
@@ -197,6 +205,7 @@ def changeuserofdevice(request):
     return render(request, 'changeuserofdevice/changeUserOfDevice.html', context)
 
 
+@login_required()
 def viewassignedpatients(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
     patient_device_list = PatientDevice.objects.filter(patient_patientid__doctorid=doctorid, inuse=1)
@@ -207,71 +216,210 @@ def viewassignedpatients(request):
     return render(request, 'viewassignedpatients/viewAssignedPatients.html', context)
 
 
+@login_required()
 def assignedpatientvitals(request, patient_id):
     currentdate = datetime.date.today()
     patient = Patient.objects.get(patientid=patient_id)
-    patient_device = PatientDevice.objects.filter(patient_patientid_id=patient_id, inuse=1)
-    temperature_list = Temperature.objects.order_by(F('temperatureid').desc()).filter(patientdeviceid__in=patient_device, timestamp__date=currentdate)[:1]
-    heartrate_list = Heartrate.objects.order_by(F('heartrateid').desc()).filter(patientdeviceid__in=patient_device, timestamp__date=currentdate)[:5]
+    patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
+    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+    ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
 
-    class Round(Func):
-        function = 'ROUND'
-        template = '%(function)s(%(expressions)s, 2)'
+    if not temperature_list.exists():
+        temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
 
-    temperature = temperature_list.aggregate(rounded_avg_price= Round(Avg('data')))
-    heartrate = heartrate_list.aggregate(rounded_avg_price= Round(Avg('data')))
-    #ecg_list = Ecg.objects.filter(patientid__in=patient_device, deviceid__in=patient_device)
+    if not heartrate_list.exists():
+        heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+
+    if not ecg_list.exists():
+        ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+
+    latest_temperature = temperature_list.latest('timestamp')
+    latest_heartrate = heartrate_list.latest('timestamp')
+    latest_ecg = ecg_list.latest('timestamp')
+
+    pagefrom = 1
+
     context = {'patient': patient,
                'patient_device': patient_device,
-               'temperature': temperature,
-               'heartrate': heartrate,
-     #          'ecg_list': ecg_list
+               'temperature_list': temperature_list,
+               'latest_temperature': latest_temperature,
+               'heartrate_list': heartrate_list,
+               'latest_heartrate': latest_heartrate,
+               'ecg_list': ecg_list,
+               'latest_ecg': latest_ecg,
+               'pagefrom': pagefrom,
                }
 
     return render(request, 'patientvitals/patientVitals.html', context)
 
 
+@login_required()
 def assignedpatientmedicalinfo(request, patient_id):
     patient = Patient.objects.get(patientid=patient_id)
     patientmedicalinfo = PatientMedicalHistory.objects.filter(patientid=patient.patientid).latest('date')
+    pagefrom = 1
     context = {'patient': patient,
                'patientmedicalinfo': patientmedicalinfo,
+               'pagefrom': pagefrom
                }
 
     return render(request, 'patientmedicalinfo/patientMedicalInfo.html', context)
 
 
-def changerecordinginterval(request):
-    return render(request, 'changerecordinginterval/changeRecordingInterval.html')
+@login_required()
+def assignedpatientrecords(request, patient_id):
+    patient = Patient.objects.get(patientid=patient_id)
+    patient_medical_history_list = PatientMedicalHistory.objects.filter(patientid=patient_id)
+    temperature_distinct_date_records = Temperature.objects.raw('SELECT DISTINCT DATE(timestamp), temperatureID FROM capstone.temperature GROUP BY 1 DESC;')
+    context = {'patient': patient,
+               'patient_medical_history_list': patient_medical_history_list,
+               'temperature_distinct_date_records': temperature_distinct_date_records
+               }
+
+    return render(request, 'patientrecords/patientRecords.html', context)
 
 
-def stoprecording(request):
+@login_required()
+def assignedpatientrecords(request, patient_id):
+    patient = Patient.objects.get(patientid=patient_id)
+    patient_medical_history_list = PatientMedicalHistory.objects.filter(patientid=patient_id)
+    temperature_distinct_date_records = Temperature.objects.raw('SELECT DISTINCT DATE(timestamp), temperatureID FROM capstone.temperature GROUP BY 1 DESC;')
+    context = {'patient': patient,
+               'patient_medical_history_list': patient_medical_history_list,
+               'temperature_distinct_date_records': temperature_distinct_date_records
+               }
+
+    return render(request, 'patientrecords/patientRecords.html', context)
+
+
+@login_required()
+def assignedpatientrecordsmedicalhistory(request, patient_id, medical_history_id):
+    patient = Patient.objects.get(patientid=patient_id)
+    patientmedicalinfo = PatientMedicalHistory.objects.get(patient_medical_historyid=medical_history_id)
+    pagefrom = 2
+    context = {'patient': patient,
+               'patientmedicalinfo': patientmedicalinfo,
+               'pagefrom': pagefrom
+               }
+    return render(request, 'patientmedicalinfo/patientMedicalInfo.html', context)
+
+
+@login_required()
+def assignedpatientrecordsvitalrecords(request, patient_id, date):
+    convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    patient = Patient.objects.get(patientid=patient_id)
+    patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
+    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
+        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
+        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                  timestamp__date=convert_date)
+
+    if not temperature_list.exists():
+        temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
+            patientdeviceid=patient_device.patientdeviceid)
+
+    if not heartrate_list.exists():
+        heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
+            patientdeviceid=patient_device.patientdeviceid)
+
+    if not ecg_list.exists():
+        ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+
+    latest_temperature = temperature_list.latest('timestamp')
+    latest_heartrate = heartrate_list.latest('timestamp')
+    latest_ecg = ecg_list.latest('timestamp')
+
+    pagefrom = 2
+
+    context = {'patient': patient,
+               'patient_device': patient_device,
+               'temperature_list': temperature_list,
+               'latest_temperature': latest_temperature,
+               'heartrate_list': heartrate_list,
+               'latest_heartrate': latest_heartrate,
+               'ecg_list': ecg_list,
+               'latest_ecg': latest_ecg,
+               'pagefrom': pagefrom,
+               'date': datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y')
+               }
+
+    return render(request, 'patientvitals/patientVitals.html', context)
+
+
+@login_required()
+def managedevicerecording(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
     patient_device_list = PatientDevice.objects.filter(patient_patientid__doctorid=doctorid, inuse=1)
 
     context = {
         'patient_device_list': patient_device_list
     }
+    return render(request, 'managedevicerecording/manageDeviceRecording.html', context)
 
-    return render(request, 'stoprecording/stopRecording.html', context)
 
 @login_required()
 def notifications(request):
     return render(request, 'notifications/notifications.html')
 
 
+@login_required()
 def viewcurrentvitals(request):
-    return render(request, 'viewcurrentvitals/viewCurrentVitals.html')
+    patient = Patient.objects.get(userid=request.session['user_id'])
+    patient_id = patient.patientid
+    currentdate = datetime.date.today()
+    patient = Patient.objects.get(patientid=patient_id)
+    patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
+    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
+        patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
+        patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+    ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                  timestamp__date=currentdate)
+
+    if not temperature_list.exists():
+        temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
+            patientdeviceid=patient_device.patientdeviceid)
+
+    if not heartrate_list.exists():
+        heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
+            patientdeviceid=patient_device.patientdeviceid)
+
+    if not ecg_list.exists():
+        ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+
+    latest_temperature = temperature_list.latest('timestamp')
+    latest_heartrate = heartrate_list.latest('timestamp')
+    latest_ecg = ecg_list.latest('timestamp')
+
+    pagefrom = 1
+
+    context = {'patient': patient,
+               'patient_device': patient_device,
+               'temperature_list': temperature_list,
+               'latest_temperature': latest_temperature,
+               'heartrate_list': heartrate_list,
+               'latest_heartrate': latest_heartrate,
+               'ecg_list': ecg_list,
+               'latest_ecg': latest_ecg,
+               'pagefrom': pagefrom,
+               }
+
+    return render(request, 'viewcurrentvitals/viewCurrentVitals.html', context)
 
 
+@login_required()
 def viewhistoryofvitals(request):
     return render(request, 'viewhistoryofvitals/viewHistoryOfVitals.html')
 
 
+@login_required()
 def restrictuseraccess(request):
     return render(request, 'restrictuseraccess/restrictUserAccess.html')
 
-
+@login_required()
 def edituser(request, user_id):
     if request.method == 'POST':
         user = User.objects.get(id=user_id)
@@ -354,6 +502,7 @@ def validate_username(request):
     }
     return JsonResponse(data)
 
+
 def search_user(request):
     search = request.GET.get('search', None)
 
@@ -373,6 +522,7 @@ def search_user(request):
         })
 
     return JsonResponse(user_array, safe=False)
+
 
 def get_user_details(request):
     userid = request.GET.get('userid', None)
@@ -405,8 +555,8 @@ def get_user_details(request):
         'extra': extra,
     })
 
-
     return JsonResponse(user_details_array, safe=False)
+
 
 def add_device(request):
     if Device.objects.count() == 0:
@@ -484,9 +634,9 @@ def set_patient_to_device(request):
         response.append({'outcome': "Patient is set to device"})
 
         mqttc = mqtt.Client("Device " + str(deviceid))
-        mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
-        mqttc.connect("192.168.1.13", 8883)  # Change
-        mqttc.publish("/devices/" + str(deviceid) + "/patient", patientid)
+        mqttc.tls_set('opm/static/certificates/hivemqServeo-cert.pem')
+        mqttc.connect("serveo.net", 8883)  # Change
+        mqttc.publish("/devices/" + str(deviceid) + "/patient", patientdevice.patientdeviceid)
 
         return JsonResponse(response, safe=False)
     elif PatientDevice.objects.filter(patient_patientid=patientid, inuse=1).exists():
@@ -508,23 +658,46 @@ def set_patient_to_device(request):
         response.append({'outcome': "Patient is set to a new device"})
 
         mqttc = mqtt.Client("Device " + str(deviceid))
-        mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
-        mqttc.connect("192.168.1.13", 8883)  # Change
-        mqttc.publish("/devices/" + str(deviceid) + "/patient", patientid)
+        mqttc.tls_set('opm/static/certificates/hivemqServeo-cert.pem')
+        mqttc.connect("serveo.net", 8883)  # Change
+        mqttc.publish("/devices/" + str(deviceid) + "/patient", patientdevice_id)
 
         return JsonResponse(response, safe=False)
 
 
 def stop_recording(request):
     data = request.GET.get('data', None)
-    deviceId = request.GET.get('deviceid', None)
+    patientdeviceId = request.GET.get('deviceid', None)
+    deviceId = PatientDevice.objects.get(patientdeviceid=patientdeviceId).device_deviceid.deviceid
+    failedresponse = 1
     mqttc = mqtt.Client("Device " + str(deviceId))
-    mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
-    mqttc.connect("192.168.1.13", 8883)  # Change
+    mqttc.tls_set('opm/static/certificates/hivemqServeo-cert.pem')
+    try:
+        mqttc.connect("serveo.net", 8883)  # Change
+    except:
+        failedresponse = 0
     mqttc.publish("/devices/" + str(deviceId) + "/stop", data)
 
+    patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+
+    if data == 1:
+        patientdeviceobject.isrecording = 1
+    else:
+        patientdeviceobject.isrecording = 0
+
+    patientdeviceobject.save()
+
+    print(failedresponse)
+
     response = []
-    response.append({'response': "Published"})
+
+    if failedresponse == 0:
+        response.append({'response': "Failed to connect to the device. Try again later."})
+    else:
+        response.append({'response': "Published"})
+
+    print(response)
+
     return JsonResponse(response, safe=False)
 
 
@@ -544,13 +717,73 @@ def unassign_patient(request):
         response.append({'outcome': "Patient unassigned"})
 
         mqttc = mqtt.Client("Device " + str(deviceid))
-        mqttc.tls_set('opm/static/certificates/hivemq-local-cert.pem')
-        mqttc.connect("192.168.1.13", 8883)  # Change
+        mqttc.tls_set('opm/static/certificates/hivemqServeo-cert.pem')
+        mqttc.connect("serveo.net", 8883)  # Change
         mqttc.publish("/devices/" + str(deviceid) + "/patient", 0)
 
         return JsonResponse(response, safe=False)
 
     else:
-        response.append({'outcome': "No patients assigned"})
+        response.append({'outcome': "No patient assigned"})
 
         return JsonResponse(response, safe=False)
+
+
+def get_records(request):
+    searchby = request.GET.get('searchBy', None)
+    date = request.GET.get('date', None)
+    patientid = request.GET.get('patientID', None)
+
+    records_list = []
+
+    if searchby == "date":
+        medical_records_list = PatientMedicalHistory.objects.filter(patientid__patientid=patientid, date=date)
+        convert_date = datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y')
+        vitals_check_date = Temperature.objects.filter(timestamp__date=date)
+
+        if vitals_check_date.exists():
+            records_list.append({
+                'date': convert_date,
+                'recordtype': 2,
+                'data': date,
+            })
+        else:
+            records_list.append({
+                'date': "No past vital records from this date!",
+                'recordtype': 2,
+                'data': -1
+            })
+    else:
+        convert_date = datetime.datetime.strptime(date, '%Y-%m')
+        medical_records_list = PatientMedicalHistory.objects.filter(patientid__patientid=patientid, date__year=convert_date.year, date__month=convert_date.month)
+        vitals_check_dates = Temperature.objects.raw('SELECT DISTINCT DATE(timestamp), temperatureID FROM capstone.temperature WHERE YEAR(timestamp) = %s AND MONTH(timestamp) = %s GROUP BY 1 DESC ', [convert_date.year, convert_date.month])
+
+        if vitals_check_dates.__len__() != 0:
+            for vital_record in vitals_check_dates:
+                records_list.append({
+                    'date': vital_record.timestamp.strftime('%B %d, %Y'),
+                    'recordtype': 2,
+                    'data': vital_record.timestamp.date
+                })
+        else:
+            records_list.append({
+                'date': "No past vital records from this date!",
+                'recordtype': 2,
+                'data': -1,
+            })
+
+    if not medical_records_list.exists():
+        records_list.append({
+            'date': "No past medical forms from this date!",
+            'recordtype': 1,
+            'data': -1,
+        })
+
+    for medical_record in medical_records_list:
+        records_list.append({
+            'date': medical_record.date.strftime('%B %d, %Y'),
+            'recordtype': 1,
+            'data': medical_record.patient_medical_historyid,
+        })
+    return JsonResponse(records_list, safe=False)
+
