@@ -19,12 +19,16 @@
                 <form action="{% url 'createuser' %}" class="col s12 white" style="padding: 0px 50px 0px 50px;" method="post">
                     {% csrf_token %}
                   <div class="row">
+                      <h5>Account Details</h5><br />
+                        <div class="divider"></div><br />
+
 
                     <div class="input-field col s4">
                       {{ form.username }}
                       <label for="first_name">Username</label>
                     </div>
-
+                  </div>
+                <div class="row">
                     <div class="input-field col s4">
                       {{ form.password }}
                       <label for="first_name">Password</label>
@@ -34,7 +38,9 @@
                       {{ form.repeatPassword }}
                       <label for="first_name">Repeat Password</label>
                     </div>
-
+                </div>
+                <div class="row">
+                    <h5>Personal Details</h5><br />
                     <div class="input-field col s4">
                       {{ form.firstname }}
                       <label for="first_name">First Name</label>
@@ -49,23 +55,16 @@
                       {{ form.lastname }}
                       <label for="last_name">Last Name</label>
                     </div>
+                </div>
 
-                      <div class="input-field col s4">
-                      {{ form.birthday }}
-                      <label for="age">Birthday</label>
-                      </div>
+                <div class="row">
 
-                      <div class="input-field col s4">
-                      {{ form.email }}
-                      <label for="reason">Email</label>
-                      </div>
+                       <div class="input-field col s4">
+                          {{ form.birthday }}
+                          <label for="age">Birthday</label>
+                       </div>
 
-                      <div class="input-field col s4">
-                      {{ form.contactno }}
-                      <label for="reason">Contact Number</label>
-                      </div>
-
-                      <div class="col s4">
+                       <div class="col s4">
                           Type of User
                           {% for radio in form.usertype %}
                               <p>
@@ -75,7 +74,7 @@
                                </label>
                               </p>
                           {% endfor %}
-                      </div>
+                    </div>
                   <div id="chooseDoctor">
                       <label>Choose Doctor</label>
                       <br>
@@ -86,11 +85,25 @@
                         <br />
                           {{ form.bloodtype }}
                   </div>
-                  </div>
+                  </div><br />
+                <div class="row">
+                    <h5>Contact Details</h5><br />
+                        <div class="divider"></div><br />
+
+                      <div class="input-field col s4">
+                      {{ form.email }}
+                      <label for="reason">Email</label>
+                      </div>
+
+                      <div class="input-field col s4">
+                      {{ form.contactno }}
+                      <label for="reason">Contact Number</label>
+                      </div>
+                </div>
                     <center>
                         <div class='row center'>
                             <div class="col s5"></div>
-                            <button id='submitButton' type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Submit</button>
+                            <button id='submitButton' type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Add User</button>
                             <div class="col s5"></div>
                         </div>
 

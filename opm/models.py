@@ -83,6 +83,7 @@ class PatientDevice(models.Model):
     device_deviceid = models.ForeignKey(Device, models.DO_NOTHING, db_column='device_deviceID')  # Field name made lowercase.
     inuse = models.IntegerField(db_column='inUse')  # Field name made lowercase.
     isrecording = models.IntegerField(db_column='isRecording')  # Field name made lowercase.
+    recordingduration = models.IntegerField(db_column='recordingDuration', blank=True, null=True)  # Field name made lowercase.
 
 
     class Meta:
@@ -127,4 +128,26 @@ class Temperature(models.Model):
         managed = False
         db_table = 'temperature'
 
+class Thresholds(models.Model):
+    thresholdsid = models.AutoField(db_column='thresholdsID', primary_key=True)  # Field name made lowercase.
+    patientdeviceid = models.ForeignKey(PatientDevice, models.DO_NOTHING, db_column='patientDeviceID')  # Field name made lowercase.
+    mintemperature = models.FloatField(db_column='minTemperature')  # Field name made lowercase.
+    maxtemperature = models.FloatField(db_column='maxTemperature')  # Field name made lowercase.
+    minheartrate = models.IntegerField(db_column='minHeartrate')  # Field name made lowercase.
+    maxheartrate = models.IntegerField(db_column='maxHeartrate')  # Field name made lowercase.
+
+    class Meta:
+        managed = False
+        db_table = 'thresholds'
+
+class Alerts(models.Model):
+    alertid = models.AutoField(db_column='alertID', primary_key=True)  # Field name made lowercase.
+    patientdeviceid = models.ForeignKey('PatientDevice', models.DO_NOTHING, db_column='patientDeviceID')  # Field name made lowercase.
+    typeofvital = models.IntegerField(db_column='typeOfVital')  # Field name made lowercase.
+    timestamp = models.DateTimeField()
+    viewed = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'alerts'
 

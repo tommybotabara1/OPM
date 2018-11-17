@@ -2,126 +2,124 @@
 {% load staticfiles%}
 
 {% block content %}
+    <script>
+    $(document).ready(function(){
+            $('.timepicker').timepicker();
+    });
+    </script>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
     <script src="https://www.amcharts.com/lib/3/serial.js"></script>
     <script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
     <script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
     <link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <style>
-#chartdiv2 {
-	width	: 100%;
-	height	: 300px;
-}
-#chartdiv3 {
-	width	: 100%;
-	height	: 300px;
-}
+        #chartdiv2 {
+            width	: 100%;
+            height	: 300px;
+        }
+        #chartdiv3 {
+            width	: 100%;
+            height	: 300px;
+        }
 
-</style>
-<script>
-    var chart = AmCharts.makeChart("chartdiv2", {
-    "type": "serial",
-    "theme": "light",
-    "marginRight": 70,
-    "autoMarginOffset": 20,
-    "dataProvider": [
-        {% for temperature_record in temperature_list.reverse %}
-            {
-            "time": "{{ temperature_record.timestamp|date:"h:i:s A" }}",
-            "value": {{ temperature_record.data }}
-            },
-        {% endfor %}
-        ],
-    "balloon": {
-        "cornerRadius": 6
-    },
-    "valueAxes": [{
-        "axisAlpha": 0
-    }],
-    "graphs": [{
-        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]]°C</span></b>",
-        "bullet": "round",
-        "bulletSize": 6,
-        "connect": false,
-        "lineColor": "#b6d278",
-        "lineThickness": 2,
-        "negativeLineColor": "#487dac",
-        "valueField": "value"
-    }],
-    "chartCursor": {
-        "cursorAlpha": 0.1,
-        "cursorColor": "#000000",
-        "fullWidth": true,
-        "graphBulletSize": 2
-    },
-    "chartScrollbar": {},
-    "dataDateFormat": "YYYY",
-    "categoryField": "time",
-    "categoryAxis": {
-		"gridPosition": "start"
-    },
-    "export": {
-        "enabled": true
-    }
-});
+    </style>
+    <script>
+        var chart = AmCharts.makeChart("chartdiv2", {
+        "type": "serial",
+        "theme": "light",
+        "marginRight": 70,
+        "autoMarginOffset": 20,
+        "dataProvider": [
+            {% for temperature_record in temperature_list.reverse %}
+                {
+                "time": "{{ temperature_record.timestamp|date:"h:i:s A" }}",
+                "value": {{ temperature_record.data }}
+                },
+            {% endfor %}
+            ],
+        "balloon": {
+            "cornerRadius": 6
+        },
+        "valueAxes": [{
+            "axisAlpha": 0,
+        }],
+        "graphs": [{
+            "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]]°C</span></b>",
+            "bullet": "round",
+            "bulletSize": 6,
+            "connect": false,
+            "lineColor": "#b6d278",
+            "lineThickness": 2,
+            "negativeLineColor": "#487dac",
+            "valueField": "value"
+        }],
+        "chartCursor": {
+            "cursorAlpha": 0.1,
+            "cursorColor": "#000000",
+            "fullWidth": true,
+            "graphBulletSize": 2
+        },
+        "chartScrollbar": {},
+        "dataDateFormat": "YYYY",
+        "categoryField": "time",
+        "categoryAxis": {
+            "gridPosition": "start",
+            "labelFrequency": 3,
+        },
+        "export": {
+            "enabled": true
+        }
+    });
 
-    var chart = AmCharts.makeChart("chartdiv3", {
-    "type": "serial",
-    "theme": "light",
-    "marginRight": 70,
-    "autoMarginOffset": 20,
-    "dataProvider": [
-        {% for heartrate_record in heartrate_list.reverse %}
-            {
-            "time": "{{ heartrate_record.timestamp|date:"h:i:s A" }}",
-            "value": {{ heartrate_record.data }}
-            },
-        {% endfor %}
-        ],
-    "balloon": {
-        "cornerRadius": 6
-    },
-    "valueAxes": [{
-        "axisAlpha": 0
-    }],
-    "graphs": [{
-        "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] bpm</span></b>",
-        "bullet": "round",
-        "bulletSize": 6,
-        "connect": false,
-        "lineColor": "#b6d278",
-        "lineThickness": 2,
-        "negativeLineColor": "#487dac",
-        "valueField": "value"
-    }],
-    "chartCursor": {
-        "cursorAlpha": 0.1,
-        "cursorColor": "#000000",
-        "fullWidth": true,
-        "graphBulletSize": 2
-    },
-    "chartScrollbar": {},
-    "dataDateFormat": "YYYY",
-    "categoryField": "time",
-    "categoryAxis": {
-		"gridPosition": "start"
-    },
-    "export": {
-        "enabled": true
-    }
-});
-
-    $(document).ready(function(){
-        $('.sidenav').sidenav();
-    })
-
-     $(document).ready(function(){
-    $('.datepicker').datepicker();
-  });
-</script>
+        var chart = AmCharts.makeChart("chartdiv3", {
+        "type": "serial",
+        "theme": "light",
+        "marginRight": 70,
+        "autoMarginOffset": 20,
+        "dataProvider": [
+            {% for heartrate_record in heartrate_list.reverse %}
+                {
+                "time": "{{ heartrate_record.timestamp|date:"h:i:s A" }}",
+                "value": {{ heartrate_record.data }}
+                },
+            {% endfor %}
+            ],
+        "balloon": {
+            "cornerRadius": 6
+        },
+        "valueAxes": [{
+            "axisAlpha": 0
+        }],
+        "graphs": [{
+            "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] bpm</span></b>",
+            "bullet": "round",
+            "bulletSize": 6,
+            "connect": false,
+            "lineColor": "#b6d278",
+            "lineThickness": 2,
+            "negativeLineColor": "#487dac",
+            "valueField": "value"
+        }],
+        "chartCursor": {
+            "cursorAlpha": 0.1,
+            "cursorColor": "#000000",
+            "fullWidth": true,
+            "graphBulletSize": 2
+        },
+        "chartScrollbar": {},
+        "dataDateFormat": "YYYY",
+        "categoryField": "time",
+        "categoryAxis": {
+            "gridPosition": "start",
+            "labelFrequency": 3,
+        },
+        "export": {
+            "enabled": true
+        }
+    });
+    </script>
 
 <script type="text/javascript" src="{% static 'js/canvasjs.min.js' %}"></script>
 
@@ -143,7 +141,9 @@
                             text:"ECG",
                           },
                           subtitles:[{
-                              text: "As of {{ latest_ecg.timestamp|date:"F j, Y" }}",
+                              {% with ecg_list.first as first_ecg %}
+                              text: "{{ first_ecg.timestamp|date:"h:i:s A" }} - {{ latest_ecg.timestamp|date:"h:i:s A" }}",
+                              {% endwith %}
                               horizontalAlign: "center",
                             },
                                 ],
@@ -185,12 +185,12 @@
                           if(i%1000 != 0)
                               yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
                         }
-                        for(var i=0;i<1400;i=i+5){
+                        for(var i=0;i<{{ ecg_list.count }};i=i+5){
                           if(i%200 != 0)
                               xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
                         }
                     }
-            }
+            };
 </script>
 
 
@@ -223,33 +223,329 @@
             <div class="divider"></div>
             <div class="section"></div>
 
-            <div class="row white" style="margin: 10px">
+            {% if latest_ecg == -1 %}
+                <center><h5>Wala pang values</h5></center>
+            {% else %}
+                <div class="row white" style="margin: 10px">
                 <div class="col s12 white center">
                     <h5 class="center"><b>{{ patient.userid.auth_user_id.last_name }}, {{ patient.userid.auth_user_id.first_name }}</b></h5>
                     {% if pagefrom == 1 %}
                         Date: <b> {% now "F j, Y" %} </b>
                     {% endif %}
-
                     <h6 class="center green lighten-4">ECG</h6>
+                    <select class="browser-default" id="batchTime">
+                            <option value="-1" disabled selected>Select Time (by batch)</option>
+                            {% for batch in ecg_batch_start_end_time %}
+                                <option value="{{ batch.batchid }}">{{ batch.start_time }} - {{ batch.end_time }}</option>
+                            {% endfor %}
+                    </select>
+                    <input id="batch" type="hidden" value="{{ ecg_list.count }}">
+                    <a id="prevECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count == 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_before</i></a>
+                    <a id="nextECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count < 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_next</i></a>
                     <div id="ecgChart" style="height: 400px; width: 100%;"></div>
                     <div class="col s12 center green lighten-4">
-                        <h6 class="center">Temperature</h6>
-                        As of <b>{{ latest_temperature.timestamp|date:"F j, Y" }}</b>
+                        <h5 class="center"><b>Temperature</b></h5>
                         <div id="chartdiv2" style="background-color: #fff;"></div>
                         <br>
                     </div>
                     <div class="col s12 center green lighten-5">
-                        <h6 class="center">Heartrate</h6>
-                        As of <b>{{ latest_heartrate.timestamp|date:"F j, Y" }}</b>
+                        <h5 class="center"><b>Heart rate</b></h5>
                         <div id="chartdiv3" style="background-color: #fff;"></div>
                         <br>
                     </div>
                 </div>
             </div>
+            {% endif %}
+
+
 
         </div>
             <div class="section"></div><div class="section"></div>
 
+<script>
+    $("#nextECG").click(function() {
+        var currentBatch = $("#batch").val();
+        var direction = 1;
+        var batch = $("#batchTime").find(":selected").val();
+
+        $.ajax({
+        url: '{% url 'get_ecg_batch' %}',
+        data: {
+          'patientid': {{ patient.patientid }},
+          'currentBatch': currentBatch,
+          'direction': direction,
+          'batch': batch,
+        },
+        dataType: 'json',
+        success: function (data) {
+            var dataPointsArray = [];
+            var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+            for(let i = 0; i < data.length; i++){
+                dataPointsArray.push(data[i].value)
+            }
+
+            $("#prevECG").attr("disabled", false);
+
+            $("#batch").val(data.length + parseInt(currentBatch));
+            currentBatch = $("#batch").val();
+            if(currentBatch % 1000 != 0){
+                $("#nextECG").attr("disabled", true);
+            }
+            var xAxisStripLinesArray = [];
+            var yAxisStripLinesArray = [];
+            var dps = [];
+
+            var chart = new CanvasJS.Chart("ecgChart",
+                {
+                    title:{
+                    text:"ECG",
+                  },
+                  subtitles:[{
+                      text: timeRange,
+                      horizontalAlign: "center",
+                    },
+                        ],
+                  axisY:{
+                    stripLines:yAxisStripLinesArray,
+                    gridThickness: 2,
+                    gridColor:"#DC74A5",
+                    lineColor:"#DC74A5",
+                    tickColor:"#DC74A5",
+                    labelFontColor:"#DC74A5",
+                  },
+                  axisX:{
+                    stripLines:xAxisStripLinesArray,
+                    gridThickness: 2,
+                    gridColor:"#DC74A5",
+                    lineColor:"#DC74A5",
+                    tickColor:"#DC74A5",
+                    labelFontColor:"#DC74A5",
+                  },
+                  data: [
+                  {
+                    type: "spline",
+                    color:"black",
+                    dataPoints: dps
+                  }
+                  ]
+                });
+
+            addDataPointsAndStripLines();
+            chart.render();
+
+            function addDataPointsAndStripLines(){
+                    //dataPoints
+                for(var i=0; i<dataPointsArray.length;i++){
+                    dps.push({y: dataPointsArray[i]});
+                }
+                //StripLines
+                for(var i=0;i<3000;i=i+50){
+                  if(i%1000 != 0)
+                      yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                }
+                for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                  if(i%200 != 0)
+                      xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                }
+            }
+        }
+
+        });
+
+      });
+
+    $("#prevECG").click(function() {
+        var currentBatch = $("#batch").val();
+        var direction = 0;
+        var batch = $("#batchTime").find(":selected").val();
+
+        $.ajax({
+        url: '{% url 'get_ecg_batch' %}',
+        data: {
+          'patientid': {{ patient.patientid }},
+          'currentBatch': currentBatch,
+          'direction': direction,
+          'batch': batch,
+        },
+        dataType: 'json',
+        success: function (data) {
+            var dataPointsArray = [];
+            var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+            for(let i = 0; i < data.length; i++){
+                dataPointsArray.push(data[i].value)
+            }
+
+            $("#nextECG").attr("disabled", false);
+
+            if(parseInt(currentBatch) % 1000 != 0)
+                $("#batch").val(parseInt(currentBatch) - ((parseInt(currentBatch) % 1000)));
+            else
+                $("#batch").val(parseInt(currentBatch) - (1000 - (parseInt(currentBatch) % 1000)));
+
+            if($("#batch").val() <= 1000)
+                $("#prevECG").attr("disabled", true);
+
+            var xAxisStripLinesArray = [];
+            var yAxisStripLinesArray = [];
+            var dps = [];
+
+            var chart = new CanvasJS.Chart("ecgChart",
+                {
+                    title:{
+                    text:"ECG",
+                  },
+                  subtitles:[{
+                      text: timeRange,
+                      horizontalAlign: "center",
+                    },
+                        ],
+                  axisY:{
+                    stripLines:yAxisStripLinesArray,
+                    gridThickness: 2,
+                    gridColor:"#DC74A5",
+                    lineColor:"#DC74A5",
+                    tickColor:"#DC74A5",
+                    labelFontColor:"#DC74A5",
+                  },
+                  axisX:{
+                    stripLines:xAxisStripLinesArray,
+                    gridThickness: 2,
+                    gridColor:"#DC74A5",
+                    lineColor:"#DC74A5",
+                    tickColor:"#DC74A5",
+                    labelFontColor:"#DC74A5",
+                  },
+                  data: [
+                  {
+                    type: "spline",
+                    color:"black",
+                    dataPoints: dps
+                  }
+                  ]
+                });
+
+            addDataPointsAndStripLines();
+            chart.render();
+
+            function addDataPointsAndStripLines(){
+                    //dataPoints
+                for(var i=0; i<dataPointsArray.length;i++){
+                    dps.push({y: dataPointsArray[i]});
+                }
+                //StripLines
+                for(var i=0;i<3000;i=i+50){
+                  if(i%1000 != 0)
+                      yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                }
+                for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                  if(i%200 != 0)
+                      xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                }
+            }
+        }
+
+        });
+
+      });
+
+    $('#batchTime').change(function(){
+        var batch = $("#batchTime").find(":selected").val();
+        var direction = -1;
+        var currentBatch = 1000;
+
+        $.ajax({
+        url: '{% url 'get_ecg_batch' %}',
+        data: {
+          'patientid': {{ patient.patientid }},
+          'currentBatch': currentBatch,
+          'direction': direction,
+          'batch': batch,
+        },
+        dataType: 'json',
+        success: function (data) {
+            var dataPointsArray = [];
+            var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+            for(let i = 0; i < data.length; i++){
+                dataPointsArray.push(data[i].value)
+            }
+
+            if(data.length % 1000 == 0){
+                $("#nextECG").attr("disabled", false);
+            }
+            else{
+                $("#nextECG").attr("disabled", true);
+            }
+
+            $("#prevECG").attr("disabled", true);
+
+            $("#batch").val(1000);
+
+            var xAxisStripLinesArray = [];
+            var yAxisStripLinesArray = [];
+            var dps = [];
+
+            var chart = new CanvasJS.Chart("ecgChart",
+                {
+                    title:{
+                    text:"ECG",
+                  },
+                  subtitles:[{
+                      text: timeRange,
+                      horizontalAlign: "center",
+                    },
+                        ],
+                  axisY:{
+                    stripLines:yAxisStripLinesArray,
+                    gridThickness: 2,
+                    gridColor:"#DC74A5",
+                    lineColor:"#DC74A5",
+                    tickColor:"#DC74A5",
+                    labelFontColor:"#DC74A5",
+                  },
+                  axisX:{
+                    stripLines:xAxisStripLinesArray,
+                    gridThickness: 2,
+                    gridColor:"#DC74A5",
+                    lineColor:"#DC74A5",
+                    tickColor:"#DC74A5",
+                    labelFontColor:"#DC74A5",
+                  },
+                  data: [
+                  {
+                    type: "spline",
+                    color:"black",
+                    dataPoints: dps
+                  }
+                  ]
+                });
+
+            addDataPointsAndStripLines();
+            chart.render();
+
+            function addDataPointsAndStripLines(){
+                    //dataPoints
+                for(var i=0; i<dataPointsArray.length;i++){
+                    dps.push({y: dataPointsArray[i]});
+                }
+                //StripLines
+                for(var i=0;i<3000;i=i+50){
+                  if(i%1000 != 0)
+                      yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                }
+                for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                  if(i%200 != 0)
+                      xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                }
+            }
+        }
+
+        });
+    });
+
+</script>
 
 
 {% endblock %}

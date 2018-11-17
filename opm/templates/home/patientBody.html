@@ -8,7 +8,7 @@
 
                     <div class="section"></div>
 
-                    <h3 id="greeting">Good day, Patient!</h3>
+                    <h3 id="greeting">Good day, {{ user_details.auth_user_id.first_name }} {{ user_details.auth_user_id.last_name }}!</h3>
                     What do you want to do today?<br/>
                     <div class="section"></div>
                     <div class="divider"></div>
@@ -52,46 +52,41 @@
 
                     <!------------------------------------- ROW2- Guide on Knowing ------------------------------------------->
 
-                <div class="row">
+        <div class="row">
 
-                    <div class="col s12 center white" style="padding: 30px 20px 20px 20px;">
+                    <div class="col s12 white center" style="padding: 30px 50px 20px 50px;">
                         <div class="divider"></div>
                         <div class="section"></div>
-                        <h3 class="center" id="greeting">A Guide on Knowing if Your Vitals are Normal</h3>
+                        <h4 id="greeting">About the Assigned Specialist</h4>
 
-                        <div class="row">
+                        <div class="row center">
 
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                            <div class ="col s4">
 
-                                </p>
+                                <h5>Dr. {{ patient_object.doctorid.userid.auth_user_id.first_name }} {{ patient_object.doctorid.userid.auth_user_id.last_name }}</h5>
+                                Full Name of Specialist
+
                             </div>
 
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                2. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                            <div class ="col s4">
 
-                                </p>
+                                <h5>{{ patient_object.doctorid.userid.contactno }}</h5>
+                                Contact Number
+
                             </div>
 
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                3. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
+                            <div class ="col s4">
 
-                                </p>
+                                <h5>{{ patient_object.doctorid.userid.auth_user_id.email }}</h5>
+                                Email
+
                             </div>
 
-                            <div class="col s3 center white" style="padding: 30px 20px 20px 20px;">
-                                <p align="justify">
-                                4. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>
-    </div>
+        </div>
+
 
 
 {% endblock %}

@@ -13,16 +13,23 @@
 
 
                 <div class="section"></div>
+                {% if pagefrom == 1 %}
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">description</i>&nbsp;&nbsp; Patient's Medical History</h3>
+                {% else %}
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">description</i>&nbsp;&nbsp; Patient's Medical History</h3>
+                   <h4><b>({{ patientmedicalinfo.date|date:"F j, Y" }})</b></h4>
+                {% endif %}
 
-                <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">description</i>&nbsp;&nbsp; Patient's Medical History</h3>
                 <small>Form is created with the patient's consent and approval. Patient's medical history can only be viewed by the assigned specialist based on the patient's approval.</small>
                 <div class="section"></div>
                 <div class="divider"></div>
                 <div class="section"></div>
 
             </div>
-
-            <div class="col s12 m12 l12  white" style="padding: 0px 70px 0px 70px">
+            {% if patientmedicalinfo == -1 %}
+                <center><h5>Wala pang values</h5></center>
+            {% else %}
+                <div class="col s12 m12 l12  white" style="padding: 0px 70px 0px 70px">
 
                 <div class="row">
 
@@ -89,6 +96,8 @@
                 </div>
 
            </div>
+            {% endif %}
+
 
             <br />
             <section></section>

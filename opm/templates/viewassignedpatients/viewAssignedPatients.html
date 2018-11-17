@@ -30,7 +30,7 @@
 
         {% if not patient_device_list.exists %}
             <center>
-                <h5>No assigned patients!</h5>
+                <h5><b>No assigned patients!</b></h5>
             </center>
         {% else %}
             <table class="striped centered">
@@ -50,7 +50,7 @@
                             <td>{{ patient.patient_patientid.userid.auth_user_id.first_name }}</td>
                             <td>{{ patient.patient_patientid.userid.middlename }}</td>
                             <td>{{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
-                            <td>{{ patient.device_deviceid.deviceid }}</td>
+                            <td>Device {{ patient.device_deviceid.deviceid }}</td>
                             <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Latest Vitals</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patient_patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientrecords' patient.patient_patientid.patientid %}">Records</a></td>

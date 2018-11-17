@@ -32,14 +32,14 @@
                     </a>
 
                     <ul class="right hide-on-med-and-down" id="deets" style="">
-                        <li><a href="#" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
+                        <li><a href="{% url 'managepatientaccount' %}" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
                         <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
                     </ul>
                 </div>
             </nav>
 
             <ul class="sidenav" id="mobile-nav">
-                <li><a href="#" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
+                <li><a href="{% url 'managepatientaccount' %}" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
                 <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
             </ul>
         </div>

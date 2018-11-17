@@ -212,10 +212,15 @@
             <div class="divider"></div>
             <div class="section"></div>
 
-            <div class="row white" style="margin: 10px">
+            {% if latest_ecg == -1 %}
+                <center><h5>Wala pang values</h5></center>
+            {% else %}
+                <div class="row white" style="margin: 10px">
                 <div class="col s12 white center">
                     <h5 class="center"><b>{{ patient.userid.auth_user_id.last_name }}, {{ patient.userid.auth_user_id.first_name }}</b></h5>
-                    Date: <b> {% now "F j, Y" %} </b>
+                    {% if pagefrom == 1 %}
+                        Date: <b> {% now "F j, Y" %} </b>
+                    {% endif %}
 
                     <h6 class="center green lighten-4">ECG</h6>
                     <div id="ecgChart" style="height: 400px; width: 100%;"></div>
@@ -233,6 +238,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
         </div>
             <div class="section"></div><div class="section"></div>

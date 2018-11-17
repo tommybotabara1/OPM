@@ -1,0 +1,75 @@
+{% extends "home/doctorHeaderFooter.html" %}
+
+{% load staticfiles%}
+
+{% block content %}
+<div class="col s12 m12 l12 center white">
+            <div class="row">
+                <div class="section"></div>
+                <div class="col s3"></div>
+                <div class="col s6">
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">create</i>&nbsp;&nbsp; Manage Account</h3>
+                </div>
+                <div class="col s3"></div>
+            </div>
+            <div class="section"></div>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+        </div>
+
+
+        <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px;">
+            <div class ="row">
+                <div class="input-field col s4">
+                    <big><b>Full Name</b></big><br />
+                    <p>{{ user_object.auth_user_id.first_name }} {{ user_object.middlename }} {{ user_object.auth_user_id.last_name }}</p>
+                </div>
+                <div class="input-field col s4">
+                    <big><b>Username</b></big><br />
+                    <p>{{ user_object.auth_user_id.username }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s4">
+                      <input placeholder="ex: 1998-05-27" value="{{ user_object.birthday|date:"Y-m-d" }}" id="birthday" type="text" class="validate">
+                      <label for="birthday">Date of Birth</label>
+                </div>
+                <div class="input-field col s4">
+                      <input value="{{ user_object.contactno }}" id="contactNo" type="number" class="validate">
+                      <label for="birthday">Contact Number</label>
+                </div>
+                <div class="input-field col s4">
+                      <input value="{{ user_object.auth_user_id.email }}" id="email" type="email" class="validate">
+                      <label for="birthday">Email Address</label>
+                </div>
+            </div>
+            <div class="row" id="changeButton">
+                <button id="changePassword" name='btn_login' class='col s4 btn btn-large waves-effect'>Change password</button>
+            </div>
+            <div class="row" id="passwordRow" style="visibility: hidden">
+                <div class="input-field col s4">
+                    <input value="-1" id="password" type="password" class="validate">
+                    <label for="password">New Password</label>
+                </div>
+                <div class="input-field col s4">
+                    <input value="-1" id="repeatpassword" type="password" class="validate">
+                    <label for="repeatpassword">Repeat New Password</label>
+                </div>
+            </div>
+            <br /><center>
+            <button type='submit' name='btn_login' class='col s2 btn btn-large waves-effect' onclick="alert('Changes are saved.')">Save Changes</button>
+            </center><br />
+            <div class="section"></div>
+
+        </div>
+    <script>
+        $("#changePassword").click(function() {
+            $("#passwordRow").attr('style', "visibility: visible");
+            $("#password").attr('value', null);
+            $("#repeatpassword").attr('value', null);
+        });
+    </script>
+
+{% endblock %}
+
