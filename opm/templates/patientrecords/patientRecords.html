@@ -2,9 +2,11 @@
 {% load staticfiles%}
 
 {% block content %}
+    <title> OPMS - History of Records</title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
 <div class="col s12 m12 l12 center white">
-    <a href="{% url 'viewassignedpatients' %}">Back</a>
+<br>
+    <a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
             <div class="row">
                 <div class="section"></div>
                 <div class="col s3"></div>
@@ -25,16 +27,31 @@
                         <H5>Search for:</H5><br/>
                         <p>
                           <label>
-                            <input class="with-gap" name="searchFor" value="0" type="radio"  />
-                            <span>Medical Forms</span>
+                              {% if patient.restrictmedicalinformationaccess == 1 %}
+                                  <input class="with-gap" name="searchFor" value="0" type="radio"  disabled/>
+                                  <span>Medical Forms</span>
+                              {% else %}
+                                  <input class="with-gap" name="searchFor" value="0" type="radio"  />
+                                  <span>Medical Forms</span>
+                              {% endif %}
                           </label>&nbsp;&nbsp;&nbsp;
                           <label>
-                            <input class="with-gap" name="searchFor" value="1" type="radio"  />
-                            <span>Past Vital Records</span>
+                              {% if patient.restrictvitalsinformationaccess == 1 %}
+                                  <input class="with-gap" name="searchFor" value="1" type="radio"  disabled/>
+                                  <span>Past Vital Records</span>
+                              {% else %}
+                                  <input class="with-gap" name="searchFor" value="1" type="radio"  />
+                                  <span>Past Vital Records</span>
+                              {% endif %}
                           </label>
                           <label>
-                            <input class="with-gap" name="searchFor" value="2" type="radio"  />
-                            <span>All</span>
+                              {% if patient.restrictvitalsinformationaccess == 1 or patient.restrictmedicalinformationaccess == 1 %}
+                                  <input class="with-gap" name="searchFor" value="2" type="radio"  disabled/>
+                                  <span>All</span>
+                              {% else %}
+                                  <input class="with-gap" name="searchFor" value="2" type="radio"  />
+                                  <span>All</span>
+                              {% endif %}
                           </label>
                         </p>
                     </div>
@@ -72,7 +89,12 @@
                 </div>
                 <div class='row center'>
                     <div class="col s5"></div>
-                        <button id="search" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Search</button>
+                        {% if patient.restrictvitalsinformationaccess == 1 and patient.restrictmedicalinformationaccess == 1 %}
+                            <button id="search" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect' disabled>Search</button>
+                        {% else %}
+                            <button id="search" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Search</button>
+                        {% endif %}
+
                     <div class="col s5"></div>
                 </div>
                 <div class="section"></div>
@@ -84,47 +106,59 @@
 
             <div class ="row">
 
-            <div id="medicalForms">
-                <div class="col s6" style="padding: 0px 30px 0px 30px">
-                    <center><b class="teal-text text-darken-2"><big><big>Medical Forms</big></big></b></center>
-                    <br />
-                    <table class="striped">
-                    {% if patient_medical_history_list.count == 0 %}
-                        <tr><th>No existing medical forms!</th></tr>
-                    {% else %}
-                        {% for patient_medical_history in patient_medical_history_list.reverse %}
-                            <tr>
-                                <th>{{ patient_medical_history.date|date:"F d, Y" }}</th>
-                                <td style="padding-right:3%;"><a href="{% url 'assignedpatientrecordsmedicalhistory' patient.patientid patient_medical_history.patient_medical_historyid %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                            </tr>
-                        {% endfor %}
-                    {% endif %}
-                    </table>
-
+            {% if patient.restrictmedicalinformationaccess == 1 %}
+                <div id="restriction" class="col s6" style="padding: 0px 30px 0px 30px">
+                    <center><b class="teal-text text-darken-2"><big><big>Access to medical forms restricted by the patient</big></big></b></center>
                 </div>
-            </div>
-            <div id="vitalRecords">
-                <div class="col s6" style="padding: 0px 30px 0px 30px">
-                    <center><b class="teal-text text-darken-2"><big><big>Vital Records</big></big></b></center>
-                    <br />
-                    <table class="striped">
-                    {% if vitals_dates_list_size == 0 %}
-                        <tr><th>No existing vital records!</th></tr>
-                    {% else %}
-                        {% for vital_date in vitals_dates_list %}
-                            <tr>
-                                <th>{{ vital_date|date:"F d, Y" }}</th>
-                                <td style="padding-right:3%;"><a href="{% url 'assignedpatientrecordsvitalrecords' patient.patientid vital_date|date:"Y-m-d" %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
+            {% else %}
+                <div id="medicalForms">
+                    <div class="col s6" style="padding: 0px 30px 0px 30px">
+                        <center><b class="teal-text text-darken-2"><big><big>Medical Forms</big></big></b></center>
+                        <br />
+                        <table class="striped">
+                        {% if patient_medical_history_list.count == 0 %}
+                            <tr><th>No existing medical forms!</th></tr>
+                        {% else %}
+                            {% for patient_medical_history in patient_medical_history_list.reverse %}
+                                <tr>
+                                    <th>{{ patient_medical_history.date|date:"F d, Y" }}</th>
+                                    <td style="padding-right:3%;"><a href="{% url 'assignedpatientrecordsmedicalhistory' patient.patientid patient_medical_history.patient_medical_historyid %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
 
-                            </tr>
-                        {% endfor %}
-                    {% endif %}
-                    </table>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        </table>
 
+                    </div>
                 </div>
-            </div>
+            {% endif %}
 
+            {% if patient.restrictvitalsinformationaccess == 1 %}
+                <div id="restriction" class="col s6" style="padding: 0px 30px 0px 30px">
+                    <center><b class="teal-text text-darken-2"><big><big>Access to vitals records restricted by the patient</big></big></b></center>
+                </div>
+            {% else %}
+                 <div id="vitalRecords">
+                    <div class="col s6" style="padding: 0px 30px 0px 30px">
+                        <center><b class="teal-text text-darken-2"><big><big>Vitals Records</big></big></b></center>
+                        <br />
+                        <table class="striped">
+                        {% if vitals_dates_list_size == 0 %}
+                            <tr><th>No existing vital records!</th></tr>
+                        {% else %}
+                            {% for patientdeviceid_dates in vitals_patientdeviceid_dates_list %}
+                                <tr>
+                                    <th>{{ patientdeviceid_dates.date|date:"F d, Y" }}</th>
+                                    <td style="padding-right:3%;"><a href="{% url 'assignedpatientrecordsvitalrecords' patientdeviceid_dates.patientdeviceid patientdeviceid_dates.date|date:"Y-m-d" %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
+
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        </table>
+
+                    </div>
+                </div>
+            {% endif %}
             </div>
 
         </div>
@@ -154,6 +188,8 @@
         else{
             date = $('#monthandyear').val();
         }
+
+        $("#restriction").remove();
 
         if(searchFor == null)
             alert("Choose what to search for!");
@@ -216,7 +252,7 @@
 
             for(var i = 0; i < data.length; i++){
                     if(data[i].recordtype == 1){
-                        let link = '/viewassignedpatients/2/records/'+data[i].data+'/medicalform';
+                        let link = '/viewassignedpatients/{{ patient.patientid }}/records/'+data[i].data+'/medicalform';
                         if(data[i].date == "No past medical forms from this date!")
                             medicalForms += "<tr><th>No past medical forms from this date!</th></tr>";
                         else{
@@ -227,12 +263,13 @@
                         }
                     }
                     else{
+                        let link = '/viewassignedpatients/'+data[i].patientdeviceid+'/records/'+data[i].data+'/vitalrecords';
                         if(data[i].date == "No past vital records from this date!")
                             vitalRecords += "<tr><th>No past vital records from this date!!</th></tr>";
                         else{
                             vitalRecords += "<tr>";
                             vitalRecords += "<th>"+ data[i].date +"</th>\n";
-                            vitalRecords += "<td style=\"padding-right:3%;\"><a class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
+                            vitalRecords += "<td style=\"padding-right:3%;\"><a href="+link+" class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
                             vitalRecords += "</tr>";
                         }
                     }

@@ -2,6 +2,7 @@
 {% load staticfiles%}
 
 {% block content %}
+    <title>OPMS</title>
     <div class="row white">
 
                 <div class="col s12 m12 l12 center">
@@ -20,7 +21,7 @@
 
                     <A href="{% url 'viewcurrentvitals' %}"><img class="responsive-image" src="{% static 'img/currentvitals.PNG' %}" height="200px;"/></A>
                     <div class="section"></div>
-                    <h6 id="greeting">View Current Vitals</h6>
+                    <h6 id="greeting">View Today's Latest Vitals</h6>
                     <p align="justify">
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
                     </p>
@@ -31,7 +32,7 @@
 
                     <a href="{% url 'viewhistoryofvitals' %}"><img class="responsive-image" src="{% static 'img/history_currentvitals.png' %}" height="200px;"/></a>
                     <div class="section"></div>
-                    <h6 id="greeting">View History of Vitals</h6>
+                    <h6 id="greeting">View History of Records</h6>
                     <p align="justify">
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
                     </p>

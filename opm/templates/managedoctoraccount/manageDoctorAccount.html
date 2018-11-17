@@ -3,6 +3,7 @@
 {% load staticfiles%}
 
 {% block content %}
+    <title> OPMS - Manage Account </title>
 <div class="col s12 m12 l12 center white">
             <div class="row">
                 <div class="section"></div>
@@ -58,7 +59,7 @@
                 </div>
             </div>
             <br /><center>
-            <button type='submit' name='btn_login' class='col s2 btn btn-large waves-effect' onclick="alert('Changes are saved.')">Save Changes</button>
+            <button id="save" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Save Changes</button>
             </center><br />
             <div class="section"></div>
 
@@ -68,6 +69,34 @@
             $("#passwordRow").attr('style', "visibility: visible");
             $("#password").attr('value', null);
             $("#repeatpassword").attr('value', null);
+        });
+
+        $("#save").click(function() {
+            var user_id = {{ user_object.userid }};
+            var birthday = $("#birthday").val();
+            var contactno = $("#contactNo").val();
+            var email = $("#email").val();
+            var password = $("#password").val();
+            var repeatpassword = $("#repeatpassword").val();
+
+            $.ajax({
+            url: '{% url 'update_user_account' %}',
+            data: {
+              'user_id': user_id,
+              'birthday': birthday,
+              'contactno': contactno,
+              'email': email,
+              'password': password,
+              'repeatpassword': repeatpassword
+            },
+            dataType: 'json',
+            success: function (data) {
+                alert(data[0])
+
+            }
+
+            });
+
         });
     </script>
 

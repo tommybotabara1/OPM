@@ -14,6 +14,8 @@ urlpatterns = [
     path('managedevicerecording/', views.managedevicerecording, name='managedevicerecording'),
     path('viewcurrentvitals/', views.viewcurrentvitals, name='viewcurrentvitals'),
     path('viewhistoryofvitals/', views.viewhistoryofvitals, name='viewhistoryofvitals'),
+    path('viewhistoryofvitals/<int:medical_history_id>/medicalform', views.viewhistoryofvitalsmediclaform, name='viewhistoryofvitalsmediclaform'),
+    path('viewhistoryofvitals/<int:patientdevice_id>/<str:date>/vitalrecords', views.viewhistoryofvitalvitalrecords, name='viewhistoryofvitalvitalrecords'),
     path('restrictuseraccess/', views.restrictuseraccess, name='restrictuseraccess'),
     path('managedoctoraccount/', views.managedoctoraccount, name='managedoctoraccount'),
     path('managepatientaccount/', views.managepatientaccount, name='managepatientaccount'),
@@ -21,7 +23,7 @@ urlpatterns = [
     path('viewassignedpatients/<int:patient_id>/medicalinfo/', views.assignedpatientmedicalinfo, name='patientmedicalinfo'),
     path('viewassignedpatients/<int:patient_id>/records/', views.assignedpatientrecords, name='patientrecords'),
     path('viewassignedpatients/<int:patient_id>/records/<int:medical_history_id>/medicalform', views.assignedpatientrecordsmedicalhistory, name='assignedpatientrecordsmedicalhistory'),
-    path('viewassignedpatients/<int:patient_id>/records/<str:date>/vitalrecords', views.assignedpatientrecordsvitalrecords, name='assignedpatientrecordsvitalrecords'),
+    path('viewassignedpatients/<int:patientdevice_id>/records/<str:date>/vitalrecords', views.assignedpatientrecordsvitalrecords, name='assignedpatientrecordsvitalrecords'),
     path('listofusers/<int:user_id>/edituser/', views.edituser, name='edituser'),
     path('ajax/validate_username/', views.validate_username, name='validate_username'),
     path('ajax/search_user/', views.search_user, name='search_user'),
@@ -36,6 +38,8 @@ urlpatterns = [
     path('ajax/get_records/', views.get_records, name='get_records'),
     path('ajax/check_device_status/', views.check_device_status, name='check_device_status'),
     path('ajax/get_ecg_batch/', views.get_ecg_batch, name='get_ecg_batch'),
+    path('ajax/update_patient_restrictions/', views.update_patient_restrictions, name='update_patient_restrictions'),
+    path('ajax/update_user_account/', views.update_user_account, name='update_user_account'),
     path('value/', views.val_func, name='val_func'),
 ]
 

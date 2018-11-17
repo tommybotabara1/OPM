@@ -2,16 +2,11 @@
 {% load staticfiles%}
 
 {% block content %}
+        <title> OPMS - Patient's Medical History </title>
+
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <div class="col s12 white">
             <div class="col s12 m12 l12 center white">
-                {% if pagefrom == 1 %}
-                    <a href="{% url 'viewassignedpatients' %}">Back</a>
-                {% else %}
-                    <a href="{% url 'patientrecords' patient.patientid %}">Back</a>
-                {% endif %}
-
-
                 <div class="section"></div>
                 {% if pagefrom == 1 %}
                     <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">description</i>&nbsp;&nbsp; Patient's Medical History</h3>
@@ -50,7 +45,7 @@
                     </div>
                     <div class="col s12 green lighten-5" align="justify" style="border: 1px solid #e0f2f1; padding: 2%;">
 
-                        <b><big>Present Complaint:</b></big><br />
+                        <b><big>Present Complaint:</big></b><br />
                         {{ patientmedicalinfo.presentcomplaint }}
 
                     </div>
@@ -97,7 +92,15 @@
 
            </div>
             {% endif %}
-
+        <div class ="row" style="padding-left: 5%; padding-top: 3%;">
+                {% if pagefrom == 1 %}
+                    <center><a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a></center>
+                {% elif pagefrom == 2 %}
+                    <center><a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a></center>
+                {% else %}
+                    <center><a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a></center>
+                {% endif %}
+	    </div>
 
             <br />
             <section></section>

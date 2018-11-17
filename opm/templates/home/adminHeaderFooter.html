@@ -7,12 +7,12 @@
     {% load staticfiles %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/HOMEPAGE.css' %}">
 </head>
-
-<title>penge site name</title>
+<link rel="icon" href="{% static 'img/Logo_Colored.png' %}">
 
 <script>
     $(document).ready(function(){
         $('.sidenav').sidenav();
+        $('.parallax').parallax();
     })
 </script>
 
@@ -20,7 +20,6 @@
 
         <!--------------------------------------------------------- START / NAV BAR --------------------------------------------------------->
 
-        <div class="hero-image">
             <nav class="z-depth-0" style="padding: 0px 10px 10px 10px; background-color: rgba(255, 255, 255, 0.2);">
                 <div class="nav-wrapper">
                     <a href="{% url 'home' %}" class="brand-logo"><img class="responsive-image" id="logo" src="{% static 'img/Logo_Colored_4.png' %}"/></a>
@@ -38,10 +37,17 @@
             <ul class="sidenav" id="mobile-nav">
                 <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
             </ul>
+
+        <div class="parallax-container">
+            <div class="parallax"><img src="{% static 'img/parallax.png' %}"></div>
         </div>
 
         {% block content %}
         {% endblock %}
+
+        <div class="parallax-container">
+            <div class="parallax"><img src="{% static 'img/parallax_2.png' %}"></div>
+        </div>
         <!----------------------------------------------------- FOOTER STARTS HERE ----------------------------------------------------------->
             <footer class="page-footer" style="background-color: rgba(255, 255, 255, 0.3);">
               <div class="container">

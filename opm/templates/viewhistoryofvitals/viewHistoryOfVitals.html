@@ -2,9 +2,9 @@
 {% load staticfiles%}
 
 {% block content %}
+    <title> OPMS - History of Records</title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <div class="col s12 m12 l12 center white">
-
             <div class="row">
                 <div class="section"></div>
                 <div class="col s3"></div>
@@ -25,12 +25,16 @@
                         <H5>Search for:</H5><br/>
                         <p>
                           <label>
-                            <input class="with-gap" name="group1" id="0" type="radio"  />
+                            <input class="with-gap" name="searchFor" value="0" type="radio"  />
                             <span>Medical Forms</span>
                           </label>&nbsp;&nbsp;&nbsp;
                           <label>
-                            <input class="with-gap" name="group1" id="1" type="radio"  />
+                            <input class="with-gap" name="searchFor" value="1" type="radio"  />
                             <span>Past Vital Records</span>
+                          </label>
+                          <label>
+                            <input class="with-gap" name="searchFor" value="2" type="radio"  />
+                            <span>All</span>
                           </label>
                         </p>
                     </div>
@@ -43,7 +47,6 @@
                                 <option value="" disabled selected>Choose by Date or Month and Year</option>
                                 <option value="date">Search by date</option>
                                 <option value="month">Search by month and year</option>
-                                <option value="year">Search by year</option>
                                 <!--<option value="year">Search by year</option>-->
                             </select>
                             <div class="col s3"></div>
@@ -66,17 +69,10 @@
                             <br /><span>Enter Date</span>
                         </label>
                     </div>
-                    <div id="year" class="optionx year" style="display: none;"><center>
-                        <h5>Search by Year</h5>
-                        <label>
-                            <select id = "year" type="text" class="browser-default" style="width:35%;"></select>
-                            <br /><span>Enter Date</span>
-                        </label></center>
-                    </div>
                 </div>
                 <div class='row center'>
                     <div class="col s5"></div>
-                        <button type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Search</button>
+                        <button id="search" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Search</button>
                     <div class="col s5"></div>
                 </div>
                 <div class="section"></div>
@@ -84,65 +80,50 @@
 
     <div class="divider"></div>
     <br>
-    <div class="col s12 white">
+    <div class="col s12 white" style="display: block;">
 
             <div class ="row">
 
+            <div id="medicalForms">
                 <div class="col s6" style="padding: 0px 30px 0px 30px">
                     <center><b class="teal-text text-darken-2"><big><big>Medical Forms</big></big></b></center>
                     <br />
                     <table class="striped">
+                    {% if patient_medical_history_list.count == 0 %}
+                        <tr><th>No existing medical forms!</th></tr>
+                    {% else %}
+                        {% for patient_medical_history in patient_medical_history_list.reverse %}
+                            <tr>
+                                <th>{{ patient_medical_history.date|date:"F d, Y" }}</th>
+                                <td style="padding-right:3%;"><a href="{% url 'viewhistoryofvitalsmediclaform' patient_medical_history.patient_medical_historyid %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
 
-                        <tr>
-
-                            <th>October 25, 2018</th>
-                            <td style="padding-right:3%;"><a class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                        </tr>
-                        <tr>
-
-                            <th>October 27, 2018</th>
-                            <td style="padding-right:3%;"><a class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                        </tr>
-                        <tr>
-
-                            <th>October 29, 2018</th>
-                            <td style="padding-right:3%;"><a class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                        </tr>
-
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
                     </table>
 
                 </div>
-
+            </div>
+            <div id="vitalRecords">
                 <div class="col s6" style="padding: 0px 30px 0px 30px">
-                    <center><b class="teal-text text-darken-2"><big><big>Past Vital Records</big></big></b></center>
+                    <center><b class="teal-text text-darken-2"><big><big>Vital Records</big></big></b></center>
                     <br />
                     <table class="striped">
+                    {% if vitals_dates_list_size == 0 %}
+                        <tr><th>No existing vital records!</th></tr>
+                    {% else %}
+                        {% for patientdeviceid_dates in vitals_patientdeviceid_dates_list %}
+                            <tr>
+                                <th>{{ patientdeviceid_dates.date|date:"F d, Y" }}</th>
+                                <td style="padding-right:3%;"><a href="{% url 'viewhistoryofvitalvitalrecords' patientdeviceid_dates.patientdeviceid patientdeviceid_dates.date|date:"Y-m-d" %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
 
-                        <tr>
-
-                            <th>October 25, 2018</th>
-                            <td style="padding-right:3%;"><a class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                        </tr>
-                        <tr>
-
-                            <th>October 27, 2018</th>
-                            <td style="padding-right:3%;"><a class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                        </tr>
-                        <tr>
-
-                            <th>October 29, 2018</th>
-                            <td style="padding-right:3%;"><a class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
-
-                        </tr>
-
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
                     </table>
 
                 </div>
+            </div>
 
             </div>
 
@@ -160,6 +141,120 @@
     $(document).ready(function(){
         $('.sidenav').sidenav();
     });
+
+    $("#search").click(function () {
+        var searchBy = $('#typeofSearch').val();
+        var searchFor = $('input[name=searchFor]:checked').val();
+        var date = "";
+        var patientID = {{ patient.patientid }};
+
+        if(searchBy == "date"){
+            date = $('#day').val();
+        }
+        else{
+            date = $('#monthandyear').val();
+        }
+
+        if(searchFor == null)
+            alert("Choose what to search for!");
+        else if(searchBy == null)
+            alert("Choose how to search by!");
+        else if(date == "")
+            alert("Enter a date!");
+
+
+        $.ajax({
+        url: '{% url 'get_records' %}',
+        data: {
+            'searchBy': searchBy,
+            'searchFor': searchFor,
+            'date': date,
+            'patientID': patientID
+        },
+        dataType: 'json',
+        success: function (data) {
+            var medicalForms = "";
+            var vitalRecords = "";
+
+            console.log(data);
+
+            if(searchFor == 2){
+                medicalForms += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Medical Forms</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+                vitalRecords += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Vital Records\n</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+
+            }
+            else if(searchFor == 1){
+                medicalForms += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px; display: none\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Medical Forms</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+                vitalRecords += "<div class=\"col s12\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Vital Records\n</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+            }
+            else{
+                medicalForms += "<div class=\"col s12\" style=\"padding: 0px 30px 0px 30px\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Medical Forms</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+
+                vitalRecords += "<div class=\"col s6\" style=\"padding: 0px 30px 0px 30px; display: none\">\n" +
+                    "                    <center><b class=\"teal-text text-darken-2\"><big><big>Vital Records\n</big></big></b></center>\n" +
+                    "                    <br />\n" +
+                    "                    <table class=\"striped\">\n";
+            }
+
+            for(var i = 0; i < data.length; i++){
+                    if(data[i].recordtype == 1){
+                        let link = '/viewhistoryofvitals/'+data[i].data+'/medicalform';
+                        if(data[i].date == "No past medical forms from this date!")
+                            medicalForms += "<tr><th>No past medical forms from this date!</th></tr>";
+                        else{
+                            medicalForms += "<tr>";
+                            medicalForms += "<th>"+ data[i].date +"</th>\n";
+                            medicalForms += "<td style=\"padding-right:3%;\"><a href="+link+" class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
+                            medicalForms += "</tr>";
+                        }
+                    }
+                    else{
+                        let link = '/viewhistoryofvitals/'+data[i].patientdeviceid+'/'+data[i].data+'/vitalrecords';
+                        if(data[i].date == "No past vital records from this date!")
+                            vitalRecords += "<tr><th>No past vital records from this date!!</th></tr>";
+                        else{
+                            vitalRecords += "<tr>";
+                            vitalRecords += "<th>"+ data[i].date +"</th>\n";
+                            vitalRecords += "<td style=\"padding-right:3%;\"><a href="+link+" class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
+                            vitalRecords += "</tr>";
+                        }
+                    }
+                }
+                medicalForms += "</table>\n" +
+                            "\n" +
+                            "                </div>\n" +
+                            "            </div>";
+
+                vitalRecords += "</table>\n" +
+                            "\n" +
+                            "                </div>\n" +
+                            "            </div>";
+
+                $("#medicalForms").html(medicalForms);
+                $("#vitalRecords").html(vitalRecords);
+
+        }
+      });
+    });
+
 
     </script>
 

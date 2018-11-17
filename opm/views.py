@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import *
+from django.contrib.auth.hashers import *
 from django.http import JsonResponse
 import paho.mqtt.client as mqtt
 import datetime
@@ -15,8 +16,6 @@ import time
 import serial
 
 
-
-# Create your views here.
 def index(request):
     logout(request)
     form = LoginForm()
@@ -225,13 +224,21 @@ def assignedpatientvitals(request, patient_id):
     ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)[:1000]
 
     if not temperature_list.exists():
-        temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+        temperature_list = Temperature.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid)
 
     if not heartrate_list.exists():
-        heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+        heartrate_list = Heartrate.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid)
 
     if not ecg_list.exists():
-        ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+        pagefrom = 1
+
+        context = {'patient': patient,
+                   'patient_device': patient_device,
+                   'latest_ecg': -2,
+                   'pagefrom': pagefrom
+                   }
+
+        return render(request, 'patientvitals/patientVitals.html', context)
 
     if temperature_list.exists():
         latest_temperature = temperature_list.latest('timestamp')
@@ -310,18 +317,24 @@ def assignedpatientrecords(request, patient_id):
     patient = Patient.objects.get(patientid=patient_id)
     patientdevice = PatientDevice.objects.filter(patient_patientid=patient.patientid)
     patient_medical_history_list = PatientMedicalHistory.objects.filter(patientid=patient_id)
-    temperature_distinct_date_records = Temperature.objects.filter(patientdeviceid__in=patientdevice)
-    temperature_distinct_date_records = temperature_distinct_date_records.values_list('timestamp', flat=True).distinct()
+    temperature_records = Temperature.objects.filter(patientdeviceid__in=patientdevice)
+    temperature_distinct_date_records = temperature_records.values_list('patientdeviceid', 'timestamp').distinct()
 
     vitals_dates_list = []
+    vitals_patientdeviceid_dates_list = []
     for temperature_data in temperature_distinct_date_records:
-        if not vitals_dates_list.__contains__(temperature_data.date()):
-            vitals_dates_list.append(temperature_data.date())
+        if not vitals_dates_list.__contains__(temperature_data[1].date()):
+            vitals_dates_list.append(temperature_data[1].date())
+            vitals_patientdeviceid_dates_list.append({
+                'date': temperature_data[1].date(),
+                'patientdeviceid': temperature_data[0]
+            })
 
     vitals_dates_list_size = vitals_dates_list.__len__()
     context = {'patient': patient,
                'patient_medical_history_list': patient_medical_history_list,
                'vitals_dates_list': vitals_dates_list,
+               'vitals_patientdeviceid_dates_list': vitals_patientdeviceid_dates_list,
                'vitals_dates_list_size': vitals_dates_list_size
                }
 
@@ -340,10 +353,10 @@ def assignedpatientrecordsmedicalhistory(request, patient_id, medical_history_id
 
 
 @login_required()
-def assignedpatientrecordsvitalrecords(request, patient_id, date):
+def assignedpatientrecordsvitalrecords(request, patientdevice_id, date):
     convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
-    patient = Patient.objects.get(patientid=patient_id)
-    patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
+    patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
+    patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
     temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
         patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
     heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
@@ -427,8 +440,8 @@ def viewcurrentvitals(request):
         patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
     heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
         patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
-    ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid,
-                                                                  timestamp__date=currentdate)
+    ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                 timestamp__date=currentdate)[:1000]
 
     if not temperature_list.exists():
         temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
@@ -439,7 +452,12 @@ def viewcurrentvitals(request):
             patientdeviceid=patient_device.patientdeviceid)
 
     if not ecg_list.exists():
-        ecg_list = Ecg.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid)
+        context = {'patient': patient,
+                   'patient_device': patient_device,
+                   'latest_ecg': -2,
+                   }
+
+        return render(request, 'viewcurrentvitals/viewCurrentVitals.html', context)
 
     if temperature_list.exists():
         latest_temperature = temperature_list.latest('timestamp')
@@ -450,9 +468,34 @@ def viewcurrentvitals(request):
     else:
         latest_heartrate = -1
     if ecg_list.exists():
-        latest_ecg = ecg_list.latest('timestamp')
+        latest_ecg = ecg_list.all()[ecg_list.count() - 1]
     else:
         latest_ecg = -1
+
+    ecg_list_all = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                     timestamp__date=currentdate)
+
+    ecg_list_batch_values = ecg_list_all.values_list('batchid', flat=True).distinct()
+
+    batch_list = []
+    for batch in ecg_list_batch_values:
+        if not batch_list.__contains__(int(batch)):
+            batch_list.append(int(batch))
+
+    ecg_batch_start_end_time = []
+    for batch in batch_list:
+        current_batch_list = Ecg.objects.order_by(F('timestamp').asc()).filter(
+            patientdeviceid=patient_device.patientdeviceid,
+            timestamp__date=currentdate, batchid=batch)
+        start_time = current_batch_list.first().timestamp
+        end_time = current_batch_list.last().timestamp
+
+        ecg_batch_start_end_time.append({
+            'batchid': batch,
+            'start_time': start_time.time().strftime('%I:%M:%S %p'),
+            'end_time': end_time.time().strftime('%I:%M:%S %p'),
+        })
+
 
     context = {'patient': patient,
                'patient_device': patient_device,
@@ -462,6 +505,8 @@ def viewcurrentvitals(request):
                'latest_heartrate': latest_heartrate,
                'ecg_list': ecg_list,
                'latest_ecg': latest_ecg,
+               'batch_list': batch_list,
+               'ecg_batch_start_end_time': ecg_batch_start_end_time,
                }
 
     return render(request, 'viewcurrentvitals/viewCurrentVitals.html', context)
@@ -469,12 +514,112 @@ def viewcurrentvitals(request):
 
 @login_required()
 def viewhistoryofvitals(request):
-    return render(request, 'viewhistoryofvitals/viewHistoryOfVitals.html')
+    patient = Patient.objects.get(userid=request.session['user_id'])
+    patientdevice = PatientDevice.objects.filter(patient_patientid=patient.patientid)
+    patient_medical_history_list = PatientMedicalHistory.objects.filter(patientid=patient.patientid)
+    temperature_records = Temperature.objects.filter(patientdeviceid__in=patientdevice)
+    temperature_distinct_date_records = temperature_records.values_list('patientdeviceid', 'timestamp').distinct()
+
+    vitals_dates_list = []
+    vitals_patientdeviceid_dates_list = []
+    for temperature_data in temperature_distinct_date_records:
+        if not vitals_dates_list.__contains__(temperature_data[1].date()):
+            vitals_dates_list.append(temperature_data[1].date())
+            vitals_patientdeviceid_dates_list.append({
+                'date': temperature_data[1].date(),
+                'patientdeviceid': temperature_data[0]
+            })
+
+    vitals_dates_list_size = vitals_dates_list.__len__()
+    context = {'patient': patient,
+               'patient_medical_history_list': patient_medical_history_list,
+               'vitals_patientdeviceid_dates_list': vitals_patientdeviceid_dates_list,
+               'vitals_dates_list_size': vitals_dates_list_size
+               }
+
+    return render(request, 'viewhistoryofvitals/viewHistoryOfVitals.html', context)
 
 
 @login_required()
+def viewhistoryofvitalsmediclaform(request, medical_history_id):
+    patient = Patient.objects.get(userid=request.session['user_id'])
+    patientmedicalinfo = PatientMedicalHistory.objects.get(patient_medical_historyid=medical_history_id)
+    pagefrom = 3
+    context = {'patient': patient,
+               'patientmedicalinfo': patientmedicalinfo,
+               'pagefrom': pagefrom
+               }
+    return render(request, 'patientmedicalinfo/patientMedicalInfo.html', context)
+
+
+@login_required()
+def viewhistoryofvitalvitalrecords(request, patientdevice_id, date):
+    convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
+    patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
+    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
+        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
+        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                 timestamp__date=convert_date)
+
+    latest_temperature = temperature_list.latest('timestamp')
+    latest_heartrate = heartrate_list.latest('timestamp')
+    latest_ecg = ecg_list.latest('timestamp')
+
+    ecg_list = ecg_list.all()[:1000]
+
+    ecg_list_all = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                     timestamp__date=convert_date)
+
+    ecg_list_batch_values = ecg_list_all.values_list('batchid', flat=True).distinct()
+
+    batch_list = []
+    for batch in ecg_list_batch_values:
+        if not batch_list.__contains__(int(batch)):
+            batch_list.append(int(batch))
+
+    ecg_batch_start_end_time = []
+    for batch in batch_list:
+        current_batch_list = Ecg.objects.order_by(F('timestamp').asc()).filter(
+            patientdeviceid=patient_device.patientdeviceid,
+            timestamp__date=convert_date, batchid=batch)
+        start_time = current_batch_list.first().timestamp
+        end_time = current_batch_list.last().timestamp
+
+        ecg_batch_start_end_time.append({
+            'batchid': batch,
+            'start_time': start_time.time().strftime('%I:%M:%S %p'),
+            'end_time': end_time.time().strftime('%I:%M:%S %p'),
+        })
+
+    pagefrom = 3
+
+    context = {'patient': patient,
+               'patient_device': patient_device,
+               'temperature_list': temperature_list,
+               'latest_temperature': latest_temperature,
+               'heartrate_list': heartrate_list,
+               'latest_heartrate': latest_heartrate,
+               'ecg_list': ecg_list,
+               'latest_ecg': latest_ecg,
+               'pagefrom': pagefrom,
+               'date': datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y'),
+               'batch_list': batch_list,
+               'ecg_batch_start_end_time': ecg_batch_start_end_time,
+               }
+
+    return render(request, 'patientvitals/patientVitals.html', context)
+
+@login_required()
 def restrictuseraccess(request):
-    return render(request, 'restrictuseraccess/restrictUserAccess.html')
+    patient = Patient.objects.get(userid=request.session['user_id'])
+
+    context = {'patient': patient,
+               }
+
+    return render(request, 'restrictuseraccess/restrictUserAccess.html', context)
 
 
 @login_required()
@@ -894,21 +1039,26 @@ def get_records(request):
         convert_date = datetime.datetime.strptime(date, '%Y-%m')
         medical_records_list = PatientMedicalHistory.objects.filter(patientid__patientid=patientid, date__year=convert_date.year, date__month=convert_date.month)
 
-        temperature_distinct_date_records = Temperature.objects.filter(patientdeviceid__in=patientdevice, timestamp__year=convert_date.year, timestamp__month=convert_date.month)
-        temperature_distinct_date_records = temperature_distinct_date_records.values_list('timestamp',
-                                                                                          flat=True).distinct()
+        temperature_records = Temperature.objects.filter(patientdeviceid__in=patientdevice, timestamp__year=convert_date.year, timestamp__month=convert_date.month)
+        temperature_distinct_date_records = temperature_records.values_list('patientdeviceid', 'timestamp').distinct()
 
         vitals_dates_list = []
+        vitals_patientdeviceid_dates_list = []
         for temperature_data in temperature_distinct_date_records:
-            if not vitals_dates_list.__contains__(temperature_data.date()):
-                vitals_dates_list.append(temperature_data.date())
+            if not vitals_dates_list.__contains__(temperature_data[1].date()):
+                vitals_dates_list.append(temperature_data[1].date())
+                vitals_patientdeviceid_dates_list.append({
+                    'date': temperature_data[1].date(),
+                    'patientdeviceid': temperature_data[0]
+                })
 
         if vitals_dates_list.__len__() != 0:
-            for vital_record in vitals_dates_list:
+            for vital_record in vitals_patientdeviceid_dates_list:
                 records_list.append({
-                    'date': vital_record.strftime('%B %d, %Y'),
+                    'date': vital_record.get('date').strftime('%B %d, %Y'),
                     'recordtype': 2,
-                    'data': vital_record
+                    'data': vital_record.get('date'),
+                    'patientdeviceid': vital_record.get('patientdeviceid'),
                 })
         else:
             records_list.append({
@@ -931,7 +1081,6 @@ def get_records(request):
             'data': medical_record.patient_medical_historyid,
         })
 
-    print(records_list)
     return JsonResponse(records_list, safe=False)
 
 
@@ -955,15 +1104,16 @@ def get_ecg_batch(request):
     patient_id = request.GET.get('patientid', None)
     direction = request.GET.get('direction', None)
     batch = request.GET.get('batch', None)
+    date = request.GET.get('date', None)
 
-    currentdate = datetime.date.today()
+    convert_date = datetime.datetime.strptime(date, '%B %d, %Y')
     patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
 
     if batch == "-1":
-        ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+        ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
     else:
         ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
-                                                                     timestamp__date=currentdate, batchid=batch)
+                                                                     timestamp__date=convert_date, batchid=batch)
     if direction == "1":
         ecg_list = ecg_list.all()[int(currentBatch):int(currentBatch)+1000]
     elif int(currentBatch) - (2000 + (int(currentBatch) % 1000)) < 0:
@@ -980,6 +1130,85 @@ def get_ecg_batch(request):
 
     return JsonResponse(ecg_values, safe=False)
 
+
+def update_patient_restrictions(request):
+    patient_id = request.GET.get('patient_id', None)
+    medicalInformation = request.GET.get('medicalInformation', None)
+    vitalRecords = request.GET.get('vitalRecords', None)
+
+    patient = Patient.objects.get(patientid=patient_id)
+
+    patient.restrictmedicalinformationaccess = medicalInformation
+    patient.restrictvitalsinformationaccess = vitalRecords
+
+    patient.save()
+    response = []
+
+    response.append({'response': 'Restrictions Updated'})
+
+    return JsonResponse(response, safe=False)
+
+def update_user_account(request):
+    user_id = request.GET.get('user_id', None)
+    birthday = request.GET.get('birthday', None)
+    contactno = request.GET.get('contactno', None)
+    email = request.GET.get('email', None)
+    password = request.GET.get('password', None)
+    repeatpassword = request.GET.get('repeatpassword', None)
+
+
+    user = User.objects.get(id=user_id)
+    user_details = Userdetails.objects.get(userid=user_id)
+
+    if user_details.usertype.usertypeid == 3:
+        user_type = Doctor.objects.get(userid=user_id)
+    else:
+        user_type = Patient.objects.get(userid=user_id)
+
+    response = []
+    error = 0
+
+    error_message = "Missing/Wrong information: \n"
+    if birthday == "":
+        error_message += "Birthday\n"
+        error = 1
+
+    if contactno == "":
+        error_message += "Contact number\n"
+        error = 1
+
+    if email == "":
+        error_message += "Email\n"
+        error = 1
+
+    if password == "":
+        error_message += "Password\n"
+        error = 1
+
+    if repeatpassword == "":
+        error_message += "Password\n"
+        error = 1
+
+    if password != repeatpassword:
+        error_message += "Password and Repeat password is not the same\n"
+        error = 1
+
+    try:
+        validate_password(password)
+    except ValidationError as e:
+        error_message += str(e) + "\n"
+        error = 1
+
+    response.append(error_message)
+
+    if error == 0:
+        user_details.birthday = birthday
+        user.email = email
+        user_details.contactno = contactno
+    else:
+        response.append(error_message)
+
+    return JsonResponse(response, safe=False)
 
 def val_func(request):
     serport = serial.Serial('COM3', 9600)

@@ -1,8 +1,9 @@
-{% extends "home/doctorHeaderFooter.html" %}
+{% extends "home/patientHeaderFooter.html" %}
 
 {% load staticfiles%}
 
 {% block content %}
+    <title> OPMS - Manage Account </title>
 <div class="col s12 m12 l12 center white">
             <div class="row">
                 <div class="section"></div>
@@ -87,6 +88,37 @@
             $("#passwordRow").attr('style', "visibility: visible");
             $("#password").attr('value', null);
             $("#repeatpassword").attr('value', null);
+        });
+
+        $("#saveButton").click(function() {
+            var medicalInformation = -1
+            var vitalRecords = -1
+            if($("#medicalInformation").is(':checked'))
+                medicalInformation = 0;
+            else
+                medicalInformation = 1;
+
+            if($("#vitalRecords").is(':checked'))
+                vitalRecords = 0;
+            else
+                vitalRecords = 1;
+
+            $.ajax({
+            url: '{% url 'update_patient_restrictions' %}',
+            data: {
+              'patient_id': {{ patient.patientid }},
+              'medicalInformation': medicalInformation,
+              'vitalRecords': vitalRecords,
+            },
+            dataType: 'json',
+            success: function (data) {
+                alert(data[0].response);
+                location.reload();
+
+            }
+
+            });
+
         });
     </script>
 

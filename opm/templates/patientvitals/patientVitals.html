@@ -2,11 +2,12 @@
 {% load staticfiles%}
 
 {% block content %}
-    <script>
-    $(document).ready(function(){
-            $('.timepicker').timepicker();
-    });
-    </script>
+    {% if pagefrom == 1 %}
+        <title> OPMS - View Latest Vitals </title>
+    {% else %}
+        <title> OPMS - Patient Vitals Record </title>
+    {% endif %}
+
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
     <script src="https://www.amcharts.com/lib/3/serial.js"></script>
@@ -195,13 +196,15 @@
 
 
         <div class="col s12 m12 l12  white">
-        
-            <div class="row center">
 
+            <div class="row center">
+                <br>
                 {% if pagefrom == 1 %}
-                    <a href="{% url 'viewassignedpatients' %}">Back</a>
+                    <a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
+                {% elif pagefrom == 2 %}
+                    <a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% else %}
-                    <a href="{% url 'patientrecords' patient.patientid %}">Back</a>
+                    <a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% endif %}
 
                 <div class="section"></div>
@@ -209,7 +212,7 @@
                 <div class="col s6">
 
                     {% if pagefrom == 1 %}
-                        <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View Latest Vitals</h3>
+                        <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View Today's Latest Vitals</h3>
                     {% else %}
                         <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; {{ date }} Vitals</h3>
                     {% endif %}
@@ -224,7 +227,10 @@
             <div class="section"></div>
 
             {% if latest_ecg == -1 %}
-                <center><h5>Wala pang values</h5></center>
+                <center><h5>No recorded vitals!</h5></center>
+            {% elif latest_ecg == -2 %}
+                <center><h5>No recorded vitals today!</h5></center>
+                <center>Click <a href="{% url 'patientrecords' patient.patientid %}">here</a> to check previous records.</center>
             {% else %}
                 <div class="row white" style="margin: 10px">
                 <div class="col s12 white center">
@@ -267,6 +273,7 @@
         var currentBatch = $("#batch").val();
         var direction = 1;
         var batch = $("#batchTime").find(":selected").val();
+        var date = "{{ date }}";
 
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
@@ -275,6 +282,7 @@
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
+          'date': date,
         },
         dataType: 'json',
         success: function (data) {
@@ -359,6 +367,7 @@
         var currentBatch = $("#batch").val();
         var direction = 0;
         var batch = $("#batchTime").find(":selected").val();
+        var date = "{{ date }}";
 
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
@@ -367,6 +376,7 @@
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
+          'date': date,
         },
         dataType: 'json',
         success: function (data) {
@@ -454,6 +464,7 @@
         var batch = $("#batchTime").find(":selected").val();
         var direction = -1;
         var currentBatch = 1000;
+        var date = "{{ date }}";
 
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
@@ -462,6 +473,7 @@
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
+          'date': date,
         },
         dataType: 'json',
         success: function (data) {

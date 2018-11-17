@@ -3,6 +3,7 @@
 {% load extras %}
 
 {% block content %}
+        <title> OPMS - View Assigned Patients </title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
         <div class="col s12 m12 l12 center white">
             <div class="row">        
@@ -51,7 +52,7 @@
                             <td>{{ patient.patient_patientid.userid.middlename }}</td>
                             <td>{{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
                             <td>Device {{ patient.device_deviceid.deviceid }}</td>
-                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Latest Vitals</a>&nbsp;&nbsp;
+                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Today's Latest Vitals</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patient_patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientrecords' patient.patient_patientid.patientid %}">Records</a></td>
                           </tr>
@@ -63,17 +64,6 @@
 
 
             <div class="section"></div>
-        <!--
-            <ul class="pagination center">
-                <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
-                <li class="active"><a href="#!">1</a></li>
-                <li class="waves-effect"><a href="#!">2</a></li>
-                <li class="waves-effect"><a href="#!">3</a></li>
-                <li class="waves-effect"><a href="#!">4</a></li>
-                <li class="waves-effect"><a href="#!">5</a></li>
-                <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
-            </ul>
--->
 
         </div>
 

@@ -54,6 +54,8 @@ class Patient(models.Model):
     doctorid = models.ForeignKey(Doctor, models.DO_NOTHING, db_column='doctorID')  # Field name made lowercase.
     userid = models.ForeignKey(Userdetails, models.DO_NOTHING, db_column='userID')  # Field name made lowercase.
     bloodtype = models.CharField(db_column='bloodType', max_length=45)  # Field name made lowercase.
+    restrictmedicalinformationaccess = models.IntegerField(db_column='restrictMedicalInformationAccess')  # Field name made lowercase.
+    restrictvitalsinformationaccess = models.IntegerField(db_column='restrictVitalsInformationAccess')  # Field name made lowercase.
 
     class Meta:
         managed = False
