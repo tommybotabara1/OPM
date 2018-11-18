@@ -7,13 +7,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import *
-from django.contrib.auth.hashers import *
 from django.http import JsonResponse
 import paho.mqtt.client as mqtt
 import datetime
 from django.db.models import F
 import time
 import serial
+from twilio.rest import Client
+import random
 
 
 def index(request):
@@ -37,10 +38,61 @@ def loginuser(request):
                 login(request, user)
 
                 request.session['user_id'] = user.id
-                return redirect(home)
+                userdetails = Userdetails.objects.get(auth_user_id=request.session['user_id'])
 
+                print(userdetails.usertype.usertypeid)
+
+                if userdetails.usertype.usertypeid == 1 or userdetails.usertype.usertypeid == 2:
+                    return redirect('adminauthentication')
+                elif userdetails.usertype.usertypeid == 3 or userdetails.usertype.usertypeid == 4:
+                    return redirect('home')
             else:
                 return redirect('index')
+
+
+@login_required()
+def adminauthentication(request):
+    # Generate OTP password
+    chars = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', '0', 'P', 'Q', 'R', 'S', 'T', 'U',
+             'V', 'W', 'X', 'Y', 'Z', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    otp = ""
+    for x in range(6):
+        otp = otp + chars[random.randint(0, len(chars)) - 1]
+    print(otp)
+
+    # Your Account Sid and Auth Token from twilio.com/console
+    account_sid = "AC54dbed5f1b63313345460f725fce098a"
+    auth_token = "c6897746b240e1ecb1475af8b4c66ee0"
+    client = Client(account_sid, auth_token)
+
+    message = client.messages \
+        .create(
+        body="Your OTP is: " + otp,
+        from_='+14065102947',
+        to='+639178029516'
+    )
+
+    request.session['otp'] = otp
+
+    return render(request, 'adminauthentication/adminAuthentication.html')
+
+
+@login_required()
+def adminauthenticate(request, otp):
+    if otp == request.session['otp']:
+        return redirect('home')
+    else:
+        html = "" \
+               "<html>" \
+               "<head>" \
+               "<title>My Django App</title>" \
+               "</head>" \
+               "<body>Wrong OTP code. Try again." \
+               "<br>" \
+               "<a href='/'>Log in page</a>" \
+               "</body>" \
+               "</html>"
+        return HttpResponse(html)
 
 
 @login_required()
@@ -54,6 +106,7 @@ def home(request):
         if userdetails.usertype.usertypeid == 1:
             return render(request, 'home/systemAdminBody.html', context)
         elif userdetails.usertype.usertypeid == 2:
+            redirect(adminauthentication)
             return render(request, 'home/adminBody.html', context)
         elif userdetails.usertype.usertypeid == 3:
             return render(request, 'home/doctorBody.html', context)
@@ -67,7 +120,6 @@ def home(request):
 
     else:
         return redirect('index')
-
 
 @login_required()
 def listofusers(request):
@@ -612,6 +664,7 @@ def viewhistoryofvitalvitalrecords(request, patientdevice_id, date):
 
     return render(request, 'patientvitals/patientVitals.html', context)
 
+
 @login_required()
 def restrictuseraccess(request):
     patient = Patient.objects.get(userid=request.session['user_id'])
@@ -1155,7 +1208,7 @@ def update_user_account(request):
     email = request.GET.get('email', None)
     password = request.GET.get('password', None)
     repeatpassword = request.GET.get('repeatpassword', None)
-
+    bloodtype = request.GET.get('bloodtype', None)
 
     user = User.objects.get(id=user_id)
     user_details = Userdetails.objects.get(userid=user_id)
@@ -1193,18 +1246,28 @@ def update_user_account(request):
         error_message += "Password and Repeat password is not the same\n"
         error = 1
 
-    try:
-        validate_password(password)
-    except ValidationError as e:
-        error_message += str(e) + "\n"
-        error = 1
-
-    response.append(error_message)
+    if password != "-1":
+        try:
+            validate_password(password)
+            user.set_password(password)
+        except ValidationError as e:
+            error_message += str(e) + "\n"
+            error = 1
 
     if error == 0:
         user_details.birthday = birthday
         user.email = email
         user_details.contactno = contactno
+
+        if bloodtype != "-1":
+            user_type.bloodtype = bloodtype
+            user_type.save()
+
+        user_details.save()
+        user.save()
+
+
+        response.append("Account information updated")
     else:
         response.append(error_message)
 

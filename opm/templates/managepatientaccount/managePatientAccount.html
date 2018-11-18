@@ -22,17 +22,21 @@
 
         <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px;">
             <div class ="row">
-                <div class="input-field col s4">
+                <div class="input-field col s3">
                     <big><b>Full Name</b></big><br />
                     <p>{{ user_object.auth_user_id.first_name }} {{ user_object.middlename }} {{ user_object.auth_user_id.last_name }}</p>
                 </div>
-                <div class="input-field col s4">
+                <div class="input-field col s3">
                     <big><b>Username</b></big><br />
                     <p>{{ user_object.auth_user_id.username }}</p>
                 </div>
-                <div class="input-field col s4">
+                <div class="input-field col s3">
                     <big><b>Assigned Doctor</b></big><br />
                     <p>Dr. {{ patient_object.doctorid.userid.auth_user_id.first_name }} {{ patient_object.doctorid.userid.auth_user_id.last_name }}</p>
+                </div>
+                <div class="input-field col s3">
+                    <big><b>Blood Type</b></big><br />
+                    <p>{{ patient_object.bloodtype }}</p>
                 </div>
             </div>
             <div class="row">
@@ -54,18 +58,18 @@
                             <div id="chooseBloodType">
                                 <label>Change Blood Type</label>
                                 <br />
-                                    <select class="browser-default col s12">
+                                    <select id="bloodType" class="browser-default col s12">
                                         <option value="" disabled selected>Change Blood Type</option>
-                                        <option value="1">Type A</option>
-                                        <option value="2">Type B</option>
-                                        <option value="3">Type AB</option>
-                                        <option value="4">Type O</option>
+                                        <option value="A">Type A</option>
+                                        <option value="B">Type B</option>
+                                        <option value="AB">Type AB</option>
+                                        <option value="O">Type O</option>
                                     </select>
                             </div>
                     </div>
             </div>
             <div class="row" id="changeButton">
-                <button id="changePassword" name='btn_login' class='col s4 btn btn-large waves-effect'>Change password</button>
+                <button id="changePassword" name='btn_login' class='col s4 btn btn-large waves-effect' value="1">Change password</button>
             </div>
             <div class="row" id="passwordRow" style="visibility: hidden">
                 <div class="input-field col s4">
@@ -78,47 +82,63 @@
                 </div>
             </div>
             <br /><center>
-            <button type='submit' name='btn_login' class='col s2 btn btn-large waves-effect' onclick="alert('Changes are saved.')">Save Changes</button>
+            <button id="save" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Save Changes</button>
             </center><br />
             <div class="section"></div>
 
         </div>
     <script>
         $("#changePassword").click(function() {
-            $("#passwordRow").attr('style', "visibility: visible");
-            $("#password").attr('value', null);
-            $("#repeatpassword").attr('value', null);
-        });
-
-        $("#saveButton").click(function() {
-            var medicalInformation = -1
-            var vitalRecords = -1
-            if($("#medicalInformation").is(':checked'))
-                medicalInformation = 0;
-            else
-                medicalInformation = 1;
-
-            if($("#vitalRecords").is(':checked'))
-                vitalRecords = 0;
-            else
-                vitalRecords = 1;
-
-            $.ajax({
-            url: '{% url 'update_patient_restrictions' %}',
-            data: {
-              'patient_id': {{ patient.patientid }},
-              'medicalInformation': medicalInformation,
-              'vitalRecords': vitalRecords,
-            },
-            dataType: 'json',
-            success: function (data) {
-                alert(data[0].response);
-                location.reload();
-
+            if($("#changePassword").val() == "1"){
+                $("#passwordRow").attr('style', "visibility: visible");
+                $("#password").attr('value', null);
+                $("#repeatpassword").attr('value', null);
+                $("#changePassword").val("0");
+                $("#changePassword").html('Cancel change password');
+            }
+            else{
+                $("#passwordRow").attr('style', "visibility: hidden");
+                $("#password").attr('value', "-1");
+                $("#repeatpassword").attr('value', "-1");
+                $("#changePassword").val("1");
+                $("#changePassword").html('Change password');
             }
 
-            });
+        });
 
+        $("#save").click(function() {
+            var user_id = {{ user_object.userid }};
+            var birthday = $("#birthday").val();
+            var contactno = $("#contactNo").val();
+            var email = $("#email").val();
+            var password = $("#password").val();
+            var repeatpassword = $("#repeatpassword").val();
+            var bloodtype = $('#bloodType').val()
+
+            if(bloodtype == null)
+                bloodtype = -1;
+
+            console.log(bloodtype);
+
+            $.ajax({
+                url: '{% url 'update_user_account' %}',
+                data: {
+                  'user_id': user_id,
+                  'birthday': birthday,
+                  'contactno': contactno,
+                  'email': email,
+                  'password': password,
+                  'repeatpassword': repeatpassword,
+                  'bloodtype': bloodtype
+                },
+                dataType: 'json',
+                success: function (data) {
+                    alert(data[0]);
+                    location.reload();
+
+                }
+
+            });
         });
     </script>
 

@@ -46,7 +46,7 @@
                 </div>
             </div>
             <div class="row" id="changeButton">
-                <button id="changePassword" name='btn_login' class='col s4 btn btn-large waves-effect'>Change password</button>
+                <button id="changePassword" name='btn_login' class='col s4 btn btn-large waves-effect' value="1">Change password</button>
             </div>
             <div class="row" id="passwordRow" style="visibility: hidden">
                 <div class="input-field col s4">
@@ -66,9 +66,23 @@
         </div>
     <script>
         $("#changePassword").click(function() {
-            $("#passwordRow").attr('style', "visibility: visible");
-            $("#password").attr('value', null);
-            $("#repeatpassword").attr('value', null);
+            if($("#changePassword").val() == "1"){
+                $("#passwordRow").attr('style', "visibility: visible");
+                $("#password").attr('value', null);
+                $("#repeatpassword").attr('value', null);
+                $("#changePassword").val("0");
+                $("#changePassword").html('Cancel change password');
+            }
+            else{
+                $("#passwordRow").attr('style', "visibility: hidden");
+                $("#password").attr('value', "-1");
+                $("#repeatpassword").attr('value', "-1");
+                $("#changePassword").val("1");
+                $("#changePassword").html('Change password');
+            }
+
+
+
         });
 
         $("#save").click(function() {
@@ -87,11 +101,13 @@
               'contactno': contactno,
               'email': email,
               'password': password,
-              'repeatpassword': repeatpassword
+              'repeatpassword': repeatpassword,
+              'bloodtype': -1
             },
             dataType: 'json',
             success: function (data) {
-                alert(data[0])
+                alert(data[0]);
+                location.reload();
 
             }
 

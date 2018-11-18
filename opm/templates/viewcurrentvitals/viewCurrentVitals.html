@@ -212,7 +212,7 @@
                 <center><h5>No recorded vitals!</h5></center>
             {% elif latest_ecg == -2 %}
                 <center><h5>No recorded vitals today!</h5></center>
-                <center>Click <a href="{% url 'viewhistoryofvitals' %}">here</a> to check previous records.</center>
+                <center>Click <a href="{% url 'viewhistoryofvitals' %}">here</a> to view previous records.</center>
             {% else %}
                 <div class="row white" style="margin: 10px">
                 <div class="col s12 white center">
@@ -230,13 +230,13 @@
                     <a id="nextECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count < 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_next</i></a>
                     <div id="ecgChart" style="height: 400px; width: 100%;"></div>
                     <div class="col s12 center green lighten-4">
-                        <h5 class="center"><b>Temperature</b></h5>
-                        <div id="chartdiv2" style="background-color: #fff;"></div>
+                        <h5 class="center"><b>Heart rate</b></h5>
+                        <div id="chartdiv3" style="background-color: #fff;"></div>
                         <br>
                     </div>
                     <div class="col s12 center green lighten-5">
-                        <h5 class="center"><b>Heart rate</b></h5>
-                        <div id="chartdiv3" style="background-color: #fff;"></div>
+                        <h5 class="center"><b>Temperature</b></h5>
+                        <div id="chartdiv2" style="background-color: #fff;"></div>
                         <br>
                     </div>
                 </div>
