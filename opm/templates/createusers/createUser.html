@@ -2,15 +2,11 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title> OPMS - Create User </title>
+    <title> OPHM - Create User </title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
 
         <div class="col s12 m12 l12 center white">
-
-            <div class="section"></div>
-
             <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">person_add</i>&nbsp;&nbsp;Create a User</h3>
-            <div class="section"></div>
             <div class="divider"></div>
             <div class="section"></div>
 
@@ -22,26 +18,20 @@
                   <div class="row">
                       <h5>Account Details</h5><br />
                         <div class="divider"></div><br />
-
-
                     <div class="input-field col s4">
                       {{ form.username }}
-                      <label for="first_name">Username</label>
+                      <label for="{{ form.username.id_for_label }}">Username</label>
                     </div>
                   </div>
                 <div class="row">
                     <div class="input-field col s4">
-                      {{ form.password }}
-                      <label for="first_name">Password</label>
-                    </div>
-
-                    <div class="input-field col s4">
-                      {{ form.repeatPassword }}
-                      <label for="first_name">Repeat Password</label>
+                      {{ form.email }}
+                      <label for="{{ form.email.id_for_label }}">Email</label>
                     </div>
                 </div>
                 <div class="row">
                     <h5>Personal Details</h5><br />
+                    <div class="divider"></div><br />
                     <div class="input-field col s4">
                       {{ form.firstname }}
                       <label for="first_name">First Name</label>
@@ -76,6 +66,13 @@
                               </p>
                           {% endfor %}
                     </div>
+                  <div class="input-field col s4" id="licenseNumber">
+                      <label>License Number</label>
+                      <br>
+                      {{ form.licensenumber }}
+                      <br /><br /><br />
+                        <label>License Number</label>
+                  </div>
                   <div id="chooseDoctor">
                       <label>Choose Doctor</label>
                       <br>
@@ -88,14 +85,13 @@
                   </div>
                   </div><br />
                 <div class="row">
+                    <label>Sex</label>
+                        <br />
+                          {{ form.sex }}
+                </div>
+                <div class="row">
                     <h5>Contact Details</h5><br />
                         <div class="divider"></div><br />
-
-                      <div class="input-field col s4">
-                      {{ form.email }}
-                      <label for="reason">Email</label>
-                      </div>
-
                       <div class="input-field col s4">
                       {{ form.contactno }}
                       <label for="reason">Contact Number</label>
@@ -115,31 +111,30 @@
 
     <style>
 
-
-
     #chooseDoctor{
         display:none;
     }
 
-</style>
+    #licenseNumber{
+        display:none;
+    }
+
+    </style>
+
 <script>
     function show(){
         if(document.getElementById('id_usertype_0').checked){
             document.getElementById('chooseDoctor').style.display ='none';
+            document.getElementById('licenseNumber').style.display ='block';
         }
         else{
             document.getElementById('chooseDoctor').style.display = 'block';
+            document.getElementById('licenseNumber').style.display ='none';
         }
 
     }
-    document.addEventListener('DOMContentLoaded', function() {
-    var elems = document.querySelectorAll('select');
-    var instances = M.FormSelect.init(elems, options);
-  });
-
     $("#id_username").change(function () {
       var username = $(this).val();
-
       $.ajax({
         url: '{% url 'validate_username' %}',
         data: {
@@ -149,11 +144,21 @@
         success: function (data) {
           if (data.is_taken) {
             alert("A user with this username already exists.");
+            $("#id_username").val("");
           }
         }
       });
 
     });
+
+    $(document).ready(function(){
+        if("{{ message }}" != "Create user")
+            alert("{{ message }}");
+        if("{{ error }}" == 1){
+            var error = "{{ error_message }}";
+            alert(error);
+        }
+        });
 </script>
 
 {% endblock %}

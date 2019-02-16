@@ -1,15 +1,14 @@
 {% extends "home/doctorHeaderFooter.html" %}
-{% load staticfiles%}
+{% load staticfiles %}
 
 {% block content %}
-<title> OPMS - Manage Device Recording </title>
+<title> OPHM - Manage Assigned Devices</title>
     <style>
 
 
         .options{
             display:none;
         }
-
     </style>
     <script>
 $(document).ready(function () {
@@ -37,13 +36,10 @@ $(document).ready(function () {
 
     </script>
 
-                    <div class="col s12 white"><div class="col s12 m12 l12 center white">
-<div id="loading" style="display: none">Loading</div>
+    <div class="col s12 white"><div class="col s12 m12 l12 center white">
+            <div id="loading" style="display: none">Loading</div>
 
-            <div class="section"></div>
-
-            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">ballot</i>&nbsp;&nbsp; Manage Device Recording</h3>
-            <div class="section"></div>
+            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">ballot</i>&nbsp;&nbsp; Manage Assigned Devices</h3>
             <div class="divider"></div>
             <div class="section"></div>
 
@@ -53,8 +49,8 @@ $(document).ready(function () {
             <h5><b>No current patients is using a device</b></h5>
         {% else %}
              <div class="row">
-             <div class="col s4"></div>
-                 <div class="col s4">
+             <div class="col s12 m2 l4"></div>
+                 <div class="col s12 m8 l4">
                         <h5>Choose Patient:</h5><br />
                           <select class="browser-default center col s12" id="patientID">
                               {% for patientdevice in patient_device_list %}
@@ -62,11 +58,12 @@ $(document).ready(function () {
                               {% endfor %}
                           </select>
                 </div>
-             <div class="col s4"></div>
+             <div class="col s12 m2 l4"></div>
              </div>
+
              <div class="row">
-                <div class="col s3"></div>
-                <div class="col s3">
+                <div class="col s12 m2 l3"></div>
+                <div class="col s12 m4 l3">
                     <h5>Patient's Device Status:</h5><br />
                         <div id="patientDeviceStatus" class="teal lighten-5 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
                     {% with patient_device_list.all|first as patientdevice %}
@@ -79,29 +76,71 @@ $(document).ready(function () {
                     {% endwith %}
                         </div>
                 </div>
-                <div class="col s3">
+                <div class="col s12 m4 l3">
                     <h5>Duration per Recording:</h5><br />
                         <div id="patientDuration" class="teal lighten-5 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
                     {% with patient_device_list.all|first as patientdevice %}
                           <span class="teal-text"><b>{{ patientdevice.recordingduration }} seconds</b></span>
-                    {% endwith %}
                         </div>
+                    <input id="recordingduration" type="hidden" value="{{ patientdevice.recordingduration }}">
+                    {% endwith %}
                 </div>
-                <div class="col s3"></div>
+                <div class="col s12 m2 l3"></div>
             </div>
+
+            <div class="row">
+                <div class="col s12 m2 l3"></div>
+                <div class="col s12 m4 l3">
+                    <br/><small>Patient's Device's </small><br />
+                    <big><big>Min & Max Temperature:</big></big><br /><br/>
+                        <div id="patientMinMaxTemperature" class="teal lighten-4 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                        {% with patient_device_list.all|first as patientdevice %}
+                            <span class="teal-text"><b>{{ patientdevice.mintemperature }}°C</b></span>
+                        {% endwith %} - {% with patient_device_list.all|first as patientdevice %}
+                            <span class="teal-text"><b>{{ patientdevice.maxtemperature }}°C</b></span>
+                        {% endwith %}
+                        </div>
+                {% with patient_device_list.all|first as patientdevice %}
+                    <input id="mintemperature" type="hidden" value="{{ patientdevice.mintemperature }}">
+                    <input id="maxtemperature" type="hidden" value="{{ patientdevice.maxtemperature }}">
+                {% endwith %}
+                </div>
+                <div class="col s12 m4 l3">
+                    <br  /><small>Patient's Device's </small><br />
+                    <big><big>Min & Max Heart Rate:</big></big><br /><br/>
+                        <div id="patientMinMaxHeartRate" class="teal lighten-4 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                        {% with patient_device_list.all|first as patientdevice %}
+                            <span class="teal-text"><b>{{ patientdevice.minheartrate }} BPM</b></span>
+
+                        {% endwith %} - {% with patient_device_list.all|first as patientdevice %}
+                            <span class="teal-text"><b>{{ patientdevice.maxheartrate }} BPM</b></span>
+
+                        {% endwith %}
+                        </div>
+                {% with patient_device_list.all|first as patientdevice %}
+                    <input id="minheartrate" type="hidden" value="{{ patientdevice.minheartrate }}">
+                    <input id="maxheartrate" type="hidden" value="{{ patientdevice.maxheartrate }}">
+                {% endwith %}
+                </div>
+                <div class="col s12 m2 l3"></div>
+            </div>
+        <button class="btn-small" id="saveConfiguration" onclick="promptConfigurationName()">Save Configuration</button>
         {% endif %}
-        <div class="col s12 m12 l12 white center" style="padding: 0px 20px 0px 30px">
+        <div class="white center" style="padding: 0px 20px 0px 30px">
                  <div class="row">
-                    <div class="col s3"></div>
-                    <div class="col s6">
+                    <div class="col s12 m2 l4"></div>
+                    <div class="col s12 m8 l4">
                         <h5>Choose Action:</h5><br />
                         <select class="browser-default center col s12" id="typeofManage">
                             <option value="" disabled selected>Choose what to manage</option>
                             <option value="setinterval">Set Duration per Recording</option>
+                            <option value="minmaxtemp">Set Min & Max Temperature</option>
+                            <option value="minmaxheartrate">Set Min & Max Heart Rate</option>
                             <option value="startstopresume">Start or Stop Recording</option>
+                            <option value="presets">Presets</option>
                         </select>
                     </div>
-                    <div class="col s3"></div>
+                    <div class="col s12 m2 l4"></div>
                 </div>
         </div>
         </div><br />
@@ -110,32 +149,105 @@ $(document).ready(function () {
 
             <!------------------------------------- SET INTERVAL PER RECORDDING ------------------------------------------->
 
+            {% with patient_device_list.all|first as patientdevice %}
             <div id="setinterval" class="options setinterval">
             <div class="divider"></div>
                 <div class="row">
                     <h5>Set Duration per Recording</h5><br />
-                    <div class="input-field col s3"></div>
-                    <div class="input-field col s2">
-                        <input id="hours" type="number" class="validate" min="0" max="23">
+                    <div class="input-field col s12 l3"></div>
+                    <div class="input-field col s4 l2">
+                        <input id="hours" type="number" class="validate" min="0" max="23" value="0">
                         <label for="hours">Hours</label>
                     </div>
-                    <div class="input-field col s2">
-                        <input id="minutes" type="number" class="validate" min="0" max="59">
+                    <div class="input-field col s4 l2">
+                        <input id="minutes" type="number" class="validate" min="0" max="59" value="0">
                         <label for="minutes">Minutes</label>
                     </div>
-                    <div class="input-field col s2">
-                        <input id="seconds" type="number" class="validate" min="0" max="59">
+                    <div class="input-field col s4 l2">
+                        <input id="seconds" type="number" class="validate" min="0" max="59" value="0">
                         <label for="seconds">Seconds</label>
                     </div>
-                    <div class="input-field col s3s"></div>
+                    <div class="input-field col s12 l3"></div>
                 </div><br />
 
                  <center>
-                    <button class="btn-large" id="setDuration">Set Duration</button>
+                     {% if patientdevice.isrecording == 1 %}
+                         <button class="btn-large" id="setDuration" disabled>Set Duration</button>
+                     {% else %}
+                         <button class="btn-large" id="setDuration">Set Duration</button>
+                     {% endif %}
                 </center>
 
             </div>
 
+        <!------------------------------------- MIN & MAX TEMPARATURE ------------------------------------------->
+
+            <div id ="minmaxtemp" class="options minmaxtemp">
+            <div class="divider"></div><br />
+
+
+                <div class ="row">
+
+                    <h5>Set Min & Max Temperature</h5><br />
+
+                    <div class="input-field col s12 l3"></div>
+                    <div class="input-field col s6 l3">
+                        {% with patient_device_list.all|first as patientdevice %}
+                        <input value="{{ patientdevice.mintemperature }}" id="minTemp" type="number" class="validate" min="0" step=".01">
+                        <label for="minTemp">Minimum Temperature</label>
+                    </div>
+                    <div class="input-field col s6 l3">
+                        <input value="{{ patientdevice.maxtemperature }}" id="maxTemp" type="number" class="validate" min="0" step=".01">
+                        <label for="maxTemp">Maximum Temperature</label>
+                    </div>
+
+                    <div class="input-field col s12 l3"></div>
+
+                </div>
+
+                <center>
+                    {% if patientdevice.isrecording == 1 %}
+                         <button class="btn-large" id="setTemperature" disabled>Set Temperature Thresholds</button>
+                     {% else %}
+                         <button class="btn-large" id="setTemperature">Set Temperature Thresholds</button>
+                     {% endif %}
+                </center>
+
+            </div>
+
+        <!------------------------------------- MIN & MAX HEARTRATE ------------------------------------------->
+
+            <div id ="minmaxheartrate" class="options minmaxheartrate">
+            <div class="divider"></div><br />
+
+
+                <div class ="row">
+
+                    <h5>Set Min & Max of Heartrate</h5><br />
+
+                    <div class="input-field col s12 l3"></div>
+                    <div class="input-field col s6 l3">
+                        <input value="{{ patientdevice.minheartrate }}" id="minHeartrate" type="number" class="validate" min="0">
+                        <label for="minHeartrate">Mininum Heartrate</label>
+                    </div>
+                    <div class="input-field col s6 l3">
+                        <input value="{{ patientdevice.maxheartrate }}" id="maxHeartrate" type="number" class="validate" min="0">
+                        <label for="maxHeartrate">Maximum Heartrate</label>
+                    </div>
+                    <div class="input-field col s12 l3"></div>
+
+                </div>
+                        {% endwith %}
+                <center>
+                    {% if patientdevice.isrecording == 1 %}
+                         <button class="btn-large" id="setHeartRate" disabled>Set Heart Rate Thresholds</button>
+                     {% else %}
+                         <button class="btn-large" id="setHeartRate">Set Heart Rate Thresholds</button>
+                     {% endif %}
+                </center>
+
+            </div>
+            {% endwith %}
 
             <!------------------------------------- START / STOP / RESUME ------------------------------------------->
 
@@ -158,6 +270,59 @@ $(document).ready(function () {
 
             </div>
             </div>
+
+        <!------------------------------------- PRESETS ------------------------------------------->
+
+            <div id ="presets" class="options presets">
+                <div class="divider"></div><br />
+                {% if presets_list.count != 0 %}
+                    <div class="white center" style="padding: 0px 20px 0px 30px">
+                             <div class="row">
+                                <div class="col s12 m2 l4"></div>
+                                <div class="col s12 m8 l4">
+                                    <h5>Presets:</h5>
+                                    <select class="browser-default center col s12" id="presetID">
+                                        {% for preset in presets_list %}
+                                            <option value="{{ preset.presetid }}">{{ preset.presetname }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col s12 m2 l4"></div>
+                            </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12 l3"></div>
+                        {% with presets_list|first as preset %}
+                        <div class="input-field col s4 l2">
+                            <input disabled id="configurationDuration" type="text" class="validate" value="{{ preset.recordingduration }} seconds">
+                            <label for="hours">Duration per Recording</label>
+                            <input id="configurationDurationValue" type="hidden" value="{{ preset.recordingduration }}">
+                        </div>
+                        <div class="input-field col s4 l2">
+                            <input disabled id="configurationTemperature" type="text" class="validate" value="{{ preset.mintemperature }}°C - {{ preset.maxtemperature }}°C">
+                            <label for="minutes">Min & Max Temperature</label>
+                            <input id="configurationTemperatureMinValue" type="hidden" value="{{ preset.mintemperature }}">
+                            <input id="configurationTemperatureMaxValue" type="hidden" value="{{ preset.maxtemperature }}">
+                        </div>
+                        <div class="input-field col s4 l2">
+                            <input disabled id="configurationHeartrate" type="text" class="validate" value="{{ preset.minheartrate }} BPM - {{ preset.maxheartrate }} BPM">
+                            <label for="minutes">Min & Max Heart Rate</label>
+                            <input id="configurationHeartrateMinValue" type="hidden" value="{{ preset.minheartrate }}">
+                            <input id="configurationHeartrateMaxValue" type="hidden" value="{{ preset.maxheartrate }}">
+                        </div>
+                        {% endwith %}
+                        <div class="input-field col s12 l3"></div>
+                    </div>
+                    {% if patientdevice.isrecording == 1 %}
+                         <button class="btn-large" id="loadConfiguration" disabled>Load Configuration</button>
+                     {% else %}
+                         <button class="btn-large" id="loadConfiguration">Load Configuration</button>
+                     {% endif %}
+
+                {% endif %}
+            </div>
+
+
         </div>
         <br />
         <section></section>
@@ -166,6 +331,39 @@ $(document).ready(function () {
 
 
 <script>
+    function promptConfigurationName(){
+        var name = prompt("Please enter configuration name");
+        if (name != null) {
+          var recordingduration = $("#recordingduration").val();
+          var mintemperature = $("#mintemperature").val();
+          var maxtemperature = $("#maxtemperature").val();
+          var minheartrate = $("#minheartrate").val();
+          var maxheartrate = $("#maxheartrate").val();
+
+          $.ajax({
+            url: '{% url 'save_configuration' %}',
+            data: {
+              'presetname': name,
+              'doctorid': {{ doctorid }},
+              'recordingduration': recordingduration,
+              'mintemperature': mintemperature,
+              'maxtemperature': maxtemperature,
+              'minheartrate': minheartrate,
+              'maxheartrate': maxheartrate,
+            },
+            dataType: 'json',
+            success: function (data) {
+                for(let i = 0; i < data.length; i++){
+                    alert(data[i]);
+                }
+                location.reload();
+
+            }
+
+          });
+        }
+    }
+
       $("#stopresume").click(function() {
           var data = $(this).val();
           var deviceid = $("#patientID").val();
@@ -203,25 +401,95 @@ $(document).ready(function () {
           var seconds = $("#seconds").val();
           var deviceid = $("#patientID").val();
 
-        $.ajax({
-        url: '{% url 'set_recording_duration' %}',
-        data: {
-          'deviceid': deviceid,
-          'hours': hours,
-          'minutes': minutes,
-          'seconds': seconds,
-        },
-        dataType: 'json',
-        success: function (data) {
-            for(let i = 0; i < data.length; i++){
-                alert(data[i].response);
-            }
-            location.reload();
+          if(hours == "" || minutes == "" || seconds == "")
+              alert("Put values for all hours, minutes, and seconds");
+          else if(hours < 0 || minutes < 0 || seconds < 0)
+              alert("Values can't be lower than zero");
+          else if(hours == 0 && minutes == 0 && seconds == 0)
+              alert("Values can't all be zero");
+          else{
+              $.ajax({
+                url: '{% url 'set_recording_duration' %}',
+                data: {
+                  'deviceid': deviceid,
+                  'hours': hours,
+                  'minutes': minutes,
+                  'seconds': seconds,
+                },
+                dataType: 'json',
+                success: function (data) {
+                    for(let i = 0; i < data.length; i++){
+                        alert(data[i].response);
+                    }
+                    location.reload();
 
-        }
+                }
 
-        });
+              });
+          }
 
+
+      });
+
+      $("#setTemperature").click(function() {
+          var minTemp = $("#minTemp").val();
+          var maxTemp = $("#maxTemp").val();
+          var deviceid = $("#patientID").val();
+
+          if(minTemp == "" || maxTemp == "")
+              alert("Put values for all hours, minutes, and seconds");
+          else if(minTemp < 0 || maxTemp < 0)
+              alert("Values can't be lower than zero");
+          else if(minTemp == 0 && maxTemp == 0)
+              alert("Values can't all be zero");
+          else{
+              $.ajax({
+                url: '{% url 'set_min_max_temperature' %}',
+                data: {
+                  'deviceid': deviceid,
+                  'mintemp': minTemp,
+                  'maxtemp': maxTemp,
+                },
+                dataType: 'json',
+                success: function (data) {
+                    for(let i = 0; i < data.length; i++){
+                        alert(data[i].response);
+                    }
+                    location.reload();
+                }
+              });
+          }
+
+      });
+
+      $("#setHeartRate").click(function() {
+          var minHeartrate = $("#minHeartrate").val();
+          var maxHeartrate = $("#maxHeartrate").val();
+          var deviceid = $("#patientID").val();
+
+          if(minHeartrate == "" || maxHeartrate == "")
+              alert("Put values for all hours, minutes, and seconds");
+          else if(minHeartrate < 0 || maxHeartrate < 0)
+              alert("Values can't be lower than zero");
+          else if(minHeartrate == 0 && maxHeartrate == 0)
+              alert("Values can't all be zero");
+          else{
+              $.ajax({
+                url: '{% url 'set_min_max_heartrate' %}',
+                data: {
+                  'deviceid': deviceid,
+                  'minheartrate': minHeartrate,
+                  'maxheartrate': maxHeartrate,
+                },
+                dataType: 'json',
+                success: function (data) {
+                    for(let i = 0; i < data.length; i++){
+                        alert(data[i].response);
+                    }
+                    location.reload();
+                }
+              });
+          }
       });
 
       $("#startTime").change(function() {
@@ -242,6 +510,20 @@ $(document).ready(function () {
 
                 var patientDeviceStatus = "";
                 var duration = "<span class=\"teal-text\"><b>"+data[0].duration+" seconds</b></span>";
+                $("#recordingduration").val(data[0].duration);
+
+                var minMaxTemperature = "<span class=\"teal-text\"><b>"+data[0].mintemperature+"°C</b></span>";
+                $("#mintemperature").val(data[0].mintemperature);
+                minMaxTemperature += " - ";
+                minMaxTemperature += "<span class=\"teal-text\"><b>"+data[0].maxtemperature+"°C</b></span>";
+                $("#maxtemperature").val(data[0].maxtemperature);
+
+                var minMaxHeartRate = "<span class=\"teal-text\"><b>"+data[0].minheartrate+" BPM</b></span>";
+                $("#minheartrate").val(data[0].minheartrate);
+                minMaxHeartRate += " - ";
+                minMaxHeartRate += "<span class=\"teal-text\"><b>"+data[0].maxheartrate+" BPM</b></span>";
+                $("#maxheartrate").val(data[0].maxheartrate);
+
                 var button = "<center>";
 
                 if(data[0].status == 0){
@@ -251,16 +533,78 @@ $(document).ready(function () {
                 else{
                     patientDeviceStatus += "<span class=\"teal-text\"><b>Device is currently Recording</b></span>";
                     button += "<button class=\"btn-large\" id=\"stopresume\" value=1>Stop Recording</button>"
+                    $("#setDuration").attr("disabled");
+                    $("#setTemperature").attr("disabled");
+                    $("#setHeartRate").attr("disabled");
+                    $("#loadConfiguration").attr("disabled");
                 }
                 button += "</center>";
 
                 $("#patientDeviceStatus").html(patientDeviceStatus);
                 $("#manageRecord").html(button);
                 $("#patientDuration").html(duration);
+                $("#patientMinMaxTemperature").html(minMaxTemperature );
+                $("#patientMinMaxHeartRate").html(minMaxHeartRate);
+
+                $("#minHeartrate").val(data[0].minheartrate);
+                $("#maxHeartrate").val(data[0].maxheartrate);
+                $("#minTemp").val(data[0].mintemperature);
+                $("#maxTemp").val(data[0].maxtemperature);
                 }
 
             });
 
+      });
+
+      $("#presetID").change(function() {
+          var presetID = $("#presetID").val();
+
+          $.ajax({
+            url: '{% url 'check_preset' %}',
+            data: {
+              'presetID': presetID
+            },
+            dataType: 'json',
+            success: function (data) {
+                $("#configurationDuration").val(data[0].recordingduration + " seconds");
+                $("#configurationTemperature").val(data[0].mintemperature + "°C - " + data[0].maxtemperature + "°C");
+                $("#configurationHeartrate").val(data[0].minheartrate + " BPM - " + data[0].maxheartrate + " BPM");
+                $("#configurationDurationValue").val(data[0].recordingduration);
+                $("#configurationTemperatureMinValue").val(data[0].mintemperature);
+                $("#configurationTemperatureMaxValue").val(data[0].maxtemperature);
+                $("#configurationHeartrateMinValue").val(data[0].minheartrate);
+                $("#configurationHeartrateMaxValue").val(data[0].maxheartrate);
+                }
+            });
+      });
+
+
+      $("#loadConfiguration").click(function() {
+          var duration = $("#configurationDurationValue").val();
+          var minTemperature = $("#configurationTemperatureMinValue").val();
+          var maxTemperature = $("#configurationTemperatureMaxValue").val();
+          var minHeartrate = $("#configurationHeartrateMinValue").val();
+          var maxHeartrate = $("#configurationHeartrateMaxValue").val();
+          var deviceid = $("#patientID").val();
+
+          $.ajax({
+            url: '{% url 'load_preset' %}',
+            data: {
+              'deviceid': deviceid,
+              'duration': duration,
+              'mintemperature': minTemperature,
+              'maxtemperature': maxTemperature,
+              'minheartrate': minHeartrate,
+              'maxheartrate': maxHeartrate,
+            },
+            dataType: 'json',
+            success: function (data) {
+                for(let i = 0; i < data.length; i++){
+                    alert(data[i].response);
+                }
+                location.reload();
+            }
+          });
       });
 
 </script>

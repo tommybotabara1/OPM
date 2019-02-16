@@ -25,7 +25,7 @@ SECRET_KEY = '^a7x282mr@!)@wo@$nhje%a&lza-w!tn@6yt+%40_03yui2wyp'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.15', 'localhost', '127.0.0.1', 'opms.me']
+ALLOWED_HOSTS = ['192.168.0.194', 'localhost', '127.0.0.1', 'opms.me', '10.100.207.54']
 
 
 # Application definition
@@ -134,3 +134,9 @@ USE_TZ = False
 STATIC_URL = '/static/'
 
 LOGIN_URL = 'index'
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'tommybotabara@gmail.com'
+EMAIL_HOST_PASSWORD = 'taeka123'
+EMAIL_PORT = 587

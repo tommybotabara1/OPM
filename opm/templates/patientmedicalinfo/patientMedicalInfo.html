@@ -1,8 +1,8 @@
-{% extends "home/doctorHeaderFooter.html" %}
+{% extends base_template %}
 {% load staticfiles%}
 
 {% block content %}
-        <title> OPMS - Patient's Medical History </title>
+        <title> OPHM - Patient's Medical History </title>
 
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <div class="col s12 white">
@@ -22,7 +22,7 @@
 
             </div>
             {% if patientmedicalinfo == -1 %}
-                <center><h5>Wala pang values</h5></center>
+                <center><h5>Patient has no recorded medical history</h5></center>
             {% else %}
                 <div class="col s12 m12 l12  white" style="padding: 0px 70px 0px 70px">
 
@@ -32,8 +32,16 @@
                        <div class="col s2">
                            <b>Date:</b> {{ patientmedicalinfo.date|date:"F j, Y" }}
                        </div>
-                       <div class="col s6 center">
+                       <div class="col s3 center">
                            <b>Patient's Name:</b> {{ patient.userid.auth_user_id.first_name }} {{ patient.userid.middlename}} {{ patient.userid.auth_user_id.last_name }}
+                       </div>
+                        <div class="col s3 center">
+                           <b>Sex:</b>
+                            {% if patient.userid.sex == "M" %}
+                                Male
+                            {% else %}
+                                Female
+                            {% endif %}
                        </div>
                        <div class="col s2">
                            <b>Birthday:</b> {{ patient.userid.birthday }}
@@ -92,13 +100,13 @@
 
            </div>
             {% endif %}
-        <div class ="row" style="padding-left: 5%; padding-top: 3%;">
+        <div class ="row align-left" style="padding-left: 5%; padding-top: 3%;">
                 {% if pagefrom == 1 %}
-                    <center><a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a></center>
+                    <a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% elif pagefrom == 2 %}
-                    <center><a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a></center>
+                    <a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% else %}
-                    <center><a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a></center>
+                    <a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% endif %}
 	    </div>
 

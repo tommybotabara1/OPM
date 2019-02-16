@@ -16,7 +16,7 @@
 <body>
   <div class="section"></div>
   <div class="section"></div>
-  <div class="section"></div>    
+  <div class="section"></div>
     <main>
     <center>
       <div class="container">
@@ -28,14 +28,22 @@
             </div>
             <div class='row'>
               <div class='input-field col m12 s12'>
-                <label for='text'>Enter OTP:</label>
+                Thank you for your email confirmation. <br>
+                Please enter password:
               </div>
             </div>
-
             <div class='row'>
               <div class='input-field col m12 s12'>
                 <i class="material-icons iconis prefix">lock</i>
-                <input type="text" name="password" required="" id="otp" max="6">
+                <input type="password" name="password" required="" id="password">
+                  <label for='password'>Password</label>
+              </div>
+            </div>
+             <div class='row'>
+              <div class='input-field col m12 s12'>
+                <i class="material-icons iconis prefix">lock</i>
+                <input type="password" name="repeatpassword" required="" id="repeatpassword">
+                  <label for='repeatpassword'>Repeat Password</label>
               </div>
             </div>
             <br />
@@ -58,21 +66,30 @@
 
 <script>
     $("#submitButton").click(function() {
-        if($("#otp").val() == ""){
-            alert("No OTP entered!")
-        }
-        else{
-            window.location = "/adminauthenticate/" + $("#otp").val();
-        }
+        var user_id = {{ user.id }};
+        var password = $("#password").val();
+        var repeatpassword = $("#repeatpassword").val();
+
+        $.ajax({
+            url: '{% url 'user_account_activation_set_password' %}',
+            data: {
+              'user_id': user_id,
+              'password': password,
+              'repeatpassword': repeatpassword,
+            },
+            dataType: 'json',
+            success: function (data) {
+                if(data[0] == "Account activated"){
+                    alert(data[0]);
+                    window.location = "/";
+                }
+                else{
+                    alert(data[0]);
+                    location.reload();
+                }
+            }
+
+        });
     })
 </script>
-
-<script type="text/javascript">
-  setTimeout(function(){
-      alert("Authentication failed. Please try again");
-    location = '/'
-  },60000)
-</script>
-
-
 </html>

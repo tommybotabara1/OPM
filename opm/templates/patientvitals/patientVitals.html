@@ -1,11 +1,11 @@
-{% extends "home/doctorHeaderFooter.html" %}
+{% extends base_template %}
 {% load staticfiles%}
 
 {% block content %}
     {% if pagefrom == 1 %}
-        <title> OPMS - View Latest Vitals </title>
+        <title> OPHM - View Latest Vitals </title>
     {% else %}
-        <title> OPMS - Patient Vitals Record </title>
+        <title> OPHM - Patient Vitals Record </title>
     {% endif %}
 
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
@@ -14,6 +14,8 @@
     <script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
     <script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
     <link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
 
     <style>
         #chartdiv2 {
@@ -24,8 +26,20 @@
             width	: 100%;
             height	: 300px;
         }
+        select{
+            display: block;
+        }
 
     </style>
+    <script>
+        $(document).ready(function () {
+            $(document).ajaxStart(function () {
+                $("#loading").show();
+            }).ajaxStop(function () {
+                $("#loading").hide();
+            });
+        });
+    </script>
     <script>
         var chart = AmCharts.makeChart("chartdiv2", {
         "type": "serial",
@@ -94,7 +108,7 @@
             "axisAlpha": 0
         }],
         "graphs": [{
-            "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] bpm</span></b>",
+            "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] BPM</span></b>",
             "bullet": "round",
             "bulletSize": 6,
             "connect": false,
@@ -131,7 +145,9 @@
                     var dps = [];
                     var dataPointsArray = [
                         {% for ecg_data in ecg_list %}
-                            {{ ecg_data.data }},
+                            {% if ecg_data.data < 1000 %}
+                                {{ ecg_data.data }},
+                            {% endif %}
                         {% endfor %}
                     ];
 
@@ -146,6 +162,7 @@
                               text: "{{ first_ecg.timestamp|date:"h:i:s A" }} - {{ latest_ecg.timestamp|date:"h:i:s A" }}",
                               {% endwith %}
                               horizontalAlign: "center",
+                              fontSize: 20
                             },
                                 ],
                           axisY:{
@@ -196,18 +213,7 @@
 
 
         <div class="col s12 m12 l12  white">
-
             <div class="row center">
-                <br>
-                {% if pagefrom == 1 %}
-                    <a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
-                {% elif pagefrom == 2 %}
-                    <a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
-                {% else %}
-                    <a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
-                {% endif %}
-
-                <div class="section"></div>
                 <div class="col s3"></div>
                 <div class="col s6">
 
@@ -222,22 +228,23 @@
                 </div>
                 <div class="col s3"></div>
             </div>
-            <div class="section"></div>
             <div class="divider"></div>
-            <div class="section"></div>
 
             {% if latest_ecg == -1 %}
                 <center><h5>No recorded vitals!</h5></center>
             {% elif latest_ecg == -2 %}
                 <center><h5>No recorded vitals today!</h5></center>
                 <center>Click <a href="{% url 'patientrecords' patient.patientid %}">here</a> to view previous records.</center>
+            {% elif patient.restrictvitalsinformationaccess == 1 %}
+                <center><h4>Access to vitals records restricted by the patient</h4></center>
             {% else %}
                 <div class="row white" style="margin: 10px">
                 <div class="col s12 white center">
-                    <h5 class="center"><b>{{ patient.userid.auth_user_id.last_name }}, {{ patient.userid.auth_user_id.first_name }}</b></h5>
+                    <h4 class="center"><b>{{ patient.userid.auth_user_id.first_name }} {{ patient.userid.middlename }} {{ patient.userid.auth_user_id.last_name }}</b></h4>
                     {% if pagefrom == 1 %}
-                        Date: <b> {% now "F j, Y" %} </b>
+                        Date: <b> {% now "F j, Y" %} </b><br>
                     {% endif %}
+                    Vitals recorded using <b>Device {{ patient_device.device_deviceid.deviceid }}</b>
                     <h6 class="center green lighten-4">ECG</h6>
                     <select class="browser-default" id="batchTime">
                             <option value="-1" disabled selected>Select Time (by batch)</option>
@@ -246,29 +253,259 @@
                             {% endfor %}
                     </select>
                     <input id="batch" type="hidden" value="{{ ecg_list.count }}">
+                    <br>
                     <a id="prevECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count == 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_before</i></a>
                     <a id="nextECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count < 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_next</i></a>
+                    <br>
+                    <div id="loading" style="display: none">Loading</div>
                     <div id="ecgChart" style="height: 400px; width: 100%;"></div>
+                    <button id="ecgComments" class="waves-effect waves-light btn center">comments</button>
+                    <br><br>
                     <div class="col s12 center green lighten-4">
                         <h5 class="center"><b>Heart rate</b></h5>
                         <div id="chartdiv3" style="background-color: #fff;"></div>
                         <br>
+                        <button id="heartRateComments" class="waves-effect waves-light btn center">comments</button>
+                        <br><br>
                     </div>
                     <div class="col s12 center green lighten-5">
                         <h5 class="center"><b>Temperature</b></h5>
                         <div id="chartdiv2" style="background-color: #fff;"></div>
                         <br>
+                        <button id="temperatureComments" class="waves-effect waves-light btn center">comments</button>
+                        <br><br>
                     </div>
                 </div>
             </div>
             {% endif %}
-
-
-
+        <div class="align-left" style="padding: 2%">
+            {% if pagefrom == 1 %}
+                <a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn center"><i class="material-icons left">keyboard_backspace</i>go back</a>
+            {% elif pagefrom == 2 %}
+                <a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
+            {% elif pagefrom == 3 %}
+                <a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
+            {% else %}
+                <a href="{% url 'notifications' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
+            {% endif %}
+        </div>
         </div>
             <div class="section"></div><div class="section"></div>
+<!--------------------------------------- ALL MODALS ARE HERE ---------------------------------------------------->
+            <div id="ecgCommentsModal" class="modal">
+                <div class="modal-content">
+                  <h4>Doctor's comments (ECG)</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+                        <table id="ecgCommentsTable" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in comments %}
+                                    {% if comment.typeofvital.type == "ECG" %}
+                                        <tr>
+                                            <td>{{ comment.comment }}</td>
+                                            <td>{{ comment.timestamp|date:"h:i:s A" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% if pagefrom != 3 %}
+                        <input id="ecgComment" placeholder="Enter comment here"><button id="addEcgComment" class="waves-effect waves-light btn">Add comment</button>
+                    {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div id="heartRateCommentsModal" class="modal">
+                <div class="modal-content">
+                  <h4>Doctor's comments (Heart rate)</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+                        <table id="heartRateCommentsTable" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in comments %}
+                                    {% if comment.typeofvital.type == "Heart rate" %}
+                                        <tr>
+                                            <td>{{ comment.comment }}</td>
+                                            <td>{{ comment.timestamp|date:"h:i:s A" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% if pagefrom == 3 %}
+                        <input id="heartRateComment" placeholder="Enter comment here"><button id="addHeartRateComment" class="waves-effect waves-light btn">Add comment</button>
+                    {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div id="temperatureCommentsModal" class="modal">
+                <div class="modal-content">
+                  <h4>Doctor's comments (Temperature)</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+                        <table id="temperatureCommentsTable" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in comments %}
+                                    {% if comment.typeofvital.type == "Temperature" %}
+                                        <tr>
+                                            <td>{{ comment.comment }}</td>
+                                            <td>{{ comment.timestamp|date:"h:i:s A" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% if pagefrom == 3 %}
+                        <input id="temperatureComment" placeholder="Enter comment here"><button id="addTemperatureComment" class="waves-effect waves-light btn">Add comment</button>
+                    {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                    </div>
+                </div>
+                </div>
+            </div>
 
+            <!---------------------------------------------------------------------------------------------------------------->
 <script>
+    $(document).ready(function(){
+            $('.modal').modal();
+            //$('#infoUser').modal('open');
+            $('#ecgCommentsTable').DataTable({
+                "order": [[ 1, "desc" ]]
+            });
+            $('#heartRateCommentsTable').DataTable({
+                "order": [[ 1, "desc" ]]
+            });
+            $('#temperatureCommentsTable').DataTable({
+                "order": [[ 1, "desc" ]]
+            });
+    });
+    $('#addEcgComment').on( 'click', function () {
+        var t = $('#ecgCommentsTable').DataTable();
+        var comment = $("#ecgComment").val();
+        var timestamp = "{% now "Y-m-d H:i:s" %}";
+
+        if(comment != "" && comment != null){
+            t.row.add( [
+                comment,
+                "{% now "h:i:s A" %}"
+            ] ).draw( false );
+
+            $.ajax({
+                url: '{% url 'add_comment' %}',
+                data: {
+                  'comment': comment,
+                  'timestamp': timestamp,
+                  'typeofvital': 1,
+                  'patientdeviceid': {{ patient_device.patientdeviceid }},
+                },
+                dataType: 'json',
+                success: function (data) {
+                    $("#ecgComment").val("");
+                }
+            });
+        }
+        else{
+            alert("No comment input!")
+        }
+
+    });
+    $('#addHeartRateComment').on( 'click', function () {
+        var t = $('#heartRateCommentsTable').DataTable();
+        var comment = $("#heartRateComment").val();
+        var timestamp = "{% now "Y-m-d H:i:s" %}";
+
+        if(comment != "" && comment != null){
+            t.row.add( [
+                comment,
+                "{% now "h:i:s A" %}"
+            ] ).draw( false );
+
+            $.ajax({
+                url: '{% url 'add_comment' %}',
+                data: {
+                  'comment': comment,
+                  'timestamp': timestamp,
+                  'typeofvital': 2,
+                  'patientdeviceid': {{ patient_device.patientdeviceid }},
+                },
+                dataType: 'json',
+                success: function (data) {
+                    $("#heartRateComment").val("");
+                }
+            });
+        }
+        else{
+            alert("No comment input!")
+        }
+
+    });
+    $('#addTemperatureComment').on( 'click', function () {
+        var t = $('#temperatureCommentsTable').DataTable();
+        var comment = $("#temperatureComment").val();
+        var timestamp = "{% now "Y-m-d H:i:s" %}";
+
+        if(comment != "" && comment != null){
+            t.row.add( [
+                comment,
+                "{% now "h:i:s A" %}"
+            ] ).draw( false );
+
+            $.ajax({
+                url: '{% url 'add_comment' %}',
+                data: {
+                  'comment': comment,
+                  'timestamp': timestamp,
+                  'typeofvital': 3,
+                  'patientdeviceid': {{ patient_device.patientdeviceid }},
+                },
+                dataType: 'json',
+                success: function (data) {
+                    $("#temperatureComment").val("");
+                }
+            });
+        }
+        else{
+            alert("No comment input!")
+        }
+
+    });
+    $("#ecgComments").click(function() {
+        $('#ecgCommentsModal').modal('open');
+    });
+    $("#heartRateComments").click(function() {
+        $('#heartRateCommentsModal').modal('open');
+    });
+    $("#temperatureComments").click(function() {
+        $('#temperatureCommentsModal').modal('open');
+    });
     $("#nextECG").click(function() {
         var currentBatch = $("#batch").val();
         var direction = 1;
@@ -290,7 +527,8 @@
             var timeRange = data[0].time + " - " + data[data.length - 1].time;
 
             for(let i = 0; i < data.length; i++){
-                dataPointsArray.push(data[i].value)
+                if(data[i].value < 1000)
+                    dataPointsArray.push(data[i].value)
             }
 
             $("#prevECG").attr("disabled", false);
@@ -312,6 +550,7 @@
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
+                      fontSize: 20
                     },
                         ],
                   axisY:{
@@ -384,7 +623,8 @@
             var timeRange = data[0].time + " - " + data[data.length - 1].time;
 
             for(let i = 0; i < data.length; i++){
-                dataPointsArray.push(data[i].value)
+                if(data[i].value < 1000)
+                    dataPointsArray.push(data[i].value)
             }
 
             $("#nextECG").attr("disabled", false);
@@ -409,6 +649,7 @@
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
+                      fontSize: 20
                     },
                         ],
                   axisY:{
@@ -481,7 +722,8 @@
             var timeRange = data[0].time + " - " + data[data.length - 1].time;
 
             for(let i = 0; i < data.length; i++){
-                dataPointsArray.push(data[i].value)
+                if(data[i].value < 1000)
+                    dataPointsArray.push(data[i].value)
             }
 
             if(data.length % 1000 == 0){
@@ -507,6 +749,7 @@
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
+                      fontSize: 20
                     },
                         ],
                   axisY:{

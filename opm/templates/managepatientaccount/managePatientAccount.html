@@ -3,58 +3,68 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title> OPMS - Manage Account </title>
+    <title> OPHM - Manage Account </title>
 <div class="col s12 m12 l12 center white">
             <div class="row">
-                <div class="section"></div>
                 <div class="col s3"></div>
                 <div class="col s6">
                     <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">create</i>&nbsp;&nbsp; Manage Account</h3>
                 </div>
                 <div class="col s3"></div>
             </div>
-            <div class="section"></div>
             <div class="divider"></div>
-            <div class="section"></div>
-
         </div>
 
 
-        <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px;">
+        <div class="white" style="padding: 0px 40px 0px 40px;">
             <div class ="row">
-                <div class="input-field col s3">
+                <div class="input-field col s6 m6 l3">
                     <big><b>Full Name</b></big><br />
                     <p>{{ user_object.auth_user_id.first_name }} {{ user_object.middlename }} {{ user_object.auth_user_id.last_name }}</p>
                 </div>
-                <div class="input-field col s3">
+                <div class="input-field col s6 m6 l3">
                     <big><b>Username</b></big><br />
                     <p>{{ user_object.auth_user_id.username }}</p>
                 </div>
-                <div class="input-field col s3">
-                    <big><b>Assigned Doctor</b></big><br />
-                    <p>Dr. {{ patient_object.doctorid.userid.auth_user_id.first_name }} {{ patient_object.doctorid.userid.auth_user_id.last_name }}</p>
-                </div>
-                <div class="input-field col s3">
+                <div class="input-field col s6 m6 l3">
                     <big><b>Blood Type</b></big><br />
                     <p>{{ patient_object.bloodtype }}</p>
                 </div>
+                <div class="input-field col s6 m6 l3">
+                    <big><b>Sex</b></big><br />
+                    <p>{{ patient_object.userid.sex }}</p>
+                </div>
+            </div>
+            <div class ="row">
+                <div class="input-field col s6 m6 l3">
+                    <big><b>Assigned Doctor</b></big><br />
+                    <p>Dr. {{ patient_object.doctorid.userid.auth_user_id.first_name }} {{ patient_object.doctorid.userid.auth_user_id.last_name }}</p>
+                </div>
+                <div class="input-field col s6 m6 l3">
+                    <big><b>Assigned Doctor's Contact Number</b></big><br />
+                    <p>{{ patient_object.doctorid.userid.contactno }}</p>
+                </div>
+                <div class="input-field col s6 m6 l3">
+                    <big><b>Assigned Doctor's Email</b></big><br />
+                    <p>{{ patient_object.doctorid.userid.auth_user_id.email }}</p>
+                </div>
             </div>
             <div class="row">
-                <div class="input-field col s4">
-                      <input placeholder="ex: 1998-05-27" value="{{ user_object.birthday|date:"Y-m-d" }}" id="birthday" type="text" class="validate">
+                <div class="input-field col s12 m4 l4">
+                      <input placeholder="ex: 1998-05-27" value="{{ user_object.birthday|date:"Y-m-d" }}" id="birthday" type="date" class="validate">
                       <label for="birthday">Date of Birth</label>
                 </div>
-                <div class="input-field col s4">
+                <div class="input-field col s12 m4 l4">
                       <input value="{{ user_object.contactno }}" id="contactNo" type="number" class="validate">
                       <label for="birthday">Contact Number</label>
                 </div>
-                <div class="input-field col s4">
+                <div class="input-field col s12 m4 l4">
                       <input value="{{ user_object.auth_user_id.email }}" id="email" type="email" class="validate">
                       <label for="birthday">Email Address</label>
                 </div>
             </div>
             <div class="row">
-                    <div class="input-field col s4">
+                    <div class="input-field col s12 m4 l4">
                             <div id="chooseBloodType">
                                 <label>Change Blood Type</label>
                                 <br />
@@ -67,37 +77,51 @@
                                     </select>
                             </div>
                     </div>
+                    <div class="input-field col s12 m4 l4">
+                            <div id="chooseBloodType">
+                                <label>Change Sex</label>
+                                <br />
+                                    <select id="sex" class="browser-default col s12">
+                                        <option value="" disabled selected>Change Sex</option>
+                                        <option value="M">Male</option>
+                                        <option value="F">Female</option>
+                                    </select>
+                            </div>
+                    </div>
+            </div>
+            <div class="row">
+
             </div>
             <div class="row" id="changeButton">
-                <button id="changePassword" name='btn_login' class='col s4 btn btn-large waves-effect' value="1">Change password</button>
+                <button id="changePassword" name='btn_login' class='col s12 m4 l4 btn btn-small waves-effect' value="1">Change password</button>
             </div>
-            <div class="row" id="passwordRow" style="visibility: hidden">
-                <div class="input-field col s4">
+            <div class="row" id="passwordRow" style="display: none">
+                <div class="input-field col s12 m4 l4">
                     <input value="-1" id="password" type="password" class="validate">
                     <label for="password">New Password</label>
                 </div>
-                <div class="input-field col s4">
+                <div class="input-field col s12 m4 l4">
                     <input value="-1" id="repeatpassword" type="password" class="validate">
                     <label for="repeatpassword">Repeat New Password</label>
                 </div>
             </div>
             <br /><center>
             <button id="save" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Save Changes</button>
-            </center><br />
+            </center>
             <div class="section"></div>
 
         </div>
     <script>
         $("#changePassword").click(function() {
             if($("#changePassword").val() == "1"){
-                $("#passwordRow").attr('style', "visibility: visible");
+                $("#passwordRow").attr('style', "display: block");
                 $("#password").attr('value', null);
                 $("#repeatpassword").attr('value', null);
                 $("#changePassword").val("0");
                 $("#changePassword").html('Cancel change password');
             }
             else{
-                $("#passwordRow").attr('style', "visibility: hidden");
+                $("#passwordRow").attr('style', "display: none");
                 $("#password").attr('value', "-1");
                 $("#repeatpassword").attr('value', "-1");
                 $("#changePassword").val("1");
@@ -113,7 +137,11 @@
             var email = $("#email").val();
             var password = $("#password").val();
             var repeatpassword = $("#repeatpassword").val();
-            var bloodtype = $('#bloodType').val()
+            var bloodtype = $('#bloodType').val();
+            var sex = $('#sex').val();
+
+            if(sex == null)
+                sex = -1;
 
             if(bloodtype == null)
                 bloodtype = -1;
@@ -129,7 +157,8 @@
                   'email': email,
                   'password': password,
                   'repeatpassword': repeatpassword,
-                  'bloodtype': bloodtype
+                  'bloodtype': bloodtype,
+                  'sex': sex,
                 },
                 dataType: 'json',
                 success: function (data) {

@@ -2,45 +2,143 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title>OPMS</title>
-
-    <div class="row white">
+    <title>OPHM - Homepage</title>
+    <script>
+        $(document).ready(function () {
+            $(document).ajaxStart(function () {
+                $("#loading").show();
+            }).ajaxStop(function () {
+                $("#loading").hide();
+            });
+        });
+    </script>
+    <div class ="white">
+            <div class="row white">
 
                 <div class="col s12 m12 l12 center">
-
-                    <div class="section"></div>
-
-                    <h3 id="greeting">Good day, Doctor {{ user_details.auth_user_id.last_name}}!</h3>
+                <div id="loading" style="display: none">Loading</div>
+                    <h3 id="greeting">Welcome, Doctor {{ user_details.auth_user_id.last_name}}!</h3>
                     What do you want to do today?<br/>
                     <div class="section"></div>
                     <div class="divider"></div>
-                    <div class="section"></div>
-
                 </div>
 
-                <div class="col s6 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
-
-                    <a href="{% url 'viewassignedpatients'%}"><img class="responsive-image" src="{% static 'img/viewlistofusers.png' %}" height="200px;"/></a>
-                    <div class="section"></div>
-                    <h6 id="greeting">View Assigned Patients</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, dapat naka-under na dito yung View Patient Medical Record + View Patient Records? Sorry bobo
-                    </p>
-
-                </div>
-
-                <div class="col s6 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
-
-                    <a href="{% url 'managedevicerecording' %}"><img class="responsive-image" src="{% static 'img/manageDeviceRecords.png' %}" height="200px;"/></a>
-                    <div class="section"></div>
-                    <h6 id="greeting">Manage Device Recording</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-                </div>
-
+            </div>
         </div>
-    
 
+        <div class="white">
+            <div class ="row" style="padding: 20px;">
+
+                <div class="col s12 m2 l2"></div>
+                <div class="col s12 m4 l4">
+
+                    <h5><i class="material-icons left">access_time</i><b>Clock</b></h5><br/>
+
+                    <div class="col s12 yellow lighten-3 z-depth-1 center" style="padding: 2%; border-radius: 10px;">
+
+                        <h6><center>{% now "F t, Y" %}</center></h6>
+                        <big><b><p id="txt" align="center"></p></b></big>
+
+                    </div>
+
+                </div>
+                <div class="col s12 m4 l4 white">
+
+                    <h5><i class="material-icons left">notification_important</i><b>Notifications</b></h5><br/>
+
+                    <div class="col s12 green lighten-2 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                         <span class="white-text">
+                             <b id="notificationCountDashboard"> No notifications.</b><br/>
+                             <br/><div class="right"><a href="{% url 'notifications' %}" class="waves-effect waves-light btn green darken-2">View All</a>
+                            </div>
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="col s12 m2 l2"></div>
+
+            </div>
+
+            <div class="row" style="padding: 20px;">
+                <div class="col s12 m6 l6 white">
+
+                    <h5><i class="material-icons left">group</i><b>Assigned Patients</b></h5>
+                    Last Recorded Vitals
+
+                    <div class ="col s12">
+                        <center>
+                        <table class="centered">
+
+                            <thead><tr>
+
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Name</th>
+                                <th>Action</th>
+                            </tr></thead>
+                            <tbody>
+                                {% for patientdevice in patient_device_list %}
+                                    <tr>
+                                        {% if patientdevice.ecg_set.last is none %}
+                                            <td>N/A</td>
+                                            <td>N/A</td>
+                                        {% else %}
+                                            <td>{{ patientdevice.ecg_set.last.timestamp|date:"Y-m-d" }}</td>
+                                            <td>{{ patientdevice.ecg_set.last.timestamp|time:"H:i:s A" }}</td>
+                                        {% endif %}
+                                        <td>{{ patientdevice.patient_patientid.userid.auth_user_id.first_name }} {{ patientdevice.patient_patientid.userid.middlename }} {{ patientdevice.patient_patientid.userid.auth_user_id.last_name }}</td>
+                                        {% if patientdevice.ecg_set.last is none %}
+                                            <td>N/A</td>
+                                        {% else %}
+                                            <td><a class="waves-effect waves-light btn" href="{% url 'patientvitals' patientdevice.patient_patientid.patientid %}">View Full Results</a></td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        </center>
+                    </div>
+
+                </div>
+
+
+                <div class="col s12 m6 l6">
+
+                    <h5><i class="material-icons left">group</i><b>Assigned Patients' Devices</b></h5>
+                    Patient's Devices current statuses
+
+                    <center>
+                        <table class="centered">
+
+                            <thead><tr>
+
+                                <th>Device Number</th>
+                                <th>Status</th>
+                                <th>Assigned Patient</th>
+                                <th>Action</th>
+                            </tr></thead>
+                            <tbody>
+                                {% for patientdevice in patient_device_list %}
+                                    <tr>
+                                        <td>{{ patientdevice.device_deviceid.deviceid }}</td>
+                                        {% if patientdevice.isrecording == 0 %}
+                                            <td>Not Recording</td>
+                                        {% else %}
+                                            <td>Recording</td>
+                                        {% endif %}
+                                        <td>{{ patientdevice.patient_patientid.userid.auth_user_id.first_name }} {{ patientdevice.patient_patientid.userid.middlename }} {{ patientdevice.patient_patientid.userid.auth_user_id.last_name }}</td>
+                                        <td><a class="waves-effect waves-light btn" href="{% url 'managedevicerecording' %}">Manage Device</a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+
+                        </table>
+                        </center>
+
+                </div>
+
+            </div>
+        </div>
 {% endblock %}
 

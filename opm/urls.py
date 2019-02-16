@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-
 urlpatterns = [
     path('', views.index, name='index'),
     path('loginuser/', views.loginuser, name='loginuser'),
@@ -8,7 +7,10 @@ urlpatterns = [
     path('adminauthenticate/<str:otp>', views.adminauthenticate, name='adminauthenticate'),
     path('home/', views.home, name='home'),
     path('notifications/', views.notifications, name='notifications'),
+    path('notifications/<int:alert_id>/<int:patientdevice_id>/records/<str:date>/vitalrecords', views.viewnotification, name='viewnotification'),
     path('listofusers/', views.listofusers, name='listofusers'),
+    path('listofdoctors/', views.listofdoctors, name='listofdoctors'),
+    path('listofpatients/', views.listofpatients, name='listofpatients'),
     path('filloutmedicalform/', views.filloutmedicalform, name='filloutmedicalform'),
     path('createuser/', views.createuser, name='createuser'),
     path('changeuserofdevice/', views.changeuserofdevice, name='changeuserofdevice'),
@@ -32,16 +34,29 @@ urlpatterns = [
     path('ajax/add_device/', views.add_device, name='add_device'),
     path('ajax/get_patients/', views.get_patients, name='get_patients'),
     path('ajax/search_patients/', views.search_patients, name='search_patients'),
+    path('ajax/search_assigned_patients/', views.search_assigned_patients, name='search_assigned_patients'),
     path('ajax/set_patient_to_device/', views.set_patient_to_device, name='set_patient_to_device'),
     path('ajax/get_user_details/', views.get_user_details, name='get_user_details'),
     path('ajax/stop_recording/', views.stop_recording, name='stop_recording'),
     path('ajax/set_recording_duration/', views.set_recording_duration, name='set_recording_duration'),
+    path('ajax/set_min_max_temperature/', views.set_min_max_temperature, name='set_min_max_temperature'),
+    path('ajax/set_min_max_heartrate/', views.set_min_max_heartrate, name='set_min_max_heartrate'),
     path('ajax/unassign_patient/', views.unassign_patient, name='unassign_patient'),
     path('ajax/get_records/', views.get_records, name='get_records'),
     path('ajax/check_device_status/', views.check_device_status, name='check_device_status'),
     path('ajax/get_ecg_batch/', views.get_ecg_batch, name='get_ecg_batch'),
     path('ajax/update_patient_restrictions/', views.update_patient_restrictions, name='update_patient_restrictions'),
     path('ajax/update_user_account/', views.update_user_account, name='update_user_account'),
-    path('value/', views.val_func, name='val_func'),
+    path('ajax/get_notification_count/', views.get_notification_count, name='get_notification_count'),
+    path('ajax/add_comment/', views.add_comment, name='add_comment'),
+    path('ajax/save_configuration/', views.save_configuration, name='save_configuration'),
+    path('ajax/check_preset/', views.check_preset, name='check_preset'),
+    path('ajax/load_preset/', views.load_preset, name='load_preset'),
+    path('ajax/edit_user_account/', views.edit_user_account, name='edit_user_account'),
+    path('ajax/user_account_activation_set_password/', views.user_account_activation_set_password, name='user_account_activation_set_password'),
+    path('summary/<int:patientdevice_id>/<str:date>', views.summary, name='summary'),
+    path('signup/', views.signup, name='signup'),
+    path('activate/<str:uidb64>/<str:token>', views.activate, name='activate'),
 ]
+
 

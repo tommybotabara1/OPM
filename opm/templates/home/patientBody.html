@@ -2,93 +2,735 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title>OPMS</title>
-    <div class="row white">
+    <script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+    <script src="https://www.amcharts.com/lib/3/serial.js"></script>
+    <script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
+    <script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
+    <link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
+
+    <title>OPHM - Home</title>
+    <div class ="white">
+            <div class="row white">
 
                 <div class="col s12 m12 l12 center">
 
-                    <div class="section"></div>
-
-                    <h3 id="greeting">Good day, {{ user_details.auth_user_id.first_name }} {{ user_details.auth_user_id.last_name }}!</h3>
+                    <h3 id="greeting">Welcome, {{ user_details.auth_user_id.first_name }} {{ user_details.auth_user_id.last_name }}!</h3>
                     What do you want to do today?<br/>
-                    <div class="section"></div>
                     <div class="divider"></div>
-                    <div class="section"></div>
 
                 </div>
 
-                <div class="col s4 m4 l4 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
+            </div>
 
-                    <A href="{% url 'viewcurrentvitals' %}"><img class="responsive-image" src="{% static 'img/currentvitals.PNG' %}" height="200px;"/></A>
-                    <div class="section"></div>
-                    <h6 id="greeting">View Today's Latest Vitals</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
+            <div class ="row white">
+                <style>
+                #chartdiv2 {
+                    width	: 100%;
+                    height	: 300px;
+                }
+                #chartdiv3 {
+                    width	: 100%;
+                    height	: 300px;
+                }
 
-                </div>
+            </style>
+                <script>
+                    var chart = AmCharts.makeChart("chartdiv2", {
+                        "type": "serial",
+                        "theme": "light",
+                        "marginRight": 70,
+                        "autoMarginOffset": 20,
+                        "dataProvider": [
+                            {% for temperature_record in temperature_list.reverse %}
+                                {
+                                "time": "{{ temperature_record.timestamp|date:"h:i:s A" }}",
+                                "value": {{ temperature_record.data }}
+                                },
+                            {% endfor %}
+                            ],
+                        "balloon": {
+                            "cornerRadius": 6
+                        },
+                        "valueAxes": [{
+                            "axisAlpha": 0,
+                        }],
+                        "graphs": [{
+                            "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]]°C</span></b>",
+                            "bullet": "round",
+                            "bulletSize": 6,
+                            "connect": false,
+                            "lineColor": "#b6d278",
+                            "lineThickness": 2,
+                            "negativeLineColor": "#487dac",
+                            "valueField": "value"
+                        }],
+                        "chartCursor": {
+                            "cursorAlpha": 0.1,
+                            "cursorColor": "#000000",
+                            "fullWidth": true,
+                            "graphBulletSize": 2
+                        },
+                        "chartScrollbar": {},
+                        "dataDateFormat": "YYYY",
+                        "categoryField": "time",
+                        "categoryAxis": {
+                            "gridPosition": "start",
+                            "labelFrequency": 3,
+                        },
+                        "export": {
+                            "enabled": true
+                        }
+                    });
 
-                <div class="col s4 m4 l4 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
+                    var chart = AmCharts.makeChart("chartdiv3", {
+                        "type": "serial",
+                        "theme": "light",
+                        "marginRight": 70,
+                        "autoMarginOffset": 20,
+                        "dataProvider": [
+                            {% for heartrate_record in heartrate_list.reverse %}
+                                {
+                                "time": "{{ heartrate_record.timestamp|date:"h:i:s A" }}",
+                                "value": {{ heartrate_record.data }}
+                                },
+                            {% endfor %}
+                            ],
+                        "balloon": {
+                            "cornerRadius": 6
+                        },
+                        "valueAxes": [{
+                            "axisAlpha": 0
+                        }],
+                        "graphs": [{
+                            "balloonText": "[[category]]<br><b><span style='font-size:14px;'>[[value]] bpm</span></b>",
+                            "bullet": "round",
+                            "bulletSize": 6,
+                            "connect": false,
+                            "lineColor": "#b6d278",
+                            "lineThickness": 2,
+                            "negativeLineColor": "#487dac",
+                            "valueField": "value"
+                        }],
+                        "chartCursor": {
+                            "cursorAlpha": 0.1,
+                            "cursorColor": "#000000",
+                            "fullWidth": true,
+                            "graphBulletSize": 2
+                        },
+                        "chartScrollbar": {},
+                        "dataDateFormat": "YYYY",
+                        "categoryField": "time",
+                        "categoryAxis": {
+                            "gridPosition": "start",
+                            "labelFrequency": 3,
+                        },
+                        "export": {
+                            "enabled": true
+                        }
+                    });
+                </script>
+                <script>
+                    $(document).ready(function () {
+                        $(document).ajaxStart(function () {
+                            $("#loading").show();
+                        }).ajaxStop(function () {
+                            $("#loading").hide();
+                        });
+                    });
+                </script>
+                <script type="text/javascript" src="{% static 'js/canvasjs.min.js' %}"></script>
+                <script type ="text/javascript">
+                window.onload = function () {
+                    var xAxisStripLinesArray = [];
+                    var yAxisStripLinesArray = [];
+                    var dps = [];
+                    var dataPointsArray = [
+                        {% for ecg_data in ecg_list %}
+                            {{ ecg_data.data }},
+                        {% endfor %}
+                    ];
 
-                    <a href="{% url 'viewhistoryofvitals' %}"><img class="responsive-image" src="{% static 'img/history_currentvitals.png' %}" height="200px;"/></a>
-                    <div class="section"></div>
-                    <h6 id="greeting">View History of Records</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
 
+                    var chart = new CanvasJS.Chart("ecgChart",
+                        {
+                            title:{
+                            text:"ECG",
+                          },
+                          subtitles:[{
+                              {% with ecg_list.first as first_ecg %}
+                              text: "{{ first_ecg.timestamp|date:"h:i:s A" }} - {{ latest_ecg.timestamp|date:"h:i:s A" }}",
+                              {% endwith %}
+                              horizontalAlign: "center",
+                            },
+                                ],
+                          axisY:{
+                            stripLines:yAxisStripLinesArray,
+                            gridThickness: 2,
+                            gridColor:"#DC74A5",
+                            lineColor:"#DC74A5",
+                            tickColor:"#DC74A5",
+                            labelFontColor:"#DC74A5",
+                          },
+                          axisX:{
+                            stripLines:xAxisStripLinesArray,
+                            gridThickness: 2,
+                            gridColor:"#DC74A5",
+                            lineColor:"#DC74A5",
+                            tickColor:"#DC74A5",
+                            labelFontColor:"#DC74A5",
+                          },
+                          data: [
+                          {
+                            type: "spline",
+                            color:"black",
+                            dataPoints: dps
+                          }
+                          ]
+                        });
 
-                </div>
+                    addDataPointsAndStripLines();
+                    chart.render();
 
-                <div class="col s4 m4 l4 center teal lighten-4" style="padding: 30px 20px 20px 20px;">
-
-                    <a href="{% url 'restrictuseraccess' %}"><img class="responsive-image" src="{% static 'img/restrictuseraccess.PNG' %}" height="200px;"/></a>
-                    <div class="section"></div>
-                    <h6 id="greeting">Restrict User Access</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-
-                </div>
-
-                    <!------------------------------------- ROW2- Guide on Knowing ------------------------------------------->
-
-        <div class="row">
-
-                    <div class="col s12 white center" style="padding: 30px 50px 20px 50px;">
-                        <div class="divider"></div>
-                        <div class="section"></div>
-                        <h4 id="greeting">About the Assigned Specialist</h4>
-
-                        <div class="row center">
-
-                            <div class ="col s4">
-
-                                <h5>Dr. {{ patient_object.doctorid.userid.auth_user_id.first_name }} {{ patient_object.doctorid.userid.auth_user_id.last_name }}</h5>
-                                Full Name of Specialist
-
+                    function addDataPointsAndStripLines(){
+                            //dataPoints
+                        for(var i=0; i<dataPointsArray.length;i++){
+                            dps.push({y: dataPointsArray[i]});
+                        }
+                        //StripLines
+                        for(var i=0;i<3000;i=i+50){
+                          if(i%1000 != 0)
+                              yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                        }
+                        for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                          if(i%200 != 0)
+                              xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                        }
+                    }
+            };
+</script>
+                {% if patient_device == -1 %}
+                    <br>
+                    <center><h5>You are not assigned to any recording device</h5></center>
+                    <center>Click <a href="{% url 'viewhistoryofvitals' %}">here</a> to view previous records.</center>
+                {% else %}
+                    <div class="col s12 m12 l12  white">
+                        <center><h4>Today's Latest Vitals</h4></center>
+                        {% if latest_ecg == -1 %}
+                            <center><h5>No recorded vitals!</h5></center>
+                        {% elif latest_ecg == -2 %}
+                            <center><h5>No recorded vitals today!</h5></center>
+                            <center>Click <a href="{% url 'viewhistoryofvitals' %}">here</a> to view previous records.</center>
+                        {% else %}
+                            <div class="row white" style="margin: 10px">
+                            <div class="col s12 white center">
+                                <h5>Date: <b> {% now "F j, Y" %} </b></h5>
+                                <h6 class="center green lighten-4">ECG</h6>
+                                <select class="browser-default" id="batchTime">
+                                        <option value="-1" disabled selected>Select Time (by batch)</option>
+                                        {% for batch in ecg_batch_start_end_time %}
+                                            <option value="{{ batch.batchid }}">{{ batch.start_time }} - {{ batch.end_time }}</option>
+                                        {% endfor %}
+                                </select>
+                                <input id="batch" type="hidden" value="{{ ecg_list.count }}">
+                                <a id="prevECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count == 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_before</i></a>
+                                <a id="nextECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count < 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_next</i></a>
+                                <br>
+                                <div id="loading" style="display: none">Loading</div>
+                                <div id="ecgChart" style="height: 400px; width: 100%;"></div>
+                                <button id="ecgComments" class="waves-effect waves-light btn center">comments</button>
+                                <br><br>
+                                <div class="col s12 center green lighten-4">
+                                    <h5 class="center"><b>Heart rate</b></h5>
+                                    <div id="chartdiv3" style="background-color: #fff;"></div>
+                                    <br>
+                                    <button id="heartRateComments" class="waves-effect waves-light btn center">comments</button>
+                                    <br><br>
+                                </div>
+                                <div class="col s12 center green lighten-5">
+                                    <h5 class="center"><b>Temperature</b></h5>
+                                    <div id="chartdiv2" style="background-color: #fff;"></div>
+                                    <br>
+                                    <button id="temperatureComments" class="waves-effect waves-light btn center">comments</button>
+                                    <br><br>
+                                </div>
                             </div>
-
-                            <div class ="col s4">
-
-                                <h5>{{ patient_object.doctorid.userid.contactno }}</h5>
-                                Contact Number
-
-                            </div>
-
-                            <div class ="col s4">
-
-                                <h5>{{ patient_object.doctorid.userid.auth_user_id.email }}</h5>
-                                Email
-
-                            </div>
-
                         </div>
+                        {% endif %}
                     </div>
+                {% endif %}
+
+
+                <script>
+                    $("#nextECG").click(function() {
+                        var currentBatch = $("#batch").val();
+                        var direction = 1;
+                        var batch = $("#batchTime").find(":selected").val();
+                        var date = "{{ date }}";
+
+                        $.ajax({
+                        url: '{% url 'get_ecg_batch' %}',
+                        data: {
+                          'patientid': {{ patient.patientid }},
+                          'currentBatch': currentBatch,
+                          'direction': direction,
+                          'batch': batch,
+                          'date': date,
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            var dataPointsArray = [];
+                            var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+                            for(let i = 0; i < data.length; i++){
+                                dataPointsArray.push(data[i].value)
+                            }
+
+                            $("#prevECG").attr("disabled", false);
+
+                            $("#batch").val(data.length + parseInt(currentBatch));
+                            currentBatch = $("#batch").val();
+                            if(currentBatch % 1000 != 0){
+                                $("#nextECG").attr("disabled", true);
+                            }
+                            var xAxisStripLinesArray = [];
+                            var yAxisStripLinesArray = [];
+                            var dps = [];
+
+                            var chart = new CanvasJS.Chart("ecgChart",
+                                {
+                                    title:{
+                                    text:"ECG",
+                                  },
+                                  subtitles:[{
+                                      text: timeRange,
+                                      horizontalAlign: "center",
+                                      fontSize: 20
+                                    },
+                                        ],
+                                  axisY:{
+                                    stripLines:yAxisStripLinesArray,
+                                    gridThickness: 2,
+                                    gridColor:"#DC74A5",
+                                    lineColor:"#DC74A5",
+                                    tickColor:"#DC74A5",
+                                    labelFontColor:"#DC74A5",
+                                  },
+                                  axisX:{
+                                    stripLines:xAxisStripLinesArray,
+                                    gridThickness: 2,
+                                    gridColor:"#DC74A5",
+                                    lineColor:"#DC74A5",
+                                    tickColor:"#DC74A5",
+                                    labelFontColor:"#DC74A5",
+                                  },
+                                  data: [
+                                  {
+                                    type: "spline",
+                                    color:"black",
+                                    dataPoints: dps
+                                  }
+                                  ]
+                                });
+
+                            addDataPointsAndStripLines();
+                            chart.render();
+
+                            function addDataPointsAndStripLines(){
+                                    //dataPoints
+                                for(var i=0; i<dataPointsArray.length;i++){
+                                    dps.push({y: dataPointsArray[i]});
+                                }
+                                //StripLines
+                                for(var i=0;i<3000;i=i+50){
+                                  if(i%1000 != 0)
+                                      yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                                }
+                                for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                                  if(i%200 != 0)
+                                      xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                                }
+                            }
+                        }
+
+                        });
+
+                      });
+
+                    $("#prevECG").click(function() {
+                        var currentBatch = $("#batch").val();
+                        var direction = 0;
+                        var batch = $("#batchTime").find(":selected").val();
+                        var date = "{{ date }}";
+
+                        $.ajax({
+                        url: '{% url 'get_ecg_batch' %}',
+                        data: {
+                          'patientid': {{ patient.patientid }},
+                          'currentBatch': currentBatch,
+                          'direction': direction,
+                          'batch': batch,
+                          'date': date,
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            var dataPointsArray = [];
+                            var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+                            for(let i = 0; i < data.length; i++){
+                                dataPointsArray.push(data[i].value)
+                            }
+
+                            $("#nextECG").attr("disabled", false);
+
+                            if(parseInt(currentBatch) % 1000 != 0)
+                                $("#batch").val(parseInt(currentBatch) - ((parseInt(currentBatch) % 1000)));
+                            else
+                                $("#batch").val(parseInt(currentBatch) - (1000 - (parseInt(currentBatch) % 1000)));
+
+                            if($("#batch").val() <= 1000)
+                                $("#prevECG").attr("disabled", true);
+
+                            var xAxisStripLinesArray = [];
+                            var yAxisStripLinesArray = [];
+                            var dps = [];
+
+                            var chart = new CanvasJS.Chart("ecgChart",
+                                {
+                                    title:{
+                                    text:"ECG",
+                                  },
+                                  subtitles:[{
+                                      text: timeRange,
+                                      horizontalAlign: "center",
+                                      fontSize: 20
+                                    },
+                                        ],
+                                  axisY:{
+                                    stripLines:yAxisStripLinesArray,
+                                    gridThickness: 2,
+                                    gridColor:"#DC74A5",
+                                    lineColor:"#DC74A5",
+                                    tickColor:"#DC74A5",
+                                    labelFontColor:"#DC74A5",
+                                  },
+                                  axisX:{
+                                    stripLines:xAxisStripLinesArray,
+                                    gridThickness: 2,
+                                    gridColor:"#DC74A5",
+                                    lineColor:"#DC74A5",
+                                    tickColor:"#DC74A5",
+                                    labelFontColor:"#DC74A5",
+                                  },
+                                  data: [
+                                  {
+                                    type: "spline",
+                                    color:"black",
+                                    dataPoints: dps
+                                  }
+                                  ]
+                                });
+
+                            addDataPointsAndStripLines();
+                            chart.render();
+
+                            function addDataPointsAndStripLines(){
+                                    //dataPoints
+                                for(var i=0; i<dataPointsArray.length;i++){
+                                    dps.push({y: dataPointsArray[i]});
+                                }
+                                //StripLines
+                                for(var i=0;i<3000;i=i+50){
+                                  if(i%1000 != 0)
+                                      yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                                }
+                                for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                                  if(i%200 != 0)
+                                      xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                                }
+                            }
+                        }
+
+                        });
+
+                      });
+
+                    $('#batchTime').change(function(){
+                        var batch = $("#batchTime").find(":selected").val();
+                        var direction = -1;
+                        var currentBatch = 1000;
+                        var date = "{{ date }}";
+
+                        $.ajax({
+                        url: '{% url 'get_ecg_batch' %}',
+                        data: {
+                          'patientid': {{ patient.patientid }},
+                          'currentBatch': currentBatch,
+                          'direction': direction,
+                          'batch': batch,
+                          'date': date
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            var dataPointsArray = [];
+                            var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+                            for(let i = 0; i < data.length; i++){
+                                dataPointsArray.push(data[i].value)
+                            }
+
+                            if(data.length % 1000 == 0){
+                                $("#nextECG").attr("disabled", false);
+                            }
+                            else{
+                                $("#nextECG").attr("disabled", true);
+                            }
+
+                            $("#prevECG").attr("disabled", true);
+
+                            $("#batch").val(1000);
+
+                            var xAxisStripLinesArray = [];
+                            var yAxisStripLinesArray = [];
+                            var dps = [];
+
+                            var chart = new CanvasJS.Chart("ecgChart",
+                                {
+                                    title:{
+                                    text:"ECG",
+                                  },
+                                  subtitles:[{
+                                      text: timeRange,
+                                      horizontalAlign: "center",
+                                      fontSize: 20
+                                    },
+                                        ],
+                                  axisY:{
+                                    stripLines:yAxisStripLinesArray,
+                                    gridThickness: 2,
+                                    gridColor:"#DC74A5",
+                                    lineColor:"#DC74A5",
+                                    tickColor:"#DC74A5",
+                                    labelFontColor:"#DC74A5",
+                                  },
+                                  axisX:{
+                                    stripLines:xAxisStripLinesArray,
+                                    gridThickness: 2,
+                                    gridColor:"#DC74A5",
+                                    lineColor:"#DC74A5",
+                                    tickColor:"#DC74A5",
+                                    labelFontColor:"#DC74A5",
+                                  },
+                                  data: [
+                                  {
+                                    type: "spline",
+                                    color:"black",
+                                    dataPoints: dps
+                                  }
+                                  ]
+                                });
+
+                            addDataPointsAndStripLines();
+                            chart.render();
+
+                            function addDataPointsAndStripLines(){
+                                    //dataPoints
+                                for(var i=0; i<dataPointsArray.length;i++){
+                                    dps.push({y: dataPointsArray[i]});
+                                }
+                                //StripLines
+                                for(var i=0;i<3000;i=i+50){
+                                  if(i%1000 != 0)
+                                      yAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                                }
+                                for(var i=0;i<{{ ecg_list.count }};i=i+5){
+                                  if(i%200 != 0)
+                                      xAxisStripLinesArray.push({value:i,thickness:0.7, color:"#DC74A5"});
+                                }
+                            }
+                        }
+
+                        });
+                    });
+                </script>
+            </div>
+            {% if patient_device != -1 %}
+                <div class ="row white center" style="padding: 30px 20px 20px 20px;">
+                <div class="divider"></div>
+                <div class="section"></div>
+                <h4>Current Device Configurations</h4>
+                <div class="col s12 m12s l4">
+
+                        <h5>Duration per Recording:</h5><br />
+                            <div id="patientDuration" class="teal lighten-5 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                              <span class="teal-text"><b>{{ patient_device.recordingduration }} seconds</b></span>
+                            </div>
+
                 </div>
+                <div class ="col s12 m12 l4">
+                        <h5>Min & Max Temperature:</h5><br/>
+                        <div id="patientMinMaxTemperature" class="teal lighten-5 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                            <span class="teal-text"><b>{{ patient_device.mintemperature }}°C</b></span>
+                            -
+                            <span class="teal-text"><b>{{ patient_device.maxtemperature }}°C</b></span>
+                        </div>
+
+                </div>
+                <div class="col s12 m12 l4">
+                    <h5>Min & Max Heart Rate:</h5><br/>
+                        <div id="patientMinMaxHeartRate" class="teal lighten-5 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                            <span class="teal-text"><b>{{ patient_device.minheartrate }} BPM</b></span>
+                            -
+                            <span class="teal-text"><b>{{ patient_device.maxheartrate }} BPM</b></span>
+                        </div>
+
+                </div>
+
+            </div>
+            {% endif %}
+            <div class ="row white center" style="padding: 30px 20px 20px 20px;">
+                <div class="divider"></div>
+                <div class="section"></div>
+                <h4>About the Assigned Specialist</h4>
+                <div class ="col s12 m12 l4">
+
+                    <h5>Dr. {{ patient_object.doctorid.userid.auth_user_id.first_name }} {{ patient_object.doctorid.userid.auth_user_id.last_name }}</h5>
+                    Full Name of Specialist
+
+                </div>
+                <div class="col s12 m12 l4">
+
+                    <h5>{{ patient_object.doctorid.userid.contactno }}</h5>
+                    Contact Number
+
+                </div>
+                <div class="col s12 m12s l4">
+
+                    <h5>{{ patient_object.doctorid.userid.auth_user_id.email }}</h5>
+                    Email
+
+                </div>
+
+            </div>
         </div>
 
+<!--------------------------------------- ALL MODALS ARE HERE ---------------------------------------------------->
+            <div id="ecgCommentsModal" class="modal">
+                <div class="modal-content">
+                  <h4>Doctor's comments (ECG)</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+                        <table id="ecgCommentsTable" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in comments %}
+                                    {% if comment.typeofvital.type == "ECG" %}
+                                        <tr>
+                                            <td>{{ comment.comment }}</td>
+                                            <td>{{ comment.timestamp|date:"h:i:s A" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div id="heartRateCommentsModal" class="modal">
+                <div class="modal-content">
+                  <h4>Doctor's comments (Heart rate)</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+                        <table id="heartRateCommentsTable" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in comments %}
+                                    {% if comment.typeofvital.type == "Heart rate" %}
+                                        <tr>
+                                            <td>{{ comment.comment }}</td>
+                                            <td>{{ comment.timestamp|date:"h:i:s A" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div id="temperatureCommentsModal" class="modal">
+                <div class="modal-content">
+                  <h4>Doctor's comments (Temperature)</h4>
+                  <div class="col s12 m12 l12 ">
+                    <div class="row">
+                        <table id="temperatureCommentsTable" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in comments %}
+                                    {% if comment.typeofvital.type == "Temperature" %}
+                                        <tr>
+                                            <td>{{ comment.comment }}</td>
+                                            <td>{{ comment.timestamp|date:"h:i:s A" }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Back</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+    <!---------------------------------------------------------------------------------------------------------------->
+    <script>
+        $(document).ready(function(){
+            $('.modal').modal();
+            //$('#infoUser').modal('open');
+            $('#ecgCommentsTable').DataTable({
+                "order": [[ 1, "desc" ]]
+            });
+            $('#heartRateCommentsTable').DataTable({
+                "order": [[ 1, "desc" ]]
+            });
+            $('#temperatureCommentsTable').DataTable({
+                "order": [[ 1, "desc" ]]
+            });
 
-
+            $("#ecgComments").click(function() {
+                $('#ecgCommentsModal').modal('open');
+            });
+            $("#heartRateComments").click(function() {
+                $('#heartRateCommentsModal').modal('open');
+            });
+            $("#temperatureComments").click(function() {
+                $('#temperatureCommentsModal').modal('open');
+            });
+        });
+    </script>
 {% endblock %}
 

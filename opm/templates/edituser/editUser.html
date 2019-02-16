@@ -8,108 +8,101 @@
         <div class="col s12 m12 l12 center white">
 
             <div class="section"></div>
-<a href="{% url 'listofusers' %}">Back</a>
+            <a href="{% url 'listofusers' %}">Back</a>
             <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">person_add</i>&nbsp;&nbsp;Edit User {{ user.username    }}</h3>
             <div class="section"></div>
             <div class="divider"></div>
             <div class="section"></div>
 
         </div>
-      <div class="col s12 m12 l12  white">
-              <div class="row">
-                <form action="{% url 'edituser' user.id %}" class="col s12 white" style="padding: 0px 50px 0px 50px;" method="post">
-                    {% csrf_token %}
-                  <div class="row">
 
-                    <div class="input-field col s4">
-                      {{ form.username }}
-                      <label for="first_name">Username</label>
+        <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px;">
+                <div class ="row">
+                    <div class="input-field col s6 m4 l4">
+                        <big><b>Username</b></big><br />
+                        <p>{{ user.username }}</p>
                     </div>
-
-                    <div class="input-field col s4">
-                      {{ form.password }}
-                      <label for="first_name">Password</label>
+                    <div class="input-field col s6 m4 l4">
+                        <big><b>User Type</b></big><br />
+                        <p>{{ userdetails.usertype.type }}</p>
                     </div>
-
-                    <div class="input-field col s4">
-                      {{ form.repeatPassword }}
-                      <label for="first_name">Repeat Password</label>
+                    <div class="input-field col s6 m4 l4">
+                        {% if userdetails.usertype_id == 3 %}
+                            <big><b>Assigned Patients</b></big><br />
+                            <p>{{ extra }}</p>
+                        {% elif userdetails.usertype_id == 4 %}
+                            <big><b>Assigned Doctor</b></big><br />
+                            <p>{{ extra }}</p>
+                        {% endif %}
                     </div>
-
-                    <div class="input-field col s4">
-                      {{ form.firstname }}
-                      <label for="first_name">First Name</label>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12 m4 l4">
+                          <input type="text" name="firstname" value="{{ user.first_name }}" placeholder="ex: Juan" maxlength="45" required="" id="id_firstname">
+                          <label for="first_name">First Name</label>
                     </div>
-
-                    <div class="input-field col s4">
-                      {{ form.middlename }}
-                      <label for="middle_name">Middle Name</label>
+                    <div class="input-field col s12 m4 l4">
+                          <input type="text" name="middlename" value="{{ userdetails.middlename }}" placeholder="ex: Flores" maxlength="45" required="" id="id_middlename">
+                          <label for="middle_name">Middle Name</label>
                     </div>
-
-                    <div class="input-field col s4">
-                      {{ form.lastname }}
-                      <label for="last_name">Last Name</label>
+                    <div class="input-field col s12  m4 l4">
+                          <input type="text" name="lastname" value="{{ user.last_name }}" placeholder="ex: Dela Cruz" maxlength="45" required="" id="id_lastname">
+                          <label for="last_name">Last Name</label>
                     </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12 m4 l4">
+                          <input type="date" name="birthday" value="{{ userdetails.birthday|date:"Y-m-d" }}" placeholder="ex: 1998-05-27" required="" id="id_birthday">
+                          <label for="age">Birthday</label>
+                    </div>
+                    <div class="input-field col s12 m4 l4">
+                          <input type="number" name="contactno" value="{{ userdetails.contactno }}" maxlength="45" required="" id="id_contactno">
+                          <label for="reason">Contact Number</label>
+                    </div>
+                    <div class="input-field col s12  m4 l4">
+                          <input type="email" name="email" value="{{ user.email }}" required="" id="id_email">
+                          <label for="reason">Email</label>
+                    </div>
+                </div>
 
-                      <div class="input-field col s4">
-                      {{ form.birthday }}
-                      <label for="age">Birthday</label>
+                <div class="row" id="changePasswordButton">
+                    <button id="changePassword" name='btn_login' class='col s12 l4 btn btn-small waves-effect' value="1">Change password</button>
+                </div>
+
+                {% if userdetails.usertype.usertypeid == 4 %}
+                <div class="row" id="changeAssignedDoctorButton">
+                    <button id="changeAssignedDoctor" name='btn_login' class='col s12 l4 btn btn-small waves-effect' value="1">Change Assigned Doctor</button>
+                </div>
+                {% endif %}
+
+                <div class="row" id="passwordRow" style="display: none">
+                    <big><b>Change Password</b></big><br /><br>
+                    <div class="input-field col s12 m4 l4">
+                        <input value="-1" id="password" type="password" class="validate">
+                        <label for="password">New Password</label>
+                    </div>
+                    <div class="input-field col s12 m4 l4">
+                        <input value="-1" id="repeatpassword" type="password" class="validate">
+                        <label for="repeatpassword">Repeat New Password</label>
+                    </div>
+                </div>
+
+                <div class="row" id="userAssignedDoctorRow" style="display: none">
+                    <big><b>Change Assigned Doctor</b></big><br /><br>
+                    <div id="chooseDoctor">
+                        <label>Choose Doctor</label>
+                          <br>
+                          <select name="doctorid" class="browser-default col s4" id="id_doctorid">
+                              {% for doctor in doctors %}
+                                <option value="{{ doctor.doctorid }}">{{ doctor.userid.auth_user_id.first_name }} {{ doctor.userid.auth_user_id.last_name }}</option>
+                              {% endfor %}
+                          </select>
                       </div>
-
-                      <div class="input-field col s4">
-                      {{ form.email }}
-                      <label for="reason">Email</label>
-                      </div>
-
-                      <div class="input-field col s4">
-                      {{ form.contactno }}
-                      <label for="reason">Contact Number</label>
-                      </div>
-
-                      <div class="col s4">
-                          Type of User
-                          {% for radio in form.usertype %}
-                              <p>
-                               <label>
-                                {{ radio.tag }}
-                                   <span>{{ radio.choice_label }}</span>
-                               </label>
-                              </p>
-                          {% endfor %}
-                      </div>
-                  <div id="chooseDoctor">
-                      <label>Choose Doctor</label>
-                      <br>
-                      {{ form.doctorid }}
-                      <br /><br /><br />
-
-                        <label>Choose Blood Type</label>
-                        <br />
-                          {{ form.bloodtype }}
-                  </div>
-                  </div>
-                    <center>
-
-                        <div class='row center'>
-                            <div class="col s5"></div>
-                            <button id='submitButton' type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Submit</button>
-                            <div class="col s5"></div>
-                        </div>
-
-                    </center>
-                </form>
-              </div>
-        </div>
-
-    <style>
-
-
-
-    #chooseDoctor{
-        display:none;
-    }
-
-</style>
+                </div>
+                <br /><center>
+                <button id="save" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Save Changes</button>
+                </center><br />
+            </div>
 <script>
     function show(){
         if(document.getElementById('id_usertype_0').checked){
@@ -124,6 +117,82 @@
     var elems = document.querySelectorAll('select');
     var instances = M.FormSelect.init(elems, options);
   });
+
+    $("#changePassword").click(function() {
+            if($("#changePassword").val() == "1"){
+                $("#passwordRow").attr('style', "display: block");
+                $("#password").attr('value', null);
+                $("#repeatpassword").attr('value', null);
+                $("#changePassword").val("0");
+                $("#changePassword").html('Cancel change password');
+                $("#changePassword").attr('class', 'col s12 l4 btn btn-small waves-effect red');
+            }
+            else{
+                $("#passwordRow").attr('style', "display: none");
+                $("#password").attr('value', "-1");
+                $("#repeatpassword").attr('value', "-1");
+                $("#changePassword").val("1");
+                $("#changePassword").html('Change password');
+                $("#changePassword").attr('class', 'col s12 l4 btn btn-small waves-effect');
+            }
+    });
+
+    $("#changeAssignedDoctor").click(function() {
+            if($("#changeAssignedDoctor").val() == "1"){
+                $("#userAssignedDoctorRow").attr('style', "display: block");
+                $("#changeAssignedDoctor").val("0");
+                $("#changeAssignedDoctor").html('Cancel change assigned doctor');
+                $("#changeAssignedDoctor").attr('class', 'col s12 l4 btn btn-small waves-effect red');
+            }
+            else{
+                $("#userAssignedDoctorRow").attr('style', "display: none");
+                $("#changeAssignedDoctor").val("1");
+                $("#changeAssignedDoctor").html('Change assigned doctor');
+                $("#changeAssignedDoctor").attr('class', 'col s12 l4 btn btn-small waves-effect');
+            }
+    });
+
+    $("#save").click(function() {
+            var user_id = {{ userdetails.auth_user_id_id }};
+            var firstname = $("#id_firstname").val();
+            var middlename = $("#id_middlename").val();
+            var lastname = $("#id_lastname").val();
+            var birthday = $("#id_birthday").val();
+            var contactno = $("#id_contactno").val();
+            var email = $("#id_email").val();
+            var password = $("#password").val();
+            var repeatpassword = $("#repeatpassword").val();
+            var doctor = $("#id_doctorid").val();
+            var ifchangedoctor = $("#changeAssignedDoctor").val();
+
+            if(ifchangedoctor == null)
+                ifchangedoctor = -1;
+
+            $.ajax({
+            url: '{% url 'edit_user_account' %}',
+            data: {
+              'user_id': user_id,
+              'firstname': firstname,
+              'middlename': middlename,
+              'lastname': lastname,
+              'birthday': birthday,
+              'contactno': contactno,
+              'email': email,
+              'password': password,
+              'repeatpassword': repeatpassword,
+              'doctor': doctor,
+              'ifchangedoctor': ifchangedoctor,
+            },
+            dataType: 'json',
+            success: function (data) {
+                alert(data[0]);
+                location.reload();
+
+            }
+
+            });
+
+        });
 </script>
 
 {% endblock %}

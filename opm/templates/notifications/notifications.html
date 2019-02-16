@@ -2,66 +2,70 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title> OPMS - Notifications </title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
+
+    <title> OPHM - Notifications </title>
+    <style>
+    select{
+        display: block;
+    }
+    </style>
 <div class="col s12 m12 l12  white">
 
             <div class="row center">
-                <div class="section"></div>
                 <div class="col s3"></div>
                 <div class="col s6">
                     <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">notification_important</i>&nbsp;&nbsp; Notifications</h3>
-                     Date: <b>September 30, 2018</b> | 11:30 PM
+                     Date: <b> {% now "F j, Y" %} </b>
                 <!-- Maglalagay ako ng realtime clock dito -->
                 </div>
                 <div class="col s3"></div>
             </div>
-            <div class="section"></div>
             <div class="divider"></div>
-            <div class="section"></div>
-
-            <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px">
-
-
-
-                    <table class="centered">
-                        <thead>
-                          <tr>
-                              <th>Patient ID</th>
-                              <th>First Name</th>
-                              <th>Last Name</th>
-                              <th>Time</th>
-                              <th>Status</th>
-                              <th></th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-
-                          <tr>
-                            <td>12347</td>
-                            <td>Tommy</td>
-                            <td>Botabara</td>
-                            <td>2:00 AM</td>
-                            <td>Abnormal</td>
-                            <td> <a class="btn-small waves-effect waves-light green lighten-2" href=""> View History of Vitals
-                                    <i class="material-icons left">person_outline</i>
-                                  </a></td>
-                          </tr>
-                            <tr>
-                            <td>12345</td>
-                            <td>Jhoana Marie</td>
-                            <td>dela Cruz</td>
-                            <td>4:30 PM</td>
-                            <td>Abnormal</td>
-                            <td> <a class="btn-small waves-effect waves-light green lighten-2" href=""> View History of Vitals
-                                    <i class="material-icons left">person_outline</i>
-                                  </a></td>
-                        </tbody>
-                      </table>
+            <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px; width: 100vw">
+            <table id="unviewedAlerts" class="display">
+                <thead>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>Time</th>
+                        <th>Vital Type Alerted</th>
+                        <th>Value</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                        <tr>
+                            <td>{{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.first_name }} {{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.last_name }}</td>
+                            <td>{{ alert.timestamp|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ alert.typeofvital.type }}</td>
+                            <td>{{ alert.data }}</td>
+                            <td>
+                                <center>
+                                    <a href="{% url 'viewnotification' alert.alertid alert.patientdeviceid.patientdeviceid alert.timestamp.date|date:"Y-m-d" %}" class="btn-small waves-effect waves-light green lighten-2" href=""> View
+                                         <i class="material-icons left">person_outline</i>
+                                    </a>
+                                </center>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-            <div class="section"></div>
-            <div class="section"></div><div class="section"></div>
         </div>
 
+    <script>
+            $(document).ready(function() {
+                $('#unviewedAlerts').DataTable({
+                    "autoWidth": true,
+                    "order": [[ 1, "desc" ]]
+                });
+                $('#allAlerts').DataTable({
+                    "autoWidth": true,
+                    "order": [[ 1, "desc" ]]
+                });
+            } );
+    </script>
 {% endblock %}
 

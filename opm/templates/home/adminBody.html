@@ -2,67 +2,129 @@
 {% load staticfiles%}
 
 {% block content %}
-<title> OPMS </title>
-    <div class="row white">
 
+    <title>OPHM - Homepage</title>
+    <div class ="white">
+            <div class="row white">
 
                 <div class="col s12 m12 l12 center">
-
-                    <div class="section"></div>
-                    <h3 id="greeting">Good day, {{ user_details.auth_user_id.first_name }} {{ user_details.auth_user_id.last_name}}!</h3>
+                    <h3 id="greeting">Welcome, Admin!</h3>
                     What do you want to do today?<br/>
-                    <div class="section"></div>
                     <div class="divider"></div>
-                    <div class="section"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="white">
+
+            <div class ="row" style="padding: 20px;">
+
+                <div class="col s12 m4 l4">
+
+                    <h5><i class="material-icons left">access_time</i><b>Clock</b></h5><br/>
+
+                    <div class="col s12 yellow lighten-3 z-depth-1 center" style="padding: 3%; border-radius: 10px;">
+                        <h3><center>{% now "F t, Y" %}</center></h3>
+                        <h2><b><p id="txt" align="center"></p></b></h2>
+                    </div>
+
+                </div>
+                <div class="col s12 m4 l4 white">
+                    <h5><i class="material-icons left">group</i><b>Newly Added Users</b></h5><br/>
+                    <div class="col s12 green lighten-2 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                         <span class="white-text">
+                         <center>
+                         <table class="white-text centered">
+                             <thead>
+                                <th>Name</th>
+                                <th>Time Created</th>
+                             </thead>
+                         </table>
+                         </center>
+                         <div style="height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;">
+                             <table class="white-text centered">
+                             <tbody>
+                             {% for newuser in newusers %}
+                                 <tr>
+                                    <td>{{ newuser.first_name }} {{ newuser.last_name }}</td>
+                                    <td>{{ newuser.date_joined.date|date:"Y-m-d" }} {{ newuser.date_joined.time|time:"H:i:s" }}</td>
+                                 </tr>
+                             {% endfor %}
+                             </tbody>
+                         </table>
+                         </div>
+                             <br/>
+                             <div class="center"><a href="{% url 'listofusers' %}" class="waves-effect waves-light btn green darken-2">View All Users</a></div>
+
+                        </span>
+                    </div>
+
+                </div>
+                <div class="col s12 m4 l4">
+                    <h5><i class="material-icons left">group</i><b>Last Log In</b></h5><br/>
+                    <div class="col s12 teal lighten-2 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                         <span class="white-text">
+                         <table class="white-text centered">
+                                 <thead>
+                                    <th>Name</th>
+                                    <th>Last Log In Time</th>
+                                 </thead>
+                         </table>
+                         <div style="height: 187px;border:1px solid #ccc; overflow:auto; padding: 1%;">
+                             <table class="white-text centered">
+                                 <tbody>
+                                 {% for user in allusers %}
+                                     <tr>
+                                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                        <td>{{ user.last_login.date|date:"Y-m-d" }} {{ user.last_login.time|time:"H:i:s" }}</td>
+                                     </tr>
+                                 {% endfor %}
+                                 </tbody>
+                             </table>
+                         </div>
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row" style="padding: 20px;">
+
+                <div class="col s12 m12 l12">
+                    <h5><i class="material-icons left">group</i><b>Devices Currently In Use</b></h5>
+                    <a href="{% url 'changeuserofdevice' %}" class="waves-effect waves-light btn">Assign Devices</a>
+
+                    <center>
+                        <table class="centered">
+
+                            <thead><tr>
+
+                                <th>Device ID</th>
+                                <th>Assigned Patient</th>
+                            </tr></thead>
+                        {% if device_list.count == 0 %}
+                            <b>No devices</b>
+                        {% else %}
+                            {% for device in device_list %}
+                                <tr>
+                                    <td>{{ device.deviceid }}</td>
+                                    {% for patient in patient_device_list %}
+                                        {% if patient.device_deviceid.deviceid == device.deviceid and patient.inuse == 1 %}
+                                            <td>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        </table>
+                    </center>
 
                 </div>
 
-                <div class="col s3 center teal lighten-1" style="padding: 30px 20px 20px 20px;">
+            </div>
+        </div>
 
-                    <A href="{% url 'createuser' %}"><img class="responsive-image" src="{% static 'img/createuseraccount.PNG' %}" height="200px;"/></A>
-                    <div class="section"></div>
-                    <h6 id="greeting">Create User Accounts</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-
-                </div>
-
-                <div class="col s3 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
-
-                    <A href="{% url 'listofusers' %}"><img class="responsive-image" src="{% static 'img/viewlistofusers.png' %}" height="200px;"/></A>
-                    <div class="section"></div>
-                    <h6 id="greeting">View List of Users</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-
-
-                </div>
-
-                <div class="col s3 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
-
-                    <A href="{% url 'changeuserofdevice' %}"><img class="responsive-image" src="{% static 'img/changeuserdevice.png' %}" height="200px;"/></A>
-                    <div class="section"></div>
-                    <h6 id="greeting">Change User of Device</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-
-                </div>
-
-                <div class="col s3 center teal lighten-4" style="padding: 30px 20px 20px 20px;">
-
-                    <A href="{% url 'filloutmedicalform' %}"><img class="responsive-image" src="{% static 'img/addMedicalForm.PNG' %}" height="200px;"/></A>
-                    <div class="section"></div>
-                    <h6 id="greeting">Fill Out Medical Form</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-
-                </div>
-
-    </div>
 
 {% endblock %}
 

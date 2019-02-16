@@ -8,6 +8,19 @@
     {% load staticfiles %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/HOMEPAGE.css' %}">
 
+    <style>
+        .notification-badge {
+            position: relative;
+            right: 5px;
+            top: -20px;
+            color: #fff8fd;
+            background-color: #f50002;
+            margin: 0 -.8em;
+            border-radius: 50%;
+            padding: 5px 10px;
+        }
+    </style>
+
 </head>
 
 <link rel="icon" href="{% static 'img/Logo_Colored.png' %}">
@@ -15,38 +28,70 @@
 <script>
     $(document).ready(function(){
         $('.sidenav').sidenav();
-        $('.parallax').parallax();
+        $(".dropdown-trigger").dropdown();
     })
+
+
+    function startTime() {
+        var today = new Date();
+        var h = today.getHours();
+        var m = today.getMinutes();
+        var s = today.getSeconds();
+        m = checkTime(m);
+        s = checkTime(s);
+        if (today.getHours() > 12){
+            h = h - 12;
+            s = s + " PM";
+        }else{
+            s = s + " AM";
+        }
+            document.getElementById('txt').innerHTML = h + ":" + m + ":" + s;
+            var t = setTimeout(startTime, 500);
+        }
+        function checkTime(i) {
+            if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+            return i;
+        }
+
 </script>
 
-    <body>
+    <body onload="startTime()">
+
 
         <!--------------------------------------------------------- START / NAV BAR --------------------------------------------------------->
-            <nav class="z-depth-0" style="padding: 0px 10px 10px 10px; background-color: rgba(255, 255, 255, 0.2);">
-                <div class="nav-wrapper">
-                    <a href="{% url 'home' %}" class="brand-logo"><img class="responsive-image" id="logo" src="{% static 'img/Logo_Colored_4.png' %}"/></a>
-
-                    <a href="#" class="sidenav-trigger" data-target="mobile-nav">
-                        <i class="material-icons">menu</i>
-                    </a>
-
-                    <ul class="right hide-on-med-and-down" id="deets" style="">
-                        <li><a href="{% url 'notifications' %}" class="black-text"><i class="material-icons left black-text">notification_important</i>Notifications</a></li>
-                        <li><a href="{% url 'managedoctoraccount' %}" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
-                        <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
-                    </ul>
-                </div>
-            </nav>
-
-            <ul class="sidenav" id="mobile-nav">
-                <li><a href="{% url 'notifications' %}" class="black-text"><i class="material-icons left black-text">notification_important</i>Notifications</a></li>
-                <li><a href="{% url 'managedoctoraccount' %}" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
-                <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
+        <ul id="dropdown1" class="dropdown-content">
+          <li><a href="{% url 'managedoctoraccount' %}">Manage Account</a></li>
+          <li><a href="{% url 'viewassignedpatients'%}">List of Assigned Patients</a></li>
+          <li><a href="{% url 'managedevicerecording' %}">Manage Device Recordings</a></li>
+        </ul>
+        <nav class="z-depth-0" style="padding: 0px 10px px 10px; background-color: rgba(255, 255, 255, 0.2);">
+            <div class="nav-wrapper">
+                <a href="{% url 'home' %}" class="brand-logo"><img class="responsive-image" id="logo" src="{% static 'img/Logo_Colored_4.png' %}" style="margin-left: 10px;"></a>
+                <a href="#" class="sidenav-trigger" data-target="mobile-nav"><i class="material-icons">menu</i></a>
+                <ul class="right hide-on-med-and-down">
+                    <li><a href="{% url 'home' %}" class="white-text"><i class="material-icons left white-text">home</i>Homepage</a></li>
+                    <li>
+                        <a href="{% url 'notifications' %}" class="white-text" id="notifications">
+                                <i class="material-icons left white-text" style="margin-right: 15px">notification_important</i>
+                                <small style="display: none" class="notification-badge">5</small>
+                                Notifications
+                        </a>
+                    </li>
+                  <!-- Dropdown Trigger -->
+                    <li><a class="dropdown-trigger" href="#!" data-target="dropdown1"><i class="material-icons left">view_list</i>Modules<i class="material-icons right">arrow_drop_down</i></a></li>
+                    <li><a href="{% url 'index' %}" class="white-text"><i class="material-icons left white-text">input</i>Log Out</a></li>
             </ul>
+          </div>
+        </nav>
 
-        <div class="parallax-container">
-            <div class="parallax"><img src="{% static 'img/parallax.png' %}"></div>
-        </div>
+        <ul class="sidenav" id="mobile-nav">
+            <li><a href="#" class="black-text"><i class="material-icons left black-text">home</i>Homepage</a></li>
+            <li><a href="{% url 'managedoctoraccount' %}" class="black-text"><i class="material-icons left black-text">person</i>Manage Account</a></li>
+            <li><a href="{% url 'viewassignedpatients'%}" class="black-text"><i class="material-icons left black-text">list</i>List of Assigned Patients</a></li>
+            <li><a href="{% url 'home' %}" class="black-text"><i class="material-icons left black-text">video_label</i>Manage Assigned Devices</a></li>
+            <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
+        </ul>
+
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
 
                     <!------------------------------------- ROW1- What to do? ------------------------------------------->
@@ -54,33 +99,50 @@
         {% block content %}
         {% endblock %}
 
-        <div class="parallax-container">
-            <div class="parallax"><img src="{% static 'img/parallax_2.png' %}"></div>
-        </div>
         <!----------------------------------------------------- FOOTER STARTS HERE ----------------------------------------------------------->
             <footer class="page-footer" style="background-color: rgba(255, 255, 255, 0.3);">
               <div class="container">
                 <div class="row">
                   <div class="col l6 s12">
-                    <h5 class="black-text">About the SiteName</h5>
-                    <p class="black-text">This SiteName is a system created to be able to </p>
-                  </div>
-                  <div class="col l4 offset-l2 s12">
-                    <h5 class="black-text">Links</h5>
-                    <ul>
-                      <li><a class="black-text" href="#!">Link 1</a></li>
-                      <li><a class="black-text" href="#!">Link 2</a></li>
-                    </ul>
+                    <h5 class="black-text">About OPHM</h5>
+                    <p class="black-text">OPHM (Outpatient Heart Monitoring) is a system created to be enable outpatients to keep track of their vitals without the need of constantly visiting the hospital.</p>
                   </div>
                 </div>
               </div>
               <div class="footer-copyright">
                 <div class="container black-text">
                 © 2018 All Rights Reserved
-                <a class="black-text right" href="#!">More Links</a>
                 </div>
               </div>
             </footer>
         </div>
     </body>
+<script>
+    $(document).ready(function() {
+
+        $.ajax({
+        url: '{% url 'get_notification_count' %}',
+        data: {
+        },
+        dataType: 'json',
+        success: function (data) {
+            if(data[0] == 0){
+                var notification = "<i class=\"material-icons left white-text\" style=\"margin-right: 15px\">notification_important</i>\n" +
+                "                                <small style=\"display: none\" class=\"notification-badge\">"+data[0]+"</small>\n" +
+                "                                Notifications";
+
+                $("#notificationCountDashboard").html("No new notifications.");
+            }
+            else{
+                var notification = "<i class=\"material-icons left white-text\" style=\"margin-right: 10px\">notification_important</i>\n" +
+                "                                <small class=\"notification-badge\">"+data[0]+"</small>\n" +
+                "                                Notifications";
+
+                $("#notificationCountDashboard").html("You got "+data[0]+" notifications.");
+            }
+            $("#notifications").html(notification);
+        }
+      });
+    });
+</script>
 </html>

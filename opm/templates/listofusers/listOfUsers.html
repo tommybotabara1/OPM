@@ -2,45 +2,57 @@
 {% load staticfiles%}
 
 {% block content %}
+    <style>
+    select{
+        display: block;
+    }
+    </style>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
+
     <title> OPMS - View List of Users </title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
         <div class="col s12 m12 l12 center white">
-            <div class="row">        
-                <div class="section"></div>
+            <div class="row">
                 <div class="col s3"></div>
                 <div class="col s6">        
-                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View List of Users</h3>
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; View List of
+                        {% if type == 0 %}
+                            Users
+                        {% elif type == 1 %}
+                            Doctors
+                        {% else %}
+                            Patients
+                        {% endif %}
+                    </h3>
                 </div>
                 <div class="col s3" style ="padding: 0px 40px 0px 20px">
-                        <div class="input-field grey lighten-3">
-                          <input id="search" type="search" required>
-                          <label class="label-icon" for="search"><i class="material-icons" id="searchIcon">search</i></label>
-                          <i class="material-icons">close</i>
-                        </div>
                 </div>
             </div>
-            <div class="section"></div>
             <div class="divider"></div>
-            <div class="section"></div>
                     
         </div>
         <div id='view-users' class="col s12 m12 l12 white" style="padding: 0px 20px 0px 30px">
-
-                    <table class="striped centered">
-                        <thead>
-                          <tr>
-                              <th>Username</th>
-                              <th>First Name</th>
-                              <th>Last Name</th>
-                              <th>Email</th>
-                              <th>User Type</th>
-                              <th>Status</th>
-                              <th>Action</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                         {% for user in user_list %}
+        <br>
+        <a href="{% url 'listofdoctors' %}" class="waves-effect waves-light btn">Doctors</a>
+        <a href="{% url 'listofpatients' %}" class="waves-effect waves-light btn">Patients</a>
+        <a href="{% url 'listofusers' %}" class="waves-effect waves-light btn">All</a>
+        <br>
+        <table id="alertsTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>User Type</th>
+                        <th>Status</th>
+                        <th>Date Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in user_list %}
                              <tr>
                                 <td>{{ user.username }}</td>
                                  <td>{{ user.first_name }}</td>
@@ -58,22 +70,26 @@
                                  {% else  %}
                                  <td>Active</td>
                                  {% endif %}
+                                <td>{{ user.date_joined.date|date:"Y-m-d" }}</td>
                                 {% for userdetails in user_details_list %}
                                      {% if userdetails.userid == user.id %}
                                          {% if current_user_type == 2 %}
                                              {% if userdetails.usertype.usertypeid > 2 %}
-                                               <td><a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;
-                                                   <a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a>&nbsp;&nbsp;
-                                                   <button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button>
+                                               <td>
+                                                   <center>
+                                                       <a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;
+                                                       <button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button>
+                                                   </center>
                                                </td>
                                              {% else %}
-                                                 <td><button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button></td>
+                                                 <td><center><button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button></center></td>
                                              {% endif %}
                                          {% else %}
                                               <td>
+                                              <center>
                                                   <a href="{% url 'edituser' user.id %}" class="btn-floating btn-small waves-effect waves-light blue lighten-2" ><i class="material-icons">create</i></a>&nbsp;&nbsp;
-                                                  <a class="btn-floating btn-small waves-effect waves-light red lighten-2"><i class="material-icons">clear</i></a>&nbsp;&nbsp;
                                                   <button id="info{{ user.id }}" class="btn-floating btn-small waves-effect waves-light green lighten-2" value="{{ user.id }}"><i class="material-icons">info_outline</i></button>
+                                              </center>
                                               </td>
                                          {% endif %}
 
@@ -83,57 +99,18 @@
                              </tr>
 
                          {% endfor %}
-                        </tbody>
-                      </table>
-
+                </tbody>
+        </table>
             <div class="section"></div>
-            <!--<ul class="pagination center">
-                <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
-                <li class="active"><a href="#!">1</a></li>
-                <li class="waves-effect"><a href="#!">2</a></li>
-                <li class="waves-effect"><a href="#!">3</a></li>
-                <li class="waves-effect"><a href="#!">4</a></li>
-                <li class="waves-effect"><a href="#!">5</a></li>
-                <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
-            </ul>
-                -->
-                
         </div>
 
       <!--------------------------------------- ALL MODALS ARE HERE ---------------------------------------------------->
             <div id="infoUser" class="modal">
                 <div class="modal-content">
-                  <h4>Edit User Details</h4>
+                  <h4>User Details</h4>
                   <div class="col s12 m12 l12 ">
                     <div class="row">
-
                         <table>
-
-                            <tr>
-
-                                <th>Name</th>
-                                <td>Tommy Botabara</td>
-
-                            </tr>
-                            <tr>
-
-                                <th>Age</th>
-                                <td>19</td>
-
-                            </tr>
-                            <tr>
-
-                                <th>Contact Number</th>
-                                <td>001</td>
-
-                            </tr>
-                            <tr>
-
-                                <th>Blood Type</th>
-                                <td>O</td>
-
-                            </tr>
-
                         </table>
                     </div>
                     <div class="modal-footer">
@@ -166,8 +143,14 @@
             for(let i = 0; i < data.length; i++){
                 check += data[i].extra;
             }
+            var sex = "";
+            if(data[0].sex == "M")
+                sex = "Male";
+            else
+                sex = "Female";
+
             var info = "<div class=\"modal-content\">\n" +
-                "                  <h4>Edit User Details</h4>\n" +
+                "                  <h4>User Details</h4>\n" +
                 "                  <div class=\"col s12 m12 l12 \">\n" +
                 "                    <div class=\"row\">\n" +
                 "\n" +
@@ -180,6 +163,12 @@
                 "\n" +
                 "                            </tr>\n" +
                 "                            <tr>\n" +
+                "\n" +
+                "                                <th>Sex</th>\n" +
+                "                                <td>"+sex+"</td>\n" +
+                "\n" +
+                "                            </tr>\n" +
+                 "                            <tr>\n" +
                 "\n" +
                 "                                <th>Birthday</th>\n" +
                 "                                <td>"+data[0].birthday+"</td>\n" +
@@ -196,6 +185,10 @@
             if(data[0].usertype == 3){
                 info+= "<th>Assigned Patients</th>";
                 info+= "<td>" + data[0].extra + "</td>";
+                info += "<tr>" +
+                        "<th>License Number</th>" +
+                        "<td>" + data[0].licensenumber + "</td>" +
+                        "</tr>";
             }
             else if(data[0].usertype == 4){
                 info+= "<th>Assigned Doctor</th>";
@@ -220,75 +213,13 @@
       });
 
     });
+    </script>
 
-    $("#search").keypress(function () {
-      var search = $(this).val();
-
-      $.ajax({
-        url: '{% url 'search_user' %}',
-        data: {
-          'search': search
-        },
-        dataType: 'json',
-        success: function (data) {
-          var searched_data = " <table class=\"striped centered\">" +
-              "                        <thead>" +
-              "                          <tr>" +
-              "                              <th>Username</th>" +
-              "                              <th>First Name</th>" +
-              "                              <th>Last Name</th>" +
-              "                              <th>Email</th>" +
-              "                              <th>User Type</th>" +
-              "                              <th>Status</th>" +
-              "                              <th>Action</th>" +
-              "                          </tr>\n" +
-              "                        </thead>\n" +
-              "\n" +
-              "                        <tbody>\n" +
-              "                          \n";
-
-          for(let i = 0; i < data.length; i++){
-              searched_data += "<tr>";
-              searched_data += "<td>" + data[i].userName + "</td>";
-              searched_data += "<td>" + data[i].firstname + "</td>";
-              searched_data += "<td>" + data[i].lastname + "</td>";
-              searched_data += "<td>" + data[i].email + "</td>";
-              searched_data += "<td>" + data[i].usertype + "</td>";
-              if(data[i].status == true)
-                searched_data += "<td>Active</td>";
-              else
-                  searched_data += "<td>Inactive</td>";
-
-              let link = '/listofusers/' + data[i].id + '/edituser/';
-              {% if current_user_type == 2 %}
-                  if(data[i].usertype == "Doctor" || data[i].usertype == "Patient") {
-                      searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a>&nbsp;&nbsp;";
-                      searched_data += "<button id='info" + data[i].id + "' class='btn-floating btn-small waves-effect waves-light green lighten-2' value='" + data[i].id + "'><i class='material-icons'>info_outline</i></button>";
-                      searched_data += "</td>";
-                  }
-                  else {
-                      searched_data += "<td>";
-                      searched_data += "<button id='info" + data[i].id + "' class='btn-floating btn-small waves-effect waves-light green lighten-2' value='" + data[i].id + "'><i class='material-icons'>info_outline</i></button>";
-                      searched_data += "</td>";
-                  }
-              {% else %}
-                      searched_data += "<td><a href="+ link + " class='btn-floating btn-small waves-effect waves-light blue lighten-2' ><i class='material-icons'>create</i></a>&nbsp;&nbsp;<a class='btn-floating btn-small waves-effect waves-light red lighten-2'><i class='material-icons'>clear</i></a>&nbsp;&nbsp;";
-                      searched_data += "<button id='info" + data[i].id + "' class='btn-floating btn-small waves-effect waves-light green lighten-2' value='" + data[i].id + "'><i class='material-icons'>info_outline</i></button>";
-                      searched_data += "</td>";
-              {% endif %}
-
-              searched_data += "</tr>";
-          }
-
-          searched_data += "</tbody>";
-          searched_data += "</table>";
-          searched_data += "<div class='section'></div>";
-
-//          console.log(searched_data);
-          $("#view-users").html(searched_data);
-        }
-      });
-
-    });
+    <script>
+            $(document).ready(function() {
+            $('#alertsTable').DataTable({
+        "order": [[ 6, "desc" ]]
+    } );
+        } );
     </script>
 {% endblock %}

@@ -2,6 +2,7 @@ from django import forms
 
 from .models import Userdetails, Doctor, Patient, RefUsertype
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=45)
@@ -12,7 +13,6 @@ class LoginForm(forms.Form):
         fields = ('username', 'password')
 
 class CreateUserForm(forms.Form):
-
     USERTYPE_CHOICES=[]
 
     USERTYPE_CHOICES.extend([(3, 'Doctor'),(4, 'Patient')])
@@ -26,21 +26,23 @@ class CreateUserForm(forms.Form):
         DOCTOR_CHOICES.extend([(-1, "No doctor users!")])
 
     BLOOD_TYPE_CHOICES = []
+    SEX_CHOICES = []
 
     BLOOD_TYPE_CHOICES.extend([('O', 'Type O'), ('B', 'Type B'), ('A', 'Type A'), ('AB', 'Type AB'), ])
+    SEX_CHOICES.extend([('M', 'Male'), ('F', 'Female')])
 
     username = forms.CharField(max_length=45)
     firstname = forms.CharField(max_length=45, widget=forms.TextInput(attrs={'placeholder': 'ex: Juan', "onChange":'show()'}))
     middlename = forms.CharField(max_length=45, widget=forms.TextInput(attrs={'placeholder': 'ex: Flores'}))
     lastname = forms.CharField(max_length=45, widget=forms.TextInput(attrs={'placeholder': 'ex: Dela Cruz'}))
-    password = forms.CharField(widget=forms.PasswordInput)
-    repeatPassword = forms.CharField(widget=forms.PasswordInput)
     email = forms.CharField(widget=forms.EmailInput)
-    birthday = forms.DateField(widget=forms.DateInput(attrs={'placeholder': 'ex: 1998-05-27'}))
-    contactno = forms.CharField(max_length=45, widget=forms.NumberInput)
-    usertype= forms.ChoiceField(widget=forms.RadioSelect(attrs={"onChange":'show()'}), choices=USERTYPE_CHOICES)
+    birthday = forms.DateField(widget=forms.DateInput(attrs={'placeholder': 'ex: 1998-05-27', 'type': 'date'}))
+    contactno = forms.CharField(max_length=45, widget=forms.TextInput())
+    usertype = forms.ChoiceField(widget=forms.RadioSelect(attrs={"onChange":'show()'}), choices=USERTYPE_CHOICES)
     doctorid = forms.ChoiceField(choices=DOCTOR_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s4'}))
     bloodtype = forms.ChoiceField(choices=BLOOD_TYPE_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s4'}))
+    sex = forms.ChoiceField(choices=SEX_CHOICES, widget=forms.Select(attrs={"class": 'browser-default col s4'}))
+    licensenumber = forms.CharField(max_length=45)
 
 
 class EditUserForm(forms.Form):
@@ -129,3 +131,10 @@ class MedicalHistoryForm(forms.Form):
     socialhistory = forms.CharField(max_length=1000,
                                     widget=forms.Textarea(attrs={
                                         'placeholder': "Patient's background. (ex: if patient smokes)", 'class': 'materialize-textarea'}))
+
+
+class SignupForm(UserCreationForm):
+    email = forms.EmailField(max_length=200, help_text='Required')
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')

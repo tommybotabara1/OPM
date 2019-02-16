@@ -3,26 +3,24 @@
 {% load extras %}
 
 {% block content %}
+    <style>
+    select{
+        display: block;
+    }
+    </style>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
         <title> OPMS - View Assigned Patients </title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
         <div class="col s12 m12 l12 center white">
-            <div class="row">        
-                <div class="section"></div>
+            <div class="row">
                 <div class="col s3"></div>
                 <div class="col s6">        
                     <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">list</i>&nbsp;&nbsp; Assigned Patients</h3>
                 </div>
                 <div class="col s3" style ="padding: 0px 40px 0px 20px">
-                    <form>
-                        <div class="input-field grey lighten-3">
-                          <input id="search" type="search" required>
-                          <label class="label-icon" for="search"><i class="material-icons" id="searchIcon">search</i></label>
-                          <i class="material-icons">close</i>
-                        </div>
-                      </form>
                 </div>
             </div>
-            <div class="section"></div>
             <div class="divider"></div>
             <div class="section"></div>
 
@@ -34,31 +32,37 @@
                 <h5><b>No assigned patients!</b></h5>
             </center>
         {% else %}
-            <table class="striped centered">
-                        <thead>
-                          <tr>
-                              <th>First Name</th>
-                              <th>Middle Name</th>
-                              <th>Last Name</th>
-                              <th>Device Using</th>
-                              <th>Action</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                        {% for patient in patient_device_list %}
+            <table id="assignedPatientsTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                          <th>Patient Full Name</th>
+                          <th>Device Using</th>
+                          <th>Contact Number</th>
+                          <th>Email</th>
+                          <th>Last Device Recording</th>
+                          <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patient_device_list %}
                             <tr>
-                            <td>{{ patient.patient_patientid.userid.auth_user_id.first_name }}</td>
-                            <td>{{ patient.patient_patientid.userid.middlename }}</td>
-                            <td>{{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
-                            <td>Device {{ patient.device_deviceid.deviceid }}</td>
-                            <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Today's Latest Vitals</a>&nbsp;&nbsp;
+                                <td>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.middlename }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
+                                <td>Device-{{ patient.device_deviceid.deviceid }}</td>
+                                <td>{{ patient.patient_patientid.userid.contactno }}</td>
+                                <td>{{ patient.patient_patientid.userid.auth_user_id.email }}</td>
+                                {% if patient.temperature_set.last.timestamp is none %}
+                                    <td>N/A</td>
+                                {% else %}
+                                    <td>{{ patient.temperature_set.last.timestamp }}</td>
+                                {% endif %}
+                                <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Today's Latest Vitals</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patient_patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientrecords' patient.patient_patientid.patientid %}">Records</a></td>
                           </tr>
                         {% endfor %}
-                        </tbody>
-                      </table>
+                </tbody>
+            </table>
+
         {% endif %}
 
 
@@ -67,4 +71,9 @@
 
         </div>
 
+    <script>
+            $(document).ready(function() {
+            $('#assignedPatientsTable').DataTable();
+        } );
+    </script>
 {% endblock %}

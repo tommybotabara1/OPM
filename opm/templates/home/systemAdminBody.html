@@ -2,14 +2,14 @@
 {% load staticfiles%}
 
 {% block content %}
-<title> OPMS </title>
+<title> OPHM - Home </title>
     <div class="row white">
 
                 <div class="col s12 m12 l12 center">
 
                     <div class="section"></div>
 
-                    <h3 id="greeting">Good day, System Admin!</h3>
+                    <h3 id="greeting">Welcome, System Admin!</h3>
                     What do you want to do today?<br/>
                     <div class="section"></div>
                     <div class="divider"></div>
@@ -17,27 +17,25 @@
 
                 </div>
 
-                <div class="col s6 m6 l6 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
+                <div class="col s4 m4 l4 center teal lighten-1" style="padding: 30px 20px 20px 20px;">
 
                     <a href="{% url 'createuser' %}"><img class="responsive-image" src="{% static 'img/createuseraccount.PNG' %}" height="200px;"/></a>
                     <div class="section"></div>
-                    <h6 id="greeting">Create User Accounts</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
-
+                    <h3 id="greeting" style="color: white">Create User Accounts</h3>
                 </div>
 
-                <div class="col s6 m6 l6 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
+                <div class="col s4 m4 l4 center teal lighten-2" style="padding: 30px 20px 20px 20px;">
 
                     <a href="{% url 'listofusers' %}"><img class="responsive-image" src="{% static 'img/viewlistofusers.png' %}" height="200px;"/></a>
                     <div class="section"></div>
-                    <h6 id="greeting">View List of Users</h6>
-                    <p align="justify">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam sollicitudin facilisis turpis, id rhoncus magna fermentum sed. Nunc vel venenatis mauris.
-                    </p>
+                    <h3 id="greeting" style="color: white">View List of Users</h3>
+                </div>
 
+                <div class="col s4 m4 l4 center teal lighten-3" style="padding: 30px 20px 20px 20px;">
 
+                    <a href="/admin"><img class="responsive-image" src="{% static 'img/restrictuseraccess.PNG' %}" height="200px;"/></a>
+                    <div class="section"></div>
+                    <h3 id="greeting" style="color: white">Go to Django Admin Site</h3>
                 </div>
         </div>
 

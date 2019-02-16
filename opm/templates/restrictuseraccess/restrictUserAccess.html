@@ -2,19 +2,17 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title> OPMS - Restrict User Access </title>
+    <title> OPHM - Restrict User Access </title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <div class="col s12 m12 l12  white">
-
             <div class="row center">
-                <div class="section"></div>
                 <div class="col s3"></div>
                 <div class="col s6">
-                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">highlight_off</i>&nbsp;&nbsp; Restrict Access</h3>
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">highlight_off</i>&nbsp;&nbsp; Restrict Data Access</h3>
+                    <small>The latest medical information and today's current vitals (if any) will not be restricted</small>
                 </div>
                 <div class="col s3"></div>
             </div>
-            <div class="section"></div>
             <div class="divider"></div>
             <div class="section"></div>
 
@@ -25,22 +23,22 @@
                 <div class="col s6 white left">
                         <h5><B>Doctor</B> can:</h5>
                         {% if patient.restrictmedicalinformationaccess == 0 %}
-                            <p><label><input id="medicalInformation" type="checkbox" class="filled-in" checked="checked" /><span>View Medical Information</span></label></p>
+                            <p><label><input id="medicalInformation" type="checkbox" class="filled-in" checked="checked" /><span>View Past Medical Information</span></label></p>
                         {% else %}
-                            <p><label><input id="medicalInformation" type="checkbox" class="filled-in" /><span>View Medical Information</span></label></p>
+                            <p><label><input id="medicalInformation" type="checkbox" class="filled-in" /><span>View Past Medical Information</span></label></p>
                         {% endif %}
 
                         {% if patient.restrictvitalsinformationaccess == 0 %}
-                            <p><label><input id="vitalRecords" type="checkbox" class="filled-in" checked="checked" /><span>View Historical Vital Records</span></label></p>
+                            <p><label><input id="vitalRecords" type="checkbox" class="filled-in" checked="checked" /><span>View Past Historical Vital Records</span></label></p>
                         {% else %}
-                            <p><label><input id="vitalRecords" type="checkbox" class="filled-in" /><span>View Historical Vital Records</span></label></p>
+                            <p><label><input id="vitalRecords" type="checkbox" class="filled-in" /><span>View Past Historical Vital Records</span></label></p>
                         {% endif %}
 
                 </div>
                 <div class="col s3 white"></div>
                 <div class="col s12 white">
                     <div class="row center">
-                    <button id="saveButton" class="btn btn-large waves-effect red lighten-2 center" type="submit">Save</button>
+                        <button id="saveButton" class="btn btn-large waves-effect red lighten-2 center" type="submit">Save</button>
                     </div>
                 </div>
             </div>

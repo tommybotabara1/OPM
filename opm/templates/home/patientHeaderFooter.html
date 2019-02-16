@@ -15,7 +15,7 @@
 <script>
     $(document).ready(function(){
         $('.sidenav').sidenav();
-        $('.parallax').parallax();
+        $(".dropdown-trigger").dropdown();
     })
 </script>
 
@@ -23,31 +23,33 @@
 
         <!--------------------------------------------------------- START / NAV BAR --------------------------------------------------------->
 
-
-            <nav class="z-depth-0" style="padding: 0px 10px 10px 10px; background-color: rgba(255, 255, 255, 0.2);">
-                <div class="nav-wrapper">
-                    <a href="{% url 'home' %}" class="brand-logo"><img class="responsive-image" id="logo" src="{% static 'img/Logo_Colored_4.png' %}"/></a>
-
-                    <a href="#" class="sidenav-trigger" data-target="mobile-nav">
-                        <i class="material-icons">menu</i>
-                    </a>
-
-                    <ul class="right hide-on-med-and-down" id="deets" style="">
-                        <li><a href="{% url 'managepatientaccount' %}" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
-                        <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
-                    </ul>
-                </div>
-            </nav>
-
-            <ul class="sidenav" id="mobile-nav">
-                <li><a href="{% url 'managepatientaccount' %}" class="black-text"><i class="material-icons left black-text">account_circle</i>Manage Account</a></li>
-                <li><a href="{% url 'index' %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
+        <ul id="dropdown1" class="dropdown-content">
+          <li><a href="{% url "managepatientaccount" %}">Manage Account</a></li>
+            <li><a href="{% url "viewhistoryofvitals" %}">View History of Records</a></li>
+          <li><a href="{% url "restrictuseraccess" %}">Restrict User Access</a></li>
+        </ul>
+        <nav class="z-depth-0" style="padding: 0px 10px px 10px; background-color: rgba(255, 255, 255, 0.2);">
+            <div class="nav-wrapper">
+                <a href="{% url "home" %}" class="brand-logo"><img class="responsive-image" id="logo" src="{% static 'img/Logo_Colored_4.png' %}" style="margin-left: 10px;"></a>
+                <a href="#" class="sidenav-trigger" data-target="mobile-nav"><i class="material-icons">menu</i></a>
+                <ul class="right hide-on-med-and-down">
+                    <li><a href="{% url "home" %}" class="white-text"><i class="material-icons left white-text">home</i>Homepage</a></li>
+                  <!-- Dropdown Trigger -->
+                    <li><a class="dropdown-trigger" href="#!" data-target="dropdown1"><i class="material-icons left">view_list</i>Modules<i class="material-icons right">arrow_drop_down</i></a></li>
+                    <li><a href="{% url "index" %}" class="white-text"><i class="material-icons left white-text">input</i>Log Out</a></li>
             </ul>
+          </div>
+        </nav>
+
+        <ul class="sidenav" id="mobile-nav">
+            <li><a href="{% url "home" %}" class="black-text"><i class="material-icons left black-text">home</i>Homepage</a></li>
+            <li><a href="{% url "managepatientaccount" %}" class="black-text"><i class="material-icons left black-text">person</i>Manage Account</a></li>
+            <li><a href="{% url "viewhistoryofvitals" %}" class="black-text"><i class="material-icons left black-text">description</i>View History of Records</a></li>
+            <li><a href="{% url "restrictuseraccess" %}" class="black-text"><i class="material-icons left black-text">lock</i>Restrict User Access</a></li>
+            <li><a href="{% url "index" %}" class="black-text"><i class="material-icons left black-text" >input</i>Log Out</a></li>
+        </ul>
 
 
-        <div class="parallax-container">
-            <div class="parallax"><img src="{% static 'img/parallax.png' %}"></div>
-        </div>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
 
                     <!------------------------------------- ROW1- What to do? ------------------------------------------->
@@ -55,30 +57,19 @@
         {% block content %}
         {% endblock %}
 
-        <div class="parallax-container">
-            <div class="parallax"><img src="{% static 'img/parallax_2.png' %}"></div>
-        </div>
         <!----------------------------------------------------- FOOTER STARTS HERE ----------------------------------------------------------->
             <footer class="page-footer" style="background-color: rgba(255, 255, 255, 0.3);">
               <div class="container">
                 <div class="row">
                   <div class="col l6 s12">
-                    <h5 class="black-text">About the SiteName</h5>
-                    <p class="black-text">This SiteName is a system created to be able to </p>
-                  </div>
-                  <div class="col l4 offset-l2 s12">
-                    <h5 class="black-text">Links</h5>
-                    <ul>
-                      <li><a class="black-text" href="#!">Link 1</a></li>
-                      <li><a class="black-text" href="#!">Link 2</a></li>
-                    </ul>
+                    <h5 class="black-text">About OPHM</h5>
+                    <p class="black-text">OPHM (Outpatient Heart Monitoring) is a system created to be enable outpatients to keep track of their vitals without the need of constantly visiting the hospital.</p>
                   </div>
                 </div>
               </div>
               <div class="footer-copyright">
                 <div class="container black-text">
                 © 2018 All Rights Reserved
-                <a class="black-text right" href="#!">More Links</a>
                 </div>
               </div>
             </footer>
