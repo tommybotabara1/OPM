@@ -136,6 +136,7 @@
                             title:{
                             text:"ECG",
                           },
+                        exportEnabled: true,
                           subtitles:[{
                               {% with ecg_list.first as first_ecg %}
                               text: "{{ first_ecg.timestamp|date:"h:i:s A" }} - {{ latest_ecg.timestamp|date:"h:i:s A" }}",
@@ -170,6 +171,11 @@
 
                     addDataPointsAndStripLines();
                     chart.render();
+
+                     document.getElementById("printChart").addEventListener("click",function(){
+                        chart.print();
+                    });
+
 
                     function addDataPointsAndStripLines(){
                             //dataPoints
@@ -229,6 +235,8 @@
                     <a id="prevECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count == 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_before</i></a>
                     <a id="nextECG" class="btn-floating btn-large waves-effect waves-light teal center" {% if ecg_list.count < 1000 %}disabled="true" {% endif %}><i class="material-icons">navigate_next</i></a>
                     <div id="ecgChart" style="height: 400px; width: 100%;"></div>
+                    <button class="waves-effect waves-light teal white-text center" id="printChart">Print Chart</button>  <button id="ecgComments" class="waves-effect waves-light btn center">comments</button>
+
                     <div class="col s12 center green lighten-4">
                         <h5 class="center"><b>Heart rate</b></h5>
                         <div id="chartdiv3" style="background-color: #fff;"></div>
@@ -257,7 +265,7 @@
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
         data: {
-          'patientid': {{ patient.patientid }},
+          'patientdeviceid': {{ patient_device.patientdeviceid }},
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
@@ -287,6 +295,7 @@
                     title:{
                     text:"ECG",
                   },
+                    exportEnabled: true,
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
@@ -349,7 +358,7 @@
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
         data: {
-          'patientid': {{ patient.patientid }},
+          'patientdeviceid': {{ patient_device.patientdeviceid }},
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
@@ -382,6 +391,7 @@
                     title:{
                     text:"ECG",
                   },
+                    exportEnabled: true,
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
@@ -444,7 +454,7 @@
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
         data: {
-          'patientid': {{ patient.patientid }},
+          'patientdeviceid': {{ patient_device.patientdeviceid }},
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
@@ -478,6 +488,7 @@
                     title:{
                     text:"ECG",
                   },
+                    exportEnabled: true,
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",

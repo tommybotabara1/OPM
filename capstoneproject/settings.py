@@ -25,7 +25,7 @@ SECRET_KEY = '^a7x282mr@!)@wo@$nhje%a&lza-w!tn@6yt+%40_03yui2wyp'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.194', 'localhost', '127.0.0.1', 'opms.me', '10.100.207.54']
+ALLOWED_HOSTS = ['192.168.0.194', 'localhost', '127.0.0.1', 'opms.me', '10.100.207.54', '192.168.1.19', '192.168.1.6', '192.168.100.39', '10.162.65.229']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'sslserver',
 ]
 
 MIDDLEWARE = [
@@ -137,6 +138,6 @@ LOGIN_URL = 'index'
 
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'tommybotabara@gmail.com'
-EMAIL_HOST_PASSWORD = 'taeka123'
+EMAIL_HOST_USER = 'outpatientheartmonitor@gmail.com'
+EMAIL_HOST_PASSWORD = 'pass123word'
 EMAIL_PORT = 587

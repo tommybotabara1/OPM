@@ -1,4 +1,4 @@
-{% extends "home/doctorHeaderFooter.html" %}
+{% extends base_template %}
 {% load staticfiles%}
 
 {% block content %}
@@ -9,6 +9,9 @@
     <style>
     select{
         display: block;
+    }
+    .not-viewed{
+        background-color: #bee5eb !important;
     }
     </style>
 <div class="col s12 m12 l12  white">
@@ -23,31 +26,23 @@
                 <div class="col s3"></div>
             </div>
             <div class="divider"></div>
-            <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px; width: 100vw">
-            <table id="unviewedAlerts" class="display">
+            <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px;">
+            <table id="unviewedAlerts" class="cell-border">
                 <thead>
                     <tr>
-                        <th>Patient Name</th>
-                        <th>Time</th>
-                        <th>Vital Type Alerted</th>
-                        <th>Value</th>
-                        <th></th>
+                        <th>Date Time</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for alert in alerts %}
-                        <tr>
-                            <td>{{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.first_name }} {{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.last_name }}</td>
-                            <td>{{ alert.timestamp|date:"Y-m-d H:i:s" }}</td>
-                            <td>{{ alert.typeofvital.type }}</td>
-                            <td>{{ alert.data }}</td>
-                            <td>
-                                <center>
-                                    <a href="{% url 'viewnotification' alert.alertid alert.patientdeviceid.patientdeviceid alert.timestamp.date|date:"Y-m-d" %}" class="btn-small waves-effect waves-light green lighten-2" href=""> View
-                                         <i class="material-icons left">person_outline</i>
-                                    </a>
-                                </center>
-                            </td>
+                    {% for notification in notifications %}
+                        {% if notification.viewed == 0 %}
+                            <tr class="not-viewed">
+                        {% else %}
+                            <tr>
+                        {% endif %}
+                            <td>{{ notification.datetime|date:"M j, Y, H:i:s" }}</td>
+                            <td>{{ notification.notificationdescription }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -59,11 +54,24 @@
             $(document).ready(function() {
                 $('#unviewedAlerts').DataTable({
                     "autoWidth": true,
-                    "order": [[ 1, "desc" ]]
+                    "order": [[ 0, "desc" ]],
                 });
                 $('#allAlerts').DataTable({
                     "autoWidth": true,
                     "order": [[ 1, "desc" ]]
+                });
+
+                $.ajax({
+                    url: '{% url 'view_notifications' %}',
+                    data: {
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        var notification = "<i class=\"material-icons left white-text\" style=\"margin-right: 15px\">notification_important</i>\n" +
+                            "                                <small style=\"display: none\" class=\"notification-badge\">"+data[0]+"</small>\n" +
+                            "                                Notifications";
+                        $("#notifications").html(notification);
+                    }
                 });
             } );
     </script>

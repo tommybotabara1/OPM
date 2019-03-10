@@ -47,7 +47,7 @@
         "marginRight": 70,
         "autoMarginOffset": 20,
         "dataProvider": [
-            {% for temperature_record in temperature_list.reverse %}
+            {% for temperature_record in temperature_list %}
                 {
                 "time": "{{ temperature_record.timestamp|date:"h:i:s A" }}",
                 "value": {{ temperature_record.data }}
@@ -94,7 +94,7 @@
         "marginRight": 70,
         "autoMarginOffset": 20,
         "dataProvider": [
-            {% for heartrate_record in heartrate_list.reverse %}
+            {% for heartrate_record in heartrate_list %}
                 {
                 "time": "{{ heartrate_record.timestamp|date:"h:i:s A" }}",
                 "value": {{ heartrate_record.data }}
@@ -135,7 +135,6 @@
         }
     });
     </script>
-
 <script type="text/javascript" src="{% static 'js/canvasjs.min.js' %}"></script>
 
 <script type ="text/javascript">
@@ -157,6 +156,7 @@
                             title:{
                             text:"ECG",
                           },
+                          exportEnabled: true,
                           subtitles:[{
                               {% with ecg_list.first as first_ecg %}
                               text: "{{ first_ecg.timestamp|date:"h:i:s A" }} - {{ latest_ecg.timestamp|date:"h:i:s A" }}",
@@ -235,7 +235,7 @@
             {% elif latest_ecg == -2 %}
                 <center><h5>No recorded vitals today!</h5></center>
                 <center>Click <a href="{% url 'patientrecords' patient.patientid %}">here</a> to view previous records.</center>
-            {% elif patient.restrictvitalsinformationaccess == 1 %}
+            {% elif patient.restrictvitalsinformationaccess == 1 and access_vitalrecords is not None and access_vitalrecords == 1%}
                 <center><h4>Access to vitals records restricted by the patient</h4></center>
             {% else %}
                 <div class="row white" style="margin: 10px">
@@ -285,6 +285,8 @@
                 <a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
             {% elif pagefrom == 3 %}
                 <a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
+            {% elif pagefrom == 4 %}
+                <a href="{% url 'otherpatientrecords' patient.patientid access_medicalforms access_vitalrecords %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
             {% else %}
                 <a href="{% url 'notifications' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
             {% endif %}
@@ -348,7 +350,7 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    {% if pagefrom == 3 %}
+                    {% if pagefrom != 3 %}
                         <input id="heartRateComment" placeholder="Enter comment here"><button id="addHeartRateComment" class="waves-effect waves-light btn">Add comment</button>
                     {% endif %}
                     </div>
@@ -381,7 +383,7 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    {% if pagefrom == 3 %}
+                    {% if pagefrom != 3 %}
                         <input id="temperatureComment" placeholder="Enter comment here"><button id="addTemperatureComment" class="waves-effect waves-light btn">Add comment</button>
                     {% endif %}
                     </div>
@@ -394,6 +396,18 @@
 
             <!---------------------------------------------------------------------------------------------------------------->
 <script>
+    function getTemperatureChart() {
+        var allCharts = AmCharts.charts;
+        return allCharts[0];
+    }
+
+    function getHeartRateChart() {
+        var allCharts = AmCharts.charts;
+        return allCharts[1];
+    }
+
+    var temperatureChart = getTemperatureChart();
+    var heartRateChart = getHeartRateChart();
     $(document).ready(function(){
             $('.modal').modal();
             //$('#infoUser').modal('open');
@@ -504,18 +518,17 @@
         $('#heartRateCommentsModal').modal('open');
     });
     $("#temperatureComments").click(function() {
-        $('#temperatureCommentsModal').modal('open');
+        $('#temperatureCommentsModal').modal('open')
     });
     $("#nextECG").click(function() {
         var currentBatch = $("#batch").val();
         var direction = 1;
         var batch = $("#batchTime").find(":selected").val();
         var date = "{{ date }}";
-
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
         data: {
-          'patientid': {{ patient.patientid }},
+          'patientdeviceid': {{ patient_device.patientdeviceid }},
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
@@ -525,6 +538,9 @@
         success: function (data) {
             var dataPointsArray = [];
             var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+            temperatureChart.zoomToCategoryValues(data[0].time, data[data.length - 1].time);
+            heartRateChart.zoomToCategoryValues(data[0].time, data[data.length - 1].time);
 
             for(let i = 0; i < data.length; i++){
                 if(data[i].value < 1000)
@@ -547,6 +563,7 @@
                     title:{
                     text:"ECG",
                   },
+                    exportEnabled: true,
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
@@ -611,7 +628,7 @@
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
         data: {
-          'patientid': {{ patient.patientid }},
+          'patientdeviceid': {{ patient_device.patientdeviceid }},
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
@@ -621,6 +638,9 @@
         success: function (data) {
             var dataPointsArray = [];
             var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+            temperatureChart.zoomToCategoryValues(data[0].time, data[data.length - 1].time);
+            heartRateChart.zoomToCategoryValues(data[0].time, data[data.length - 1].time);
 
             for(let i = 0; i < data.length; i++){
                 if(data[i].value < 1000)
@@ -646,6 +666,7 @@
                     title:{
                     text:"ECG",
                   },
+                    exportEnabled: true,
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",
@@ -710,7 +731,7 @@
         $.ajax({
         url: '{% url 'get_ecg_batch' %}',
         data: {
-          'patientid': {{ patient.patientid }},
+          'patientdeviceid': {{ patient_device.patientdeviceid }},
           'currentBatch': currentBatch,
           'direction': direction,
           'batch': batch,
@@ -720,6 +741,9 @@
         success: function (data) {
             var dataPointsArray = [];
             var timeRange = data[0].time + " - " + data[data.length - 1].time;
+
+            temperatureChart.zoomToCategoryValues(data[0].time, data[data.length - 1].time);
+            heartRateChart.zoomToCategoryValues(data[0].time, data[data.length - 1].time);
 
             for(let i = 0; i < data.length; i++){
                 if(data[i].value < 1000)
@@ -746,6 +770,7 @@
                     title:{
                     text:"ECG",
                   },
+                    exportEnabled: true,
                   subtitles:[{
                       text: timeRange,
                       horizontalAlign: "center",

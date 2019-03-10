@@ -65,4 +65,13 @@
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js"></script>
 </body>
 
+<script>
+    $(document).ready(function () {
+          var error = '{{ error_message }}';
+          if(error == "Invalid credentials. Try again"){
+              alert("Invalid credentials. Try again");
+              location.replace("{% url 'index' %}");
+          }
+      });
+</script>
 </html>

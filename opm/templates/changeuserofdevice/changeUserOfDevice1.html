@@ -1,0 +1,217 @@
+{% extends "home/adminHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+    <title> OPMS - Change User of Device </title>
+        <div class="col s12 white"><div class="col s12 m12 l12 center white">
+            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">smartphone</i>&nbsp;&nbsp; Change User of Device</h3>
+            <div class="divider"></div>
+            <div class="section"></div>
+
+        </div>
+
+        <div class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
+            <div class="row">
+
+                <div id="devices" class="col s4">
+                    <h5 class="center light-green lighten-4">Devices Currently In Use</h5>
+                    <div style="height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;">
+                        {% if device_list.count == 0 %}
+                            <b>No devices</b>
+                        {% else %}
+                            {% for device in device_list %}
+                            <b>Device {{ device.deviceid }}</b>
+                            <ol>
+                                {% for patient in patient_device_list %}
+                                    {% if patient.device_deviceid.deviceid == device.deviceid and patient.inuse == 1 %}
+                                        <li>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ol>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <br />
+                    <div class='row center'>
+                        <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>
+                    </div>
+                </div>
+
+                <div class = "col s4 center">
+                    <h5 class="">Choose Device ID</h5>
+                      <div id="chooseDevice">
+                          <select name="device" class="browser-default" id="deviceid">
+                              {% if device_list.count == 0 %}
+                                  No devices
+                              {% else %}
+                                  {% for device in device_list %}
+                                     <option value="{{ device.deviceid }}">{{ device.deviceid }}</option>
+                                 {% endfor %}
+                              {% endif %}
+                          </select>
+                      </div>
+                    <br />
+                    <div class='row center'>
+                        <button id='unassignPatient' class='btn btn-small waves-effect'>Unassign Patient (if any)</button>
+                    </div>
+                </div>
+
+                <div class="col s4 center">
+                <div id="patients">
+                    <h5 class="green lighten-5">Select patient</h5>
+                    <div style="height: 130px;border:1px solid #ccc; overflow:auto;">
+                        {% for patient in patient_list %}
+                            <p>
+                                <label>
+                                    <input name="patientID" type="radio" class="filled-in" value="{{ patient.patientid }}">
+                                    <span>{{ patient.userid.auth_user_id.first_name }} {{ patient.userid.auth_user_id.last_name }}</span>
+                                </label>
+                            </p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <br>
+                    <button id='setDeviceToPatient' class='btn btn-small waves-effect'>Set Device to Patient</button>
+
+                    <br>
+                 <div class='input-field col m12 s7'>
+                    <i class="material-icons iconis prefix">person_add</i>
+                    <input class='validate' type='text' name='text' id='searchPatient' />
+              </div>
+
+            </div>
+        </div>
+        <section></section>
+        <section></section>
+            </div></div>
+
+    <script>
+    $("#addNewDevice").click(function () {
+
+      $.ajax({
+        url: '{% url 'add_device' %}',
+        data: {
+        },
+        dataType: 'json',
+        success: function (data) {
+            var devices = "<h5 class=\"center light-green lighten-4\">Devices Currently In Use</h5>\n";
+            devices += "<div style=\"height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;\">";
+            var selectbox = "<select name=\"device\" class=\"browser-default\" id=\"deviceid\">";
+
+            for(var i = 0; i < data.length; i++){
+                if(i == 0){
+                    devices += "<b>Device " + data[i].deviceid + "</b>\n";
+                    devices += "<ol>\n";
+
+                    if(data[i].patient != "none"){
+                        devices += "<li>" + data[i].patient + "</li>\n";
+                    }
+
+                    selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
+                }
+                else if(data[i - 1].deviceid == data[i].deviceid){
+                    devices += "<li>" + data[i].patient + "</li>\n";
+                }
+                else if(data[i - 1].deviceid != data[i].deviceid){
+                    devices += "</ol>\n";
+                    devices += "<b>Device " + data[i].deviceid + "</b>\n";
+                    devices += "<ol>\n";
+
+                    if(data[i].patient != "none"){
+                        devices += "<li>" + data[i].patient + "</li>\n";
+                    }
+
+                    selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
+                }
+            }
+
+            devices += "</div>\n" +
+                "                    <br />\n" +
+                "                    <div class='row center'>\n" +
+                "                        <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>\n" +
+                "                    </div>";
+
+            selectbox += "</select>";
+
+            $("#devices").html(devices);
+            $("#chooseDevice").html(selectbox);
+
+        }
+      });
+    });
+
+    $("#searchPatient").keyup(function () {
+        var search = $(this).val();
+
+      $.ajax({
+        url: '{% url 'search_patients' %}',
+        data: {
+            'search': search
+        },
+        dataType: 'json',
+        success: function (data) {
+            var patients = "<h5 class=\"green lighten-5\">Select patient</h5>\n";
+
+            patients += "<div style=\"height: 130px;border:1px solid #ccc; overflow:auto;\">\n";
+
+            for(var i = 0; i < data.length; i++){
+                patients += "<p>\n";
+                patients += "<label>\n";
+                patients += "<input name='patientID' type='radio' class='filled-in' value='" + data[i].patientid + "'/>\n";
+                patients += "<span>" + data[i].patientname + "</span>\n";
+                patients += "</label>\n";
+                patients += "</p>\n";
+            }
+
+            patients += "</div>";
+            console.log(patients);
+            $("#patients").html(patients);
+        }
+      });
+    });
+
+    $("#setDeviceToPatient").click(function () {
+        var deviceID = $("#deviceid").val();
+        var patientID = $("input[name='patientID']:checked").val();
+
+        console.log("Device: " + deviceID);
+        console.log("Patient: " + patientID);
+
+      $.ajax({
+        url: '{% url 'set_patient_to_device' %}',
+        data: {
+            'deviceID': deviceID,
+            'patientID': patientID
+        },
+        dataType: 'json',
+        success: function (data) {
+            var message = data[0].outcome
+            alert(message);
+            console.log(message);
+            location.reload();
+            //$("#patients").html(patients);
+        }
+      });
+    });
+
+
+    $("#unassignPatient").click(function () {
+      var deviceID = $("#deviceid").val();
+
+      $.ajax({
+        url: '{% url 'unassign_patient' %}',
+        data: {
+            'deviceID': deviceID,
+        },
+        dataType: 'json',
+        success: function (data) {
+            var message = data[0].outcome
+            alert(message);
+            console.log(message);
+            location.reload();
+        }
+      });
+    });
+
+    </script>
+{% endblock %}

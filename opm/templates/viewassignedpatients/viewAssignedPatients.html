@@ -29,17 +29,17 @@
 
         {% if not patient_device_list.exists %}
             <center>
-                <h5><b>No assigned patients!</b></h5>
+                <h5><b>No assigned patient that is currently using a device!</b></h5>
             </center>
         {% else %}
-            <table id="assignedPatientsTable" class="display" style="width:100%">
+            <h5><b>Assigned patients that are currently using a device</b></h5>
+            <table id="assignedPatientsWithDeviceTable" class="display" style="width:100%">
                 <thead>
                     <tr>
                           <th>Patient Full Name</th>
                           <th>Device Using</th>
-                          <th>Contact Number</th>
-                          <th>Email</th>
                           <th>Last Device Recording</th>
+                          <th>Device Return Date</th>
                           <th>Action</th>
                     </tr>
                 </thead>
@@ -48,13 +48,12 @@
                             <tr>
                                 <td>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.middlename }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</td>
                                 <td>Device-{{ patient.device_deviceid.deviceid }}</td>
-                                <td>{{ patient.patient_patientid.userid.contactno }}</td>
-                                <td>{{ patient.patient_patientid.userid.auth_user_id.email }}</td>
                                 {% if patient.temperature_set.last.timestamp is none %}
                                     <td>N/A</td>
                                 {% else %}
                                     <td>{{ patient.temperature_set.last.timestamp }}</td>
                                 {% endif %}
+                                <td>{{ patient.patient_patientid.deadlinereturndate }}</td>
                                 <td><a class="waves-effect waves-light btn-small" href="{% url 'patientvitals' patient.patient_patientid.patientid %}">Today's Latest Vitals</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patient_patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
                                 <a class="waves-effect waves-light btn-small" href="{% url 'patientrecords' patient.patient_patientid.patientid %}">Records</a></td>
@@ -65,7 +64,76 @@
 
         {% endif %}
 
+        {% if not patient_list.exists %}
+            <br>
+            <hr>
+            <center>
+                <h5><b>No assigned patients!</b></h5>
+            </center>
+        {% else %}
+            <br>
+            <hr>
+            <table id="assignedPatientsTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                          <th>Patient Full Name</th>
+                          <th>Contact Number</th>
+                          <th>Email</th>
+                          <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patient_list %}
+                            <tr>
+                                <td>{{ patient.userid.auth_user_id.first_name }} {{ patient.userid.middlename }} {{ patient.userid.auth_user_id.last_name }}</td>
+                                <td>{{ patient.userid.contactno }}</td>
+                                <td>{{ patient.userid.auth_user_id.email }}</td>
+                                <td>
+                                    <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patientid %}">Medical Info</a>&nbsp;&nbsp;
+                                    <a class="waves-effect waves-light btn-small" href="{% url 'patientrecords' patient.patientid %}">Records</a>
+                                </td>
+                          </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
 
+        {% if other_patients_list.count != 0 %}
+            <br>
+            <hr>
+            <h6>Other Patients</h6>
+            <table id="otherPatientsTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                          <th>Patient Full Name</th>
+                          <th>Device Using</th>
+                          <th>Contact Number</th>
+                          <th>Email</th>
+                          <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in other_patients_list %}
+                            <tr>
+                                <td>{{ patient.patientid.userid.auth_user_id.first_name }} {{ patient.patientid.userid.auth_user_id.last_name }}</td>
+                                {% if patient.patientid.currentdeviceid == 0 %}
+                                    <td>None</td>
+                                {% else %}
+                                    <td>Device-{{ patient.patientid.currentdeviceid }}</td>
+                                {% endif %}
+                                <td>{{ patient.patientid.userid.contactno }}</td>
+                                <td>{{ patient.patientid.userid.auth_user_id.email }}</td>
+                                <td>
+                                    {% if patient.restrictmedicalinformationaccess == 0 %}
+                                        <a class="waves-effect waves-light btn-small" href="{% url 'patientmedicalinfo' patient.patientid.patientid %}">Medical Info</a>&nbsp;&nbsp;
+                                    {% endif %}
+                                    <a class="waves-effect waves-light btn-small" href="{% url 'otherpatientrecords' patient.patientid.patientid patient.restrictmedicalinformationaccess patient.restrictvitalsinformationaccess %}">Records</a>
+                                </td>
+                          </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
 
             <div class="section"></div>
 
@@ -74,6 +142,12 @@
     <script>
             $(document).ready(function() {
             $('#assignedPatientsTable').DataTable();
+        } );
+            $(document).ready(function() {
+            $('#assignedPatientsWithDeviceTable').DataTable();
+        } );
+            $(document).ready(function() {
+            $('#otherPatientsTable').DataTable();
         } );
     </script>
 {% endblock %}

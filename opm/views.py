@@ -11,16 +11,19 @@ from django.http import JsonResponse
 import paho.mqtt.client as mqtt
 import datetime
 from datetime import timedelta
-from django.db.models import F, Avg
+from django.db.models import F, Avg, Min, Max
 import time
 import serial
 from twilio.rest import Client
 import random
 from django.core.mail import send_mail
+from django.core.signing import Signer
 
-broker_ip = "192.168.0.194"
+signer = Signer()
+#broker_ip = "192.168.0.194"
 port_number = 1883
 tls_certificate = 'opm/static/certificates/cehci_tls_cert.pem'
+broker_ip = "192.168.1.19"
 
 
 from django.http import HttpResponse
@@ -34,7 +37,6 @@ from django.template.loader import render_to_string
 from .tokens import account_activation_token
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
-
 
 
 def signup(request):
@@ -83,9 +85,27 @@ def index(request):
     try:
         del request.session['user_id']
         del request.session['user_type']
+        del request.session['home_count']
     except KeyError:
         pass
+
     return render(request, 'login/index.html', {'form': form})
+
+
+def invalid_credentials(request):
+    form = LoginForm()
+    try:
+        del request.session['user_id']
+        del request.session['user_type']
+        del request.session['home_count']
+    except KeyError:
+        pass
+
+    context = {
+        'form': form,
+        'error_message': 'Invalid credentials. Try again'
+    }
+    return render(request, 'login/index.html', context)
 
 
 def loginuser(request):
@@ -99,6 +119,7 @@ def loginuser(request):
                 login(request, user)
 
                 request.session['user_id'] = user.id
+                request.session['home_count'] = 1
                 userdetails = Userdetails.objects.get(auth_user_id=request.session['user_id'])
 
                 if userdetails.usertype.usertypeid == 1 or userdetails.usertype.usertypeid == 2:
@@ -106,7 +127,9 @@ def loginuser(request):
                 elif userdetails.usertype.usertypeid == 3 or userdetails.usertype.usertypeid == 4:
                     return redirect('home')
             else:
-                return redirect('index')
+                return redirect('invalid_credentials')
+        else:
+            return HttpResponse(form.errors)
 
 
 @login_required()
@@ -120,7 +143,7 @@ def adminauthentication(request):
     print(otp)
 
     userdetails = Userdetails.objects.get(auth_user_id=request.session['user_id'])
-    """
+
     # Your Account Sid and Auth Token from twilio.com/console
     account_sid = "AC54dbed5f1b63313345460f725fce098a"
     auth_token = "c6897746b240e1ecb1475af8b4c66ee0"
@@ -132,10 +155,10 @@ def adminauthentication(request):
         from_='+14065102947',
         to=userdetails.contactno
     )
-    """
+
     request.session['otp'] = otp
 
-    return render(request, 'adminauthentication/adminAuthentication.html')
+    return render(request, 'adminauthentication/adminAuthentication.html', {'otp': otp})
 
 
 @login_required()
@@ -214,75 +237,17 @@ def home(request):
                 return render(request, 'home/patientBody.html', context)
             else:
                 patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
-            comments = Comments.objects.filter(patientdeviceid=patient_device, timestamp__date=currentdate)
-            temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-                patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
-            heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-                patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
-            ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
-                                                                         timestamp__date=currentdate)[:1000]
-
-            if not temperature_list.exists():
-                temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-                    patientdeviceid=patient_device.patientdeviceid)
-
-            if not heartrate_list.exists():
-                heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-                    patientdeviceid=patient_device.patientdeviceid)
-
-            if not ecg_list.exists():
-                patient_object = Patient.objects.get(userid=request.session['user_id'])
-
-                context = {
-                            'user_id': request.session['user_id'],
-                            'user_details': userdetails,
-                            'patient_object': patient_object,
-                            'patient': patient,
-                            'patient_device': patient_device,
-                            'latest_ecg': -2,
-                           }
-
-                return render(request, 'home/patientBody.html', context)
-
-            if temperature_list.exists():
-                latest_temperature = temperature_list.latest('timestamp')
-            else:
-                latest_temperature = -1
-            if heartrate_list.exists():
-                latest_heartrate = heartrate_list.latest('timestamp')
-            else:
-                latest_heartrate = -1
-            if ecg_list.exists():
-                latest_ecg = ecg_list.all()[ecg_list.count() - 1]
-            else:
-                latest_ecg = -1
-
-            ecg_list_all = Ecg.objects.order_by(F('timestamp').asc()).filter(
-                patientdeviceid=patient_device.patientdeviceid,
-                timestamp__date=currentdate)
-
-            ecg_list_batch_values = ecg_list_all.values_list('batchid', flat=True).distinct()
-
-            batch_list = []
-            for batch in ecg_list_batch_values:
-                if not batch_list.__contains__(int(batch)):
-                    batch_list.append(int(batch))
-
-            ecg_batch_start_end_time = []
-            for batch in batch_list:
-                current_batch_list = Ecg.objects.order_by(F('timestamp').asc()).filter(
-                    patientdeviceid=patient_device.patientdeviceid,
-                    timestamp__date=currentdate, batchid=batch)
-                start_time = current_batch_list.first().timestamp
-                end_time = current_batch_list.last().timestamp
-
-                ecg_batch_start_end_time.append({
-                    'batchid': batch,
-                    'start_time': start_time.time().strftime('%I:%M:%S %p'),
-                    'end_time': end_time.time().strftime('%I:%M:%S %p'),
-                })
+                latest_data = Temperature.objects.defer('data').filter(patientdeviceid=patient_device).order_by(F('timestamp').desc())[:1]
+                latest_data = latest_data[0]
 
             patient_object = Patient.objects.get(userid=request.session['user_id'])
+
+            if request.session['home_count'] == 1:
+                daysbeforedeadline = patient_object.deadlinereturndate - currentdate
+                if(daysbeforedeadline.days > 5):
+                    request.session['home_count'] = 2
+            else:
+                daysbeforedeadline = ( (patient_object.deadlinereturndate - currentdate) /  (patient_object.deadlinereturndate - currentdate) ) - 1000
 
             context = {
                        'user_id': request.session['user_id'],
@@ -290,20 +255,17 @@ def home(request):
                        'patient_object': patient_object,
                        'patient': patient,
                        'patient_device': patient_device,
-                       'temperature_list': temperature_list,
-                       'latest_temperature': latest_temperature,
-                       'heartrate_list': heartrate_list,
-                       'latest_heartrate': latest_heartrate,
-                       'ecg_list': ecg_list,
-                       'latest_ecg': latest_ecg,
-                       'batch_list': batch_list,
-                       'ecg_batch_start_end_time': ecg_batch_start_end_time,
-                       'comments': comments,
+                       'daysbeforedeadline': daysbeforedeadline,
+                        'latest_data': latest_data
                        }
+
+            print(patient)
+
             return render(request, 'home/patientBody.html', context)
 
     else:
         return redirect('index')
+
 
 @login_required()
 def listofusers(request):
@@ -413,9 +375,10 @@ def createuser(request):
                 }
                 return render(request, 'createusers/createUser.html', context)
 
-            user = User.objects.create_user(request.POST['username'], request.POST['email'], otp)
+            user = User.objects.create_user(request.POST['username'], request.POST['email'], 'pass123word')
             user.last_name = request.POST['lastname']
             user.first_name = request.POST['firstname']
+            user.is_active = False
             user.save()
 
             user = User.objects.get(username=request.POST['username'])
@@ -465,7 +428,7 @@ def createuser(request):
                 form = CreateUserForm()
                 context = {
                     'form': form,
-                    'message': "New User Created"
+                    'message': "New Doctor User Created. Inform user to check their email to register the account."
                 }
                 return render(request, 'createusers/createUser.html', context)
             else:
@@ -481,10 +444,46 @@ def createuser(request):
                     doctorid=doctor,
                     userid=latestpatientuser,
                     bloodtype=request.POST['bloodtype'],
+                    currentdeviceid=0,
                 )
 
                 newPatient.save()
-                return redirect('filloutmedicalform')
+
+                if PatientDoctor.objects.count() == 0:
+                    patientdoctorid = 1
+                else:
+                    patientdoctorid = PatientDoctor.objects.latest('patientdoctorid').patientdoctorid + 1
+
+                newPatientDoctor = PatientDoctor(
+                    patientdoctorid=patientdoctorid,
+                    patientid=newPatient,
+                    doctorid=newPatient.doctorid,
+                    restrictmedicalinformationaccess=0,
+                    restrictvitalsinformationaccess=0,
+                    assigneddoctor=1,
+                )
+
+                if Notifications.objects.all().count() == 0:
+                    notificationid = 1
+                else:
+                    notificationid = Notifications.objects.all().count() + 1
+
+                newNotification = Notifications(
+                    notificationid=notificationid,
+                    notificationdescription="New assigned patient. Patient name: " + newPatient.userid.auth_user_id.first_name + " " + newPatient.userid.auth_user_id.last_name,
+                    datetime=datetime.datetime.now(),
+                    userid=doctor.userid,
+                    viewed=0
+                )
+
+                newNotification.save()
+                newPatientDoctor.save()
+                form = CreateUserForm()
+                context = {
+                    'form': form,
+                    'message': "New Patient User Created. Inform user to check their email to register the account."
+                }
+                return render(request, 'createusers/createUser.html', context)
         else:
             return HttpResponse("bobo ka")
     else:
@@ -514,10 +513,14 @@ def changeuserofdevice(request):
 @login_required()
 def viewassignedpatients(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
+    patient_list = Patient.objects.filter(doctorid=doctorid)
     patient_device_list = PatientDevice.objects.filter(patient_patientid__doctorid=doctorid, inuse=1)
+    other_patients_list = PatientDoctor.objects.filter(doctorid=doctorid, assigneddoctor=0)
 
     context = {'doctorid': doctorid,
+               'patient_list': patient_list,
                'patient_device_list': patient_device_list,
+               'other_patients_list': other_patients_list,
                }
     return render(request, 'viewassignedpatients/viewAssignedPatients.html', context)
 
@@ -528,15 +531,15 @@ def assignedpatientvitals(request, patient_id):
     patient = Patient.objects.get(patientid=patient_id)
     patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
     comments = Comments.objects.filter(patientdeviceid=patient_device, timestamp__date=currentdate)
-    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
-    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+    temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            currentdate) + "') ORDER BY timestamp ASC;")
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            currentdate) + "') ORDER BY timestamp ASC;")
     ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)[:1000]
-
-    if not temperature_list.exists():
-        temperature_list = Temperature.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid)
-
-    if not heartrate_list.exists():
-        heartrate_list = Heartrate.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid)
 
     if not ecg_list.exists():
         pagefrom = 1
@@ -550,14 +553,6 @@ def assignedpatientvitals(request, patient_id):
 
         return render(request, 'patientvitals/patientVitals.html', context)
 
-    if temperature_list.exists():
-        latest_temperature = temperature_list.latest('timestamp')
-    else:
-        latest_temperature = -1
-    if heartrate_list.exists():
-        latest_heartrate = heartrate_list.latest('timestamp')
-    else:
-        latest_heartrate = -1
     if ecg_list.exists():
         latest_ecg = ecg_list.all()[ecg_list.count() - 1]
     else:
@@ -592,9 +587,7 @@ def assignedpatientvitals(request, patient_id):
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature_list': temperature_list,
-               'latest_temperature': latest_temperature,
                'heartrate_list': heartrate_list,
-               'latest_heartrate': latest_heartrate,
                'ecg_list': ecg_list,
                'latest_ecg': latest_ecg,
                'pagefrom': pagefrom,
@@ -648,10 +641,124 @@ def assignedpatientrecords(request, patient_id):
                'patient_medical_history_list': patient_medical_history_list,
                'vitals_dates_list': vitals_dates_list,
                'vitals_patientdeviceid_dates_list': vitals_patientdeviceid_dates_list,
-               'vitals_dates_list_size': vitals_dates_list_size
+               'vitals_dates_list_size': vitals_dates_list_size,
                }
 
     return render(request, 'patientrecords/patientRecords.html', context)
+
+
+@login_required()
+def otherpatientrecords(request, patient_id, access_medicalforms, access_vitalforms):
+    patient = Patient.objects.get(patientid=patient_id)
+    patientdevice = PatientDevice.objects.filter(patient_patientid=patient.patientid)
+    patient_medical_history_list = PatientMedicalHistory.objects.filter(patientid=patient_id)
+    temperature_records = Temperature.objects.filter(patientdeviceid__in=patientdevice)
+    temperature_distinct_date_records = temperature_records.values_list('patientdeviceid', 'timestamp').distinct()
+
+    vitals_dates_list = []
+    vitals_patientdeviceid_dates_list = []
+    for temperature_data in temperature_distinct_date_records:
+        if not vitals_dates_list.__contains__(temperature_data[1].date()):
+            vitals_dates_list.append(temperature_data[1].date())
+            vitals_patientdeviceid_dates_list.append({
+                'date': temperature_data[1].date(),
+                'patientdeviceid': temperature_data[0]
+            })
+
+    vitals_dates_list_size = vitals_dates_list.__len__()
+    context = {'patient': patient,
+               'patient_medical_history_list': patient_medical_history_list,
+               'vitals_dates_list': vitals_dates_list,
+               'vitals_patientdeviceid_dates_list': vitals_patientdeviceid_dates_list,
+               'vitals_dates_list_size': vitals_dates_list_size,
+               'access_medicalforms': access_medicalforms,
+               'access_vitalrecords': access_vitalforms
+               }
+
+    return render(request, 'patientrecords/patientRecords.html', context)
+
+
+@login_required()
+def otherpatientvitalrecord(request, patient_id, access_medicalforms, access_vitalforms, patientdevice_id, date):
+    convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
+    patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
+    comments = Comments.objects.filter(patientdeviceid=patient_device, timestamp__date=convert_date)
+    temperature_list = temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
+    ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                 timestamp__date=convert_date)
+
+    latest_ecg = ecg_list.latest('timestamp')
+
+    ecg_list = ecg_list.all()[:1000]
+
+    ecg_list_all = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
+                                                                     timestamp__date=convert_date)
+
+    ecg_list_batch_values = ecg_list_all.values_list('batchid', flat=True).distinct().order_by()
+
+    batch_list = []
+    for batch in ecg_list_batch_values:
+        if not batch_list.__contains__(int(batch)):
+            batch_list.append(int(batch))
+
+    ecg_batch_start_end_time = []
+    for batch in batch_list:
+        current_batch_list = Ecg.objects.order_by(F('timestamp').asc()).filter(
+            patientdeviceid=patient_device.patientdeviceid,
+            timestamp__date=convert_date, batchid=batch)
+        start_time = current_batch_list.first().timestamp
+        end_time = current_batch_list.last().timestamp
+
+        ecg_batch_start_end_time.append({
+            'batchid': batch,
+            'start_time': start_time.time().strftime('%I:%M:%S %p'),
+            'end_time': end_time.time().strftime('%I:%M:%S %p'),
+        })
+
+    pagefrom = 4
+
+    context = {'patient': patient,
+               'patient_device': patient_device,
+               'temperature_list': temperature_list,
+               'heartrate_list': heartrate_list,
+               'ecg_list': ecg_list,
+               'latest_ecg': latest_ecg,
+               'pagefrom': pagefrom,
+               'date': datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y'),
+               'batch_list': batch_list,
+               'ecg_batch_start_end_time': ecg_batch_start_end_time,
+               'base_template': 'home/doctorHeaderFooter.html',
+               'comments': comments,
+               'access_medicalforms': access_medicalforms,
+               'access_vitalrecords': access_vitalforms,
+               'patient_id': patient_id
+               }
+
+    return render(request, 'patientvitals/patientVitals.html', context)
+
+
+@login_required()
+def otherpatientmedicalrecord(request, patient_id, access_medicalforms, access_vitalforms, medical_history_id):
+    patient = Patient.objects.get(patientid=patient_id)
+    patientmedicalinfo = PatientMedicalHistory.objects.get(patient_medical_historyid=medical_history_id)
+    pagefrom = 3
+    context = {'patient': patient,
+               'patientmedicalinfo': patientmedicalinfo,
+               'pagefrom': pagefrom,
+               'base_template': 'home/doctorHeaderFooter.html',
+               'access_medicalforms': access_medicalforms,
+               'access_vitalrecords': access_vitalforms
+               }
+    return render(request, 'patientmedicalinfo/patientMedicalInfo.html', context)
+
 
 @login_required()
 def assignedpatientrecordsmedicalhistory(request, patient_id, medical_history_id):
@@ -672,15 +779,18 @@ def assignedpatientrecordsvitalrecords(request, patientdevice_id, date):
     patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
     patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
     comments = Comments.objects.filter(patientdeviceid=patient_device, timestamp__date=convert_date)
-    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
-    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    temperature_list = temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
     ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
                                                                   timestamp__date=convert_date)
-    latest_temperature = temperature_list.latest('timestamp')
-    latest_heartrate = heartrate_list.latest('timestamp')
     latest_ecg = ecg_list.latest('timestamp')
+
 
     ecg_list = ecg_list.all()[:1000]
 
@@ -713,9 +823,7 @@ def assignedpatientrecordsvitalrecords(request, patientdevice_id, date):
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature_list': temperature_list,
-               'latest_temperature': latest_temperature,
                'heartrate_list': heartrate_list,
-               'latest_heartrate': latest_heartrate,
                'ecg_list': ecg_list,
                'latest_ecg': latest_ecg,
                'pagefrom': pagefrom,
@@ -734,28 +842,30 @@ def managedevicerecording(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
     patient_device_list = PatientDevice.objects.filter(patient_patientid__doctorid=doctorid, inuse=1)
     presets_list = Presets.objects.filter(doctorid=doctorid)
+    timeList = Time.objects.all()
 
     context = {
         'doctorid': doctorid.doctorid,
         'patient_device_list': patient_device_list,
-        'presets_list': presets_list
+        'presets_list': presets_list,
+        'time_list': timeList
     }
     return render(request, 'managedevicerecording/manageDeviceRecording.html', context)
 
 
 @login_required()
-def notifications(request):
+def alerts(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
-    alerts = Alerts.objects.filter(patientdeviceid__patient_patientid__doctorid=doctorid.doctorid, patientdeviceid__inuse=1, viewed=0)
+    alerts = Alerts.objects.filter(patientdeviceid__patient_patientid__doctorid=doctorid.doctorid, patientdeviceid__inuse=1)
 
     context = {
         'alerts': alerts
     }
 
-    return render(request, 'notifications/notifications.html', context)
+    return render(request, 'alerts/alerts.html', context)
 
 @login_required()
-def viewnotification(request, alert_id, patientdevice_id, date):
+def viewalert(request, alert_id, patientdevice_id, date):
     alert = Alerts.objects.get(alertid=alert_id)
     alert.viewed = 1
     alert.save()
@@ -763,14 +873,16 @@ def viewnotification(request, alert_id, patientdevice_id, date):
     convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
     patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
     patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
-    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
-    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    temperature_list = temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
     ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
                                                                  timestamp__date=convert_date)
-    latest_temperature = temperature_list.latest('timestamp')
-    latest_heartrate = heartrate_list.latest('timestamp')
     latest_ecg = ecg_list.latest('timestamp')
 
     ecg_list = ecg_list.all()[:1000]
@@ -799,24 +911,26 @@ def viewnotification(request, alert_id, patientdevice_id, date):
             'end_time': end_time.time().strftime('%I:%M:%S %p'),
         })
 
-    pagefrom = 4
+    pagefrom = 5
 
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature_list': temperature_list,
-               'latest_temperature': latest_temperature,
                'heartrate_list': heartrate_list,
-               'latest_heartrate': latest_heartrate,
                'ecg_list': ecg_list,
                'latest_ecg': latest_ecg,
                'pagefrom': pagefrom,
                'date': datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y'),
                'batch_list': batch_list,
                'ecg_batch_start_end_time': ecg_batch_start_end_time,
-               'base_template': 'home/doctorHeaderFooter.html'
+               'base_template': 'home/doctorHeaderFooter.html',
+               'access_medicalforms': 99,
+               'access_vitalrecords': 99,
+               'patient_id': patient.patientid
                }
 
     return render(request, 'patientvitals/patientVitals.html', context)
+
 
 @login_required()
 def viewcurrentvitals(request):
@@ -825,20 +939,16 @@ def viewcurrentvitals(request):
     currentdate = datetime.date.today()
     patient = Patient.objects.get(patientid=patient_id)
     patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
-    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
-    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=currentdate)
+    temperature_list = temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            currentdate) + "') ORDER BY timestamp ASC;")
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            currentdate) + "') ORDER BY timestamp ASC;")
     ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
                                                                  timestamp__date=currentdate)[:1000]
-
-    if not temperature_list.exists():
-        temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-            patientdeviceid=patient_device.patientdeviceid)
-
-    if not heartrate_list.exists():
-        heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-            patientdeviceid=patient_device.patientdeviceid)
 
     if not ecg_list.exists():
         context = {'patient': patient,
@@ -848,14 +958,6 @@ def viewcurrentvitals(request):
 
         return render(request, 'viewcurrentvitals/viewCurrentVitals.html', context)
 
-    if temperature_list.exists():
-        latest_temperature = temperature_list.latest('timestamp')
-    else:
-        latest_temperature = -1
-    if heartrate_list.exists():
-        latest_heartrate = heartrate_list.latest('timestamp')
-    else:
-        latest_heartrate = -1
     if ecg_list.exists():
         latest_ecg = ecg_list.all()[ecg_list.count() - 1]
     else:
@@ -889,9 +991,7 @@ def viewcurrentvitals(request):
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature_list': temperature_list,
-               'latest_temperature': latest_temperature,
                'heartrate_list': heartrate_list,
-               'latest_heartrate': latest_heartrate,
                'ecg_list': ecg_list,
                'latest_ecg': latest_ecg,
                'batch_list': batch_list,
@@ -933,7 +1033,7 @@ def viewhistoryofvitals(request):
 def viewhistoryofvitalsmediclaform(request, medical_history_id):
     patient = Patient.objects.get(userid=request.session['user_id'])
     patientmedicalinfo = PatientMedicalHistory.objects.get(patient_medical_historyid=medical_history_id)
-    pagefrom = 3
+    pagefrom = 4
     context = {'patient': patient,
                'patientmedicalinfo': patientmedicalinfo,
                'pagefrom': pagefrom,
@@ -948,15 +1048,17 @@ def viewhistoryofvitalvitalrecords(request, patientdevice_id, date):
     patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
     patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
     comments = Comments.objects.filter(patientdeviceid=patient_device, timestamp__date=convert_date)
-    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
-    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
+    temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
     ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
                                                                  timestamp__date=convert_date)
 
-    latest_temperature = temperature_list.latest('timestamp')
-    latest_heartrate = heartrate_list.latest('timestamp')
     latest_ecg = ecg_list.latest('timestamp')
 
     ecg_list = ecg_list.all()[:1000]
@@ -990,9 +1092,7 @@ def viewhistoryofvitalvitalrecords(request, patientdevice_id, date):
     context = {'patient': patient,
                'patient_device': patient_device,
                'temperature_list': temperature_list,
-               'latest_temperature': latest_temperature,
                'heartrate_list': heartrate_list,
-               'latest_heartrate': latest_heartrate,
                'ecg_list': ecg_list,
                'latest_ecg': latest_ecg,
                'pagefrom': pagefrom,
@@ -1000,7 +1100,10 @@ def viewhistoryofvitalvitalrecords(request, patientdevice_id, date):
                'batch_list': batch_list,
                'ecg_batch_start_end_time': ecg_batch_start_end_time,
                'base_template': 'home/patientHeaderFooter.html',
-               'comments': comments
+               'comments': comments,
+               'access_medicalforms': 99,
+               'access_vitalrecords': 99,
+               'patient_id': patient.patientid
                }
 
     return render(request, 'patientvitals/patientVitals.html', context)
@@ -1009,8 +1112,20 @@ def viewhistoryofvitalvitalrecords(request, patientdevice_id, date):
 @login_required()
 def restrictuseraccess(request):
     patient = Patient.objects.get(userid=request.session['user_id'])
+    patientDoctorsList = PatientDoctor.objects.filter(patientid=patient)
+
+    doctors = []
+
+    for doctor in patientDoctorsList:
+        doctors.append(doctor.doctorid.doctorid)
+
+    doctorList = Doctor.objects.exclude(doctorid__in=doctors)
+    assignedDoctor = patient.doctorid
 
     context = {'patient': patient,
+               'patientdoctorlist': patientDoctorsList,
+               'doctorlist': doctorList,
+               'assigneddoctor': assignedDoctor,
                }
 
     return render(request, 'restrictuseraccess/restrictUserAccess.html', context)
@@ -1034,6 +1149,17 @@ def managepatientaccount(request):
                'patient_object': patient_object,
                }
     return render(request, 'managepatientaccount/managePatientAccount.html', context)
+
+
+@login_required()
+def faqs(request):
+    userid = request.session['user_id']
+    user_object = Userdetails.objects.get(userid=userid)
+    patient_object = Patient.objects.get(userid=userid)
+    context = {'user_object': user_object,
+               'patient_object': patient_object,
+               }
+    return render(request, 'faqs/frequentlyAskedQuestions.html', context)
 
 
 @login_required()
@@ -1140,9 +1266,29 @@ def edituser1(request, user_id):
 
         return render(request, 'edituser/editUser.html', context)
 
+
+@login_required()
+def notifications(request):
+    userid = Userdetails.objects.get(userid=request.session['user_id'])
+    notifications = Notifications.objects.filter(userid=userid)
+
+    if userid.usertype_id == 2:
+        base_template = 'home/adminHeaderFooter.html'
+    elif userid.usertype_id == 3:
+        base_template = 'home/doctorHeaderFooter.html'
+    else:
+        base_template = 'home/patientHeaderFooter.html'
+
+    context = {
+        'notifications': notifications,
+        'base_template': base_template
+    }
+
+    return render(request, 'notifications/notifications.html', context)
+
 #########################AJAX############################
 
-
+@login_required()
 def validate_username(request):
     username = request.GET.get('username', None)
     data = {
@@ -1151,6 +1297,16 @@ def validate_username(request):
     return JsonResponse(data)
 
 
+@login_required()
+def validate_email(request):
+    email = request.GET.get('email', None)
+    data = {
+        'is_taken': User.objects.filter(email__iexact=email).exists()
+    }
+    return JsonResponse(data)
+
+
+@login_required()
 def search_user(request):
     search = request.GET.get('search', None)
 
@@ -1172,6 +1328,7 @@ def search_user(request):
     return JsonResponse(user_array, safe=False)
 
 
+@login_required()
 def get_user_details(request):
     userid = request.GET.get('userid', None)
 
@@ -1212,14 +1369,20 @@ def get_user_details(request):
     return JsonResponse(user_details_array, safe=False)
 
 
+@login_required()
 def add_device(request):
+    macaddress = request.GET.get('macaddress', None)
     if Device.objects.count() == 0:
         deviceid = 1
     else:
         deviceid = Device.objects.latest('deviceid').deviceid + 1
 
     newDevice = Device(
-        deviceid=deviceid
+        deviceid=deviceid,
+        macaddress=macaddress,
+        status=0,
+        borroweddate=datetime.datetime.today(),
+        retureneddate=datetime.datetime.today(),
     )
     newDevice.save()
 
@@ -1243,6 +1406,7 @@ def add_device(request):
     return JsonResponse(device_array, safe=False)
 
 
+@login_required()
 def get_patients(request):
     patient_list = Patient.objects.filter(userid__auth_user_id__is_active=1)
     patient_array = []
@@ -1255,6 +1419,7 @@ def get_patients(request):
     return JsonResponse(patient_array, safe=False)
 
 
+@login_required()
 def search_patients(request):
     search = request.GET.get('search', None)
 
@@ -1269,6 +1434,7 @@ def search_patients(request):
     return JsonResponse(patient_array, safe=False)
 
 
+@login_required()
 def search_assigned_patients(request):
     search = request.GET.get('search', None)
 
@@ -1284,7 +1450,7 @@ def search_assigned_patients(request):
                                               )
     patient_array=[]
 
-    print(patient_list)
+
     for patient in patient_list:
         patient_array.append({
             'patientid': patient.patient_patientid.patientid,
@@ -1299,9 +1465,13 @@ def search_assigned_patients(request):
     return JsonResponse(patient_array, safe=False)
 
 
+@login_required()
 def set_patient_to_device(request):
     deviceid = request.GET.get('deviceID', None)
     patientid = request.GET.get('patientID', None)
+    returndate = request.GET.get('returnDate', None)
+    convert_date = datetime.datetime.strptime(returndate, '%Y-%m-%d')
+    macaddress = Device.objects.get(deviceid=deviceid).macaddress
 
     response = []
 
@@ -1320,24 +1490,64 @@ def set_patient_to_device(request):
         patientdevice = PatientDevice.objects.get(patient_patientid=patientid, device_deviceid=deviceid, inuse=0)
         patientdevice.inuse = 1
         patientdevice.isrecording = 0
-        patientdevice.recordingduration = 20
+        patientdevice.recordingduration = 120
         patientdevice.mintemperature = 32
         patientdevice.maxtemperature = 40
         patientdevice.minheartrate = 60
         patientdevice.maxheartrate = 100
 
+        device = Device.objects.get(deviceid=deviceid)
+        patient = Patient.objects.get(patientid=patientid)
+        device.status = 1
+        device.borroweddate = datetime.datetime.now()
+        patient.currentdeviceid = deviceid
+        patient.deadlinereturndate = convert_date
+
         mqttc = mqtt.Client("Device " + str(deviceid))
-       # mqttc.tls_set(tls_certificate)
+        #mqttc.tls_set(tls_certificate)
         try:
             mqttc.connect(broker_ip, port_number)
 
-            mqttc.publish("/devices/" + str(deviceid) + "/patient", patientdevice.patientdeviceid)
+            mqttc.publish("/devices/" + str(macaddress) + "/patient", patientdevice.patientdeviceid)
 
-            mqttc.publish("/devices/" + str(deviceid) + "/record_duration", 20)
-            mqttc.publish("/devices/" + str(deviceid) + "/change_temperature", "32_40")
-            mqttc.publish("/devices/" + str(deviceid) + "/change_heartrate", "60_100")
+            mqttc.publish("/devices/" + str(macaddress) + "/record_duration", 120)
+            mqttc.publish("/devices/" + str(macaddress) + "/change_temperature", "32_40")
+            mqttc.publish("/devices/" + str(macaddress) + "/change_heartrate", "60_100")
+            mqttc.publish("/devices/" + str(macaddress) + "/doctor", patient.doctorid.userid.userid)
+            mqttc.publish("/devices/" + str(macaddress) + "/patientName", str(patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name))
 
             patientdevice.save()
+            device.save()
+            patient.save()
+
+            if Notifications.objects.all().count() == 0:
+                notificationid = 1
+            else:
+                notificationid = Notifications.objects.all().count() + 1
+
+            newDoctorNotification = Notifications(
+                notificationid=notificationid,
+                notificationdescription="Patient: " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + ", is set to Device " + str(
+                    device.deviceid),
+                datetime=datetime.datetime.now(),
+                userid=patient.doctorid.userid,
+                viewed=0
+            )
+            newDoctorNotification.save()
+
+            if Notifications.objects.all().count() == 0:
+                notificationid = 1
+            else:
+                notificationid = Notifications.objects.all().count() + 1
+
+            newPatientNotification = Notifications(
+                notificationid=notificationid,
+                notificationdescription="Assigned to Device: " + str(device.deviceid),
+                datetime=datetime.datetime.now(),
+                userid=patient.userid,
+                viewed=0
+            )
+            newPatientNotification.save()
         except:
             failedresponse = 0
 
@@ -1359,24 +1569,63 @@ def set_patient_to_device(request):
             device_deviceid=Device.objects.get(deviceid=deviceid),
             inuse=1,
             isrecording=0,
-            recordingduration=20,
+            recordingduration=120,
             mintemperature=32,
             maxtemperature=40,
             minheartrate=60,
             maxheartrate=100,
         )
 
+        device = Device.objects.get(deviceid=deviceid)
+        patient = Patient.objects.get(patientid=patientid)
+        device.status = 1
+        device.borroweddate = datetime.datetime.now()
+        patient.currentdeviceid = deviceid
+        patient.deadlinereturndate = convert_date
+
         mqttc = mqtt.Client("Device " + str(deviceid))
         #mqttc.tls_set(tls_certificate)
         try:
             mqttc.connect(broker_ip, port_number)  # Change
 
-            mqttc.publish("/devices/" + str(deviceid) + "/patient", patientdevice_id)
-            mqttc.publish("/devices/" + str(deviceid) + "/record_duration", 20)
-            mqttc.publish("/devices/" + str(deviceid) + "/change_temperature", "32_40")
-            mqttc.publish("/devices/" + str(deviceid) + "/change_heartrate", "60_100")
+            mqttc.publish("/devices/" + str(macaddress) + "/patient", patientdevice_id)
+            mqttc.publish("/devices/" + str(macaddress) + "/record_duration", 120)
+            mqttc.publish("/devices/" + str(macaddress) + "/change_temperature", "32_40")
+            mqttc.publish("/devices/" + str(macaddress) + "/change_heartrate", "60_100")
+            mqttc.publish("/devices/" + str(macaddress) + "/doctor", patient.doctorid.userid.userid)
+            mqttc.publish("/devices/" + str(macaddress) + "/patientName", str(patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name))
 
             newPatientDevice.save()
+            device.save()
+            patient.save()
+
+            if Notifications.objects.all().count() == 0:
+                notificationid = 1
+            else:
+                notificationid = Notifications.objects.all().count() + 1
+
+            newDoctorNotification = Notifications(
+                notificationid=notificationid,
+                notificationdescription="Patient " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + " is set to Device " + str(device.deviceid),
+                datetime=datetime.datetime.now(),
+                userid=patient.doctorid.userid,
+                viewed=0
+            )
+            newDoctorNotification.save()
+
+            if Notifications.objects.all().count() == 0:
+                notificationid = 1
+            else:
+                notificationid = Notifications.objects.all().count() + 1
+
+            newPatientNotification = Notifications(
+                notificationid=notificationid,
+                notificationdescription="Assigned to Device: " + str(device.deviceid),
+                datetime=datetime.datetime.now(),
+                userid=patient.userid,
+                viewed=0
+            )
+            newPatientNotification.save()
         except:
             failedresponse = 0
 
@@ -1388,17 +1637,39 @@ def set_patient_to_device(request):
         return JsonResponse(response, safe=False)
 
 
+@login_required()
 def stop_recording(request):
     data = request.GET.get('data', None)
     patientdeviceId = request.GET.get('deviceid', None)
-    deviceId = PatientDevice.objects.get(patientdeviceid=patientdeviceId).device_deviceid.deviceid
+    patientdevice = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+    deviceId = patientdevice.device_deviceid.deviceid
+    macaddress = Device.objects.get(deviceid=deviceId).macaddress
     failedresponse = 1
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    if data == "0":
+        description = "The device is recording (started by your assigned doctor)"
+    else:
+        description = "The device stopped recording (stopped by your assigned doctor)"
+
+    newPatientNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription=description,
+        datetime=datetime.datetime.now(),
+        userid=patientdevice.patient_patientid.userid,
+        viewed=0
+    )
+
     mqttc = mqtt.Client("Device " + str(deviceId))
     #mqttc.tls_set(tls_certificate)
     try:
         mqttc.connect(broker_ip, port_number)
 
-        mqttc.publish("/devices/" + str(deviceId) + "/stop", data)
+        mqttc.publish("/devices/" + str(macaddress) + "/stop", data)
 
         patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
 
@@ -1408,6 +1679,7 @@ def stop_recording(request):
             patientdeviceobject.isrecording = 0
 
         patientdeviceobject.save()
+        newPatientNotification.save()
     except:
         failedresponse = 0
 
@@ -1421,6 +1693,7 @@ def stop_recording(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def set_recording_duration(request):
     hours = request.GET.get('hours', None)
     minutes = request.GET.get('minutes', None)
@@ -1429,18 +1702,35 @@ def set_recording_duration(request):
     total_seconds = (int(hours)*60*60)+(int(minutes)*60)+int(seconds)
 
     patientdeviceId = request.GET.get('deviceid', None)
-    deviceId = PatientDevice.objects.get(patientdeviceid=patientdeviceId).device_deviceid.deviceid
+    patientdevice = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+    deviceId = patientdevice.device_deviceid.deviceid
+    macaddress = Device.objects.get(deviceid=deviceId).macaddress
     failedresponse = 1
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    newPatientNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription="Device Recording Duration is now set to: " + str(total_seconds) + " seconds",
+        datetime=datetime.datetime.now(),
+        userid=patientdevice.patient_patientid.userid,
+        viewed=0
+    )
     mqttc = mqtt.Client("Device " + str(deviceId))
     #mqttc.tls_set(tls_certificate)
     try:
         mqttc.connect(broker_ip, port_number)
 
-        mqttc.publish("/devices/" + str(deviceId) + "/record_duration", total_seconds)
+        mqttc.publish("/devices/" + str(macaddress) + "/record_duration", total_seconds)
+
 
         patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
         patientdeviceobject.recordingduration = total_seconds
         patientdeviceobject.save()
+        newPatientNotification.save()
     except:
         failedresponse = 0
 
@@ -1454,6 +1744,7 @@ def set_recording_duration(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def set_min_max_temperature(request):
     mintemp = request.GET.get('mintemp', None)
     maxtemp = request.GET.get('maxtemp', None)
@@ -1461,19 +1752,36 @@ def set_min_max_temperature(request):
     mintemp_maxtemp = mintemp + "_" + maxtemp
 
     patientdeviceId = request.GET.get('deviceid', None)
-    deviceId = PatientDevice.objects.get(patientdeviceid=patientdeviceId).device_deviceid.deviceid
+    patientdevice = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+    deviceId = patientdevice.device_deviceid.deviceid
+    macaddress = Device.objects.get(deviceid=deviceId).macaddress
     failedresponse = 1
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    newPatientNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription="Device Temperature Thresholds is now set to: Minimum:" + mintemp + "°C; Maximum: " + maxtemp + "°C",
+        datetime=datetime.datetime.now(),
+        userid=patientdevice.patient_patientid.userid,
+        viewed=0
+    )
+
     mqttc = mqtt.Client("Device " + str(deviceId))
     #mqttc.tls_set(tls_certificate)
     try:
         mqttc.connect(broker_ip, port_number)
 
-        mqttc.publish("/devices/" + str(deviceId) + "/change_temperature", mintemp_maxtemp)
+        mqttc.publish("/devices/" + str(macaddress) + "/change_temperature", mintemp_maxtemp)
 
         patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
         patientdeviceobject.mintemperature = mintemp
         patientdeviceobject.maxtemperature = maxtemp
         patientdeviceobject.save()
+        newPatientNotification.save()
     except:
         failedresponse = 0
 
@@ -1487,6 +1795,7 @@ def set_min_max_temperature(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def set_min_max_heartrate(request):
     minheartrate = request.GET.get('minheartrate', None)
     maxheartrate = request.GET.get('maxheartrate', None)
@@ -1494,19 +1803,36 @@ def set_min_max_heartrate(request):
     minheartrate_maxheartrate = minheartrate + "_" + maxheartrate
 
     patientdeviceId = request.GET.get('deviceid', None)
-    deviceId = PatientDevice.objects.get(patientdeviceid=patientdeviceId).device_deviceid.deviceid
+    patientdevice = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+    deviceId = patientdevice.device_deviceid.deviceid
+    macaddress = Device.objects.get(deviceid=deviceId).macaddress
     failedresponse = 1
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    newPatientNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription="Device Heart Rate Thresholds is now set to: Minimum:" + minheartrate + "°C; Maximum: " + maxheartrate + "°C",
+        datetime=datetime.datetime.now(),
+        userid=patientdevice.patient_patientid.userid,
+        viewed=0
+    )
+
     mqttc = mqtt.Client("Device " + str(deviceId))
     #mqttc.tls_set(tls_certificate)
     try:
         mqttc.connect(broker_ip, port_number)
 
-        mqttc.publish("/devices/" + str(deviceId) + "/change_heartrate", minheartrate_maxheartrate)
+        mqttc.publish("/devices/" + str(macaddress) + "/change_heartrate", minheartrate_maxheartrate)
 
         patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
         patientdeviceobject.minheartrate = minheartrate
         patientdeviceobject.maxheartrate = maxheartrate
         patientdeviceobject.save()
+        newPatientNotification.save()
     except:
         failedresponse = 0
 
@@ -1520,10 +1846,30 @@ def set_min_max_heartrate(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
+def set_remarks(request):
+    remarks = request.GET.get('remarks', None)
+
+    patientdeviceId = request.GET.get('deviceid', None)
+
+    patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+    patientdeviceobject.remarks = remarks
+    patientdeviceobject.save()
+
+    response = []
+
+    response.append({'response': "Remarks Updated"})
+
+    return JsonResponse(response, safe=False)
+
+
+@login_required()
 def unassign_patient(request):
     deviceid = request.GET.get('deviceID', None)
 
     is_assigned = PatientDevice.objects.filter(device_deviceid=deviceid, inuse=1).exists()
+
+    macaddress = Device.objects.get(deviceid=deviceid).macaddress
 
     response = []
 
@@ -1535,11 +1881,46 @@ def unassign_patient(request):
         try:
             mqttc.connect(broker_ip, port_number)
 
-            mqttc.publish("/devices/" + str(deviceid) + "/patient", 0)
+            mqttc.publish("/devices/" + str(macaddress) + "/patient", 0)
 
             patientdevice = PatientDevice.objects.get(device_deviceid=deviceid, inuse=1)
+            device = Device.objects.get(deviceid=deviceid)
+            patient = Patient.objects.get(currentdeviceid=deviceid)
             patientdevice.inuse = 0
             patientdevice.save()
+            device.status = 0
+            device.returneddate = datetime.datetime.now()
+            device.save()
+            patient.currentdeviceid = 0
+            patient.save()
+
+            if Notifications.objects.all().count() == 0:
+                notificationid = 1
+            else:
+                notificationid = Notifications.objects.all().count() + 1
+
+            newDoctorNotification = Notifications(
+                notificationid=notificationid,
+                notificationdescription="Patient: " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + ", is unassigned from Device " + str(device.deviceid),
+                datetime=datetime.datetime.now(),
+                userid=patient.doctorid.userid,
+                viewed=0
+            )
+            newDoctorNotification.save()
+
+            if Notifications.objects.all().count() == 0:
+                notificationid = 1
+            else:
+                notificationid = Notifications.objects.all().count() + 1
+
+            newPatientNotification = Notifications(
+                notificationid=notificationid,
+                notificationdescription="Unassigned from Device: " + str(device.deviceid),
+                datetime=datetime.datetime.now(),
+                userid=patient.userid,
+                viewed=0
+            )
+            newPatientNotification.save()
         except:
             failedresponse = 0
 
@@ -1556,6 +1937,7 @@ def unassign_patient(request):
         return JsonResponse(response, safe=False)
 
 
+@login_required()
 def get_records(request):
     searchby = request.GET.get('searchBy', None)
     date = request.GET.get('date', None)
@@ -1632,6 +2014,7 @@ def get_records(request):
     return JsonResponse(records_list, safe=False)
 
 
+@login_required()
 def check_device_status(request):
     patientdeviceId = request.GET.get('patientdeviceid', None)
     patientdevicestatus = PatientDevice.objects.get(patientdeviceid=patientdeviceId).isrecording
@@ -1640,6 +2023,7 @@ def check_device_status(request):
     maxtemperature = PatientDevice.objects.get(patientdeviceid=patientdeviceId).maxtemperature
     minheartrate = PatientDevice.objects.get(patientdeviceid=patientdeviceId).minheartrate
     maxheartrate = PatientDevice.objects.get(patientdeviceid=patientdeviceId).maxheartrate
+    remarks = PatientDevice.objects.get(patientdeviceid=patientdeviceId).remarks
 
     status = []
 
@@ -1650,14 +2034,16 @@ def check_device_status(request):
         'maxtemperature': maxtemperature,
         'minheartrate': minheartrate,
         'maxheartrate': maxheartrate,
+        'remarks': remarks,
     })
 
     return JsonResponse(status, safe=False)
 
 
+@login_required()
 def get_ecg_batch(request):
     currentBatch = request.GET.get('currentBatch', None)
-    patient_id = request.GET.get('patientid', None)
+    patient_device_id = request.GET.get('patientdeviceid', None)
     direction = request.GET.get('direction', None)
     batch = request.GET.get('batch', None)
     date = request.GET.get('date', None)
@@ -1667,7 +2053,7 @@ def get_ecg_batch(request):
     else:
         convert_date = datetime.datetime.strptime(date, '%B %d, %Y')
 
-    patient_device = PatientDevice.objects.get(patient_patientid_id=patient_id, inuse=1)
+    patient_device = PatientDevice.objects.get(patientdeviceid=patient_device_id)
 
     if batch == "-1":
         ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
@@ -1691,6 +2077,7 @@ def get_ecg_batch(request):
     return JsonResponse(ecg_values, safe=False)
 
 
+@login_required()
 def update_patient_restrictions(request):
     patient_id = request.GET.get('patient_id', None)
     medicalInformation = request.GET.get('medicalInformation', None)
@@ -1701,6 +2088,33 @@ def update_patient_restrictions(request):
     patient.restrictmedicalinformationaccess = medicalInformation
     patient.restrictvitalsinformationaccess = vitalRecords
 
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    description = "Patient: " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + ", has: "
+
+    if medicalInformation == 1:
+        description += "Restricted you from accessing their Medical Information Records "
+    else:
+        description += "Allowed you to access their Medical Information Records "
+
+    if vitalRecords == 1:
+        description += "& Restricted you from accessing their Vital Records"
+    else:
+        description += "& Allowed you to access their Vital Records"
+
+    newDoctorNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription=description,
+        datetime=datetime.datetime.now(),
+        userid=patient.doctorid.userid,
+        viewed=0
+    )
+    newDoctorNotification.save()
+
+
     patient.save()
     response = []
 
@@ -1709,6 +2123,7 @@ def update_patient_restrictions(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def update_user_account(request):
     user_id = request.GET.get('user_id', None)
     birthday = request.GET.get('birthday', None)
@@ -1774,7 +2189,7 @@ def update_user_account(request):
 
         if sex != "-1":
             user_details.sex = sex
-            print(user_details.sex)
+
 
         user_details.save()
         user.save()
@@ -1787,9 +2202,9 @@ def update_user_account(request):
     return JsonResponse(response, safe=False)
 
 
-def get_notification_count(request):
+def get_alerts_count(request):
     doctorid = Doctor.objects.get(userid=request.session['user_id'])
-    alerts = Alerts.objects.filter(patientdeviceid__patient_patientid__doctorid=doctorid.doctorid, viewed=0)
+    alerts = Alerts.objects.filter(patientdeviceid__patient_patientid__doctorid=doctorid.doctorid, viewed=0, patientdeviceid__inuse=1)
 
     count = []
 
@@ -1797,6 +2212,7 @@ def get_notification_count(request):
     return JsonResponse(count, safe=False)
 
 
+@login_required()
 def add_comment(request):
     comment = request.GET.get('comment', None)
     timestamp = request.GET.get('timestamp', None)
@@ -1822,6 +2238,7 @@ def add_comment(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def save_configuration(request):
     presetname = request.GET.get('presetname', None)
     doctorid = request.GET.get('doctorid', None)
@@ -1860,6 +2277,7 @@ def save_configuration(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def check_preset(request):
     presetid = request.GET.get('presetID', None)
 
@@ -1879,6 +2297,7 @@ def check_preset(request):
     return JsonResponse(presetConfigurations, safe=False)
 
 
+@login_required()
 def load_preset(request):
     minheartrate = request.GET.get('minheartrate', None)
     maxheartrate = request.GET.get('maxheartrate', None)
@@ -1891,16 +2310,34 @@ def load_preset(request):
 
 
     patientdeviceId = request.GET.get('deviceid', None)
-    deviceId = PatientDevice.objects.get(patientdeviceid=patientdeviceId).device_deviceid.deviceid
+    patientdevice = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
+    deviceId = patientdevice.device_deviceid.deviceid
+    macaddress = Device.objects.get(deviceid=deviceId).macaddress
     failedresponse = 1
-    # mqttc = mqtt.Client("Device " + str(deviceId))
-    # mqttc.tls_set(tls_certificate)
-    try:
-        # mqttc.connect(broker_ip, port_number)
 
-        # mqttc.publish("/devices/" + str(deviceId) + "/change_heartrate", minheartrate_maxheartrate)
-        # mqttc.publish("/devices/" + str(deviceId) + "/change_temperature", mintemp_maxtemp)
-        # mqttc.publish("/devices/" + str(deviceId) + "/record_duration", duration)
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    newPatientNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription="Device Configurations Changed. Go to Homepage to check new configurations",
+        datetime=datetime.datetime.now(),
+        userid=patientdevice.patient_patientid.userid,
+        viewed=0
+    )
+
+    newPatientNotification.save()
+
+    mqttc = mqtt.Client("Device " + str(deviceId))
+    #mqttc.tls_set(tls_certificate)
+    try:
+        mqttc.connect(broker_ip, port_number)
+
+        mqttc.publish("/devices/" + str(macaddress) + "/change_heartrate", minheartrate_maxheartrate)
+        mqttc.publish("/devices/" + str(macaddress) + "/change_temperature", mintemp_maxtemp)
+        mqttc.publish("/devices/" + str(macaddress) + "/record_duration", duration)
 
         patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceId)
         patientdeviceobject.minheartrate = minheartrate
@@ -1922,6 +2359,7 @@ def load_preset(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def edit_user_account(request):
     user_id = request.GET.get('user_id', None)
     firstname = request.GET.get('firstname', None)
@@ -1997,11 +2435,96 @@ def edit_user_account(request):
 
         if ifchangedoctor == "0":
             patient = Patient.objects.get(userid=user_details)
+            previousDoctor = patient.doctorid
             patient.doctorid = Doctor.objects.get(doctorid=doctor)
+
+            if PatientDoctor.objects.filter(doctorid=doctor, patientid=patient).exists():
+                previousassigned = PatientDoctor.objects.get(patientid=patient, assigneddoctor=1)
+                previousassigned.delete()
+                patientdoctor = PatientDoctor.objects.get(doctorid=doctor, patientid=patient)
+                patientdoctor.assigneddoctor = 1
+                patientdoctor.save()
+            else:
+                previousassigned = PatientDoctor.objects.get(patientid=patient, assigneddoctor=1)
+                previousassigned.delete()
+                if PatientDoctor.objects.count() == 0:
+                    patientdoctorid = 1
+                else:
+                    patientdoctorid = PatientDoctor.objects.latest('patientdoctorid').patientdoctorid + 1
+
+                newPatientDoctor = PatientDoctor(
+                    patientdoctorid=patientdoctorid,
+                    patientid=patient,
+                    doctorid=patient.doctorid,
+                    restrictmedicalinformationaccess=0,
+                    restrictvitalsinformationaccess=0,
+                    assigneddoctor=1,
+                )
+                newPatientDoctor.save()
+
             patient.save()
+
+            if patient.doctorid != previousDoctor:
+                if Notifications.objects.all().count() == 0:
+                    notificationid = 1
+                else:
+                    notificationid = Notifications.objects.all().count() + 1
+
+                newDoctorNotification = Notifications(
+                    notificationid=notificationid,
+                    notificationdescription="Patient: " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + ", no longer assigned",
+                    datetime=datetime.datetime.now(),
+                    userid=previousDoctor.userid,
+                    viewed=0
+                )
+                newDoctorNotification.save()
+
+                if Notifications.objects.all().count() == 0:
+                    notificationid = 1
+                else:
+                    notificationid = Notifications.objects.all().count() + 1
+
+                newDoctorNotification = Notifications(
+                    notificationid=notificationid,
+                    notificationdescription="New assigned patient. Patient name: " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name,
+                    datetime=datetime.datetime.now(),
+                    userid=patient.doctorid.userid,
+                    viewed=0
+                )
+
+                newDoctorNotification.save()
+
+                if Notifications.objects.all().count() == 0:
+                    notificationid = 1
+                else:
+                    notificationid = Notifications.objects.all().count() + 1
+
+                newPatientNotification = Notifications(
+                    notificationid=notificationid,
+                    notificationdescription="New assigned doctor. Doctor name: " + patient.doctorid.userid.auth_user_id.first_name + " " + patient.doctorid.userid.auth_user_id.last_name,
+                    datetime=datetime.datetime.now(),
+                    userid=patient.userid,
+                    viewed=0
+                )
+
+                newPatientNotification.save()
 
         user_details.save()
         user.save()
+
+        if Notifications.objects.all().count() == 0:
+            notificationid = 1
+        else:
+            notificationid = Notifications.objects.all().count() + 1
+        newNotification = Notifications(
+            notificationid=notificationid,
+            notificationdescription="Account information was updated by the admin.",
+            datetime=datetime.datetime.now(),
+            userid=user_details,
+            viewed=0
+        )
+
+        newNotification.save()
 
         response.append("Account information updated")
     else:
@@ -2010,6 +2533,7 @@ def edit_user_account(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required()
 def user_account_activation_set_password(request):
     user_id = request.GET.get('user_id', None)
     password = request.GET.get('password', None)
@@ -2051,43 +2575,418 @@ def user_account_activation_set_password(request):
     return JsonResponse(response, safe=False)
 
 
-def summary(request, patientdevice_id, date):
+@login_required()
+def summary(request):
+    patientdevice_id = request.GET.get('patientDeviceID', None)
+    date = request.GET.get('date', None)
+
     convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
     patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
     patient = Patient.objects.get(patientid=patient_device.patient_patientid_id)
-    comments = Comments.objects.filter(patientdeviceid=patient_device, timestamp__date=convert_date)
-    temperature_list = Temperature.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
-    heartrate_list = Heartrate.objects.order_by(F('timestamp').desc()).filter(
-        patientdeviceid=patient_device.patientdeviceid, timestamp__date=convert_date)
-    ecg_list = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
-                                                                  timestamp__date=convert_date)
-    latest_temperature = temperature_list.latest('timestamp')
-    latest_heartrate = heartrate_list.latest('timestamp')
-    latest_ecg = ecg_list.latest('timestamp')
+    temperature_list = Temperature.objects.raw(
+        "SELECT temperatureID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM temperature WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
 
-    ecg_list = ecg_list.all()[:1000]
+    temperature_data_array = []
+    temperature_timestamp_array = []
+    for temperature in temperature_list:
+        temperature_data_array.append(float(temperature.data))
+        temperature_timestamp_array.append(temperature.timestamp)
 
-    ecg_list_all = Ecg.objects.order_by(F('timestamp').asc()).filter(patientdeviceid=patient_device.patientdeviceid,
-                                                                     timestamp__date=convert_date)
+    if temperature_data_array.__len__() != 0:
+        latest_temperature = temperature_data_array[temperature_data_array.__len__() - 1]
+        latest_temperature_time = temperature_timestamp_array[temperature_timestamp_array.__len__() - 1]
+        average_temperature = sum(temperature_data_array) / len(temperature_data_array)
 
-    ecg_list_batch_values = ecg_list_all.values_list('batchid', flat=True).distinct().order_by()
+        min_temperature = min(temperature_data_array)
+        min_temperature_index = temperature_data_array.index(min_temperature)
+        min_temperature_time = temperature_timestamp_array[min_temperature_index].time()
 
-    average_temperature = temperature_list.all().aggregate(Avg('data'))
-    average_heartrate = heartrate_list.all().aggregate(Avg('data'))
-    batch_count = ecg_list_batch_values.__len__()
+        max_temperature = max(temperature_data_array)
+        max_temperature_index = temperature_data_array.index(max_temperature)
+        max_temperature_time = temperature_timestamp_array[max_temperature_index].time()
+    else:
+        latest_temperature = "N/A"
+        latest_temperature_time = "N/A"
+        average_temperature = "N/A"
 
-    context = {'patient': patient,
-               'patient_device': patient_device,
-               'average_temperature': average_temperature,
-               'latest_temperature': latest_temperature,
-               'average_heartrate': average_heartrate,
-               'latest_heartrate': latest_heartrate,
-               'ecg_list': ecg_list,
-               'latest_ecg': latest_ecg,
-               'date': datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y'),
-               'batch_count': batch_count,
-               'comments': comments
-               }
+        min_temperature = "N/A"
+        min_temperature_index = "N/A"
+        min_temperature_time = "N/A"
 
-    return render(request, 'lbyproject/lbyproj.html', context)
+        max_temperature = "N/A"
+        max_temperature_index = "N/A"
+        max_temperature_time = "N/A"
+
+    heartrate_list = Heartrate.objects.raw(
+        "SELECT heartrateID, patientDeviceID, timestamp, CONVERT(AES_DECRYPT(data, UNHEX('e9fe29f77fd087f0f50a1e186c44d17c')) using utf8) as 'data', batchID FROM heartrate WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "') ORDER BY timestamp ASC;")
+
+    heartrate_data_array = []
+    heartrate_timestamp_array = []
+    for heartrate in heartrate_list:
+        heartrate_data_array.append(float(heartrate.data))
+        heartrate_timestamp_array.append(heartrate.timestamp)
+
+    if heartrate_data_array.__len__() != 0:
+        latest_heartrate = heartrate_data_array[heartrate_data_array.__len__() - 1]
+
+        average_heartrate = sum(heartrate_data_array) / len(heartrate_data_array)
+
+        min_heartrate = min(heartrate_data_array)
+        min_heartrate_index = heartrate_data_array.index(min_heartrate)
+        min_heartrate_time = heartrate_timestamp_array[min_heartrate_index].time()
+
+        max_heartrate = max(heartrate_data_array)
+        max_heartrate_index = heartrate_data_array.index(max_heartrate)
+        max_heartrate_time = heartrate_timestamp_array[max_heartrate_index].time()
+    else:
+        latest_heartrate = "N/A"
+
+        average_heartrate = "N/A"
+
+        min_heartrate = "N/A"
+        min_heartrate_index = "N/A"
+        min_heartrate_time = "N/A"
+
+        max_heartrate = "N/A"
+        max_heartrate_index = "N/A"
+        max_heartrate_time = "N/A"
+
+    batch_count = Ecg.objects.raw(
+        "SELECT ecgID, COUNT(DISTINCT(batchID)) as 'batchCount' FROM ecg WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "');")
+
+    details = []
+
+    details.append({
+       'name': patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name,
+       'device': patient_device.device_deviceid_id,
+       'average_temperature': average_temperature,
+       'latest_temperature': latest_temperature,
+       'average_heartrate': average_heartrate,
+       'latest_heartrate': latest_heartrate,
+       'last_recorded_time': latest_temperature_time.time(),
+       'date': datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B %d, %Y'),
+       'batch_count': batch_count[0].batchCount,
+       'min_temperature': min_temperature,
+       'max_temperature': max_temperature,
+       'min_heartrate': min_heartrate,
+       'max_heartrate': max_heartrate,
+       'min_temperature_time': min_temperature_time,
+       'max_temperature_time': max_temperature_time,
+       'min_heartrate_time': min_heartrate_time,
+       'max_heartrate_time': max_heartrate_time,
+    })
+
+    return JsonResponse(details, safe=False)
+
+
+@login_required()
+def add_new_doctor_restriction(request):
+    patient_id = request.GET.get('patient_id', None)
+    doctor_id = request.GET.get('doctor_id', None)
+    medicalInformation = request.GET.get('medicalInformation', None)
+    vitalRecords = request.GET.get('vitalRecords', None)
+
+    patient = Patient.objects.get(patientid=patient_id)
+    doctor = Doctor.objects.get(doctorid=doctor_id)
+
+    if PatientDoctor.objects.count() == 0:
+        patientdoctirid = 1
+    else:
+        patientdoctirid = PatientDoctor.objects.latest('patientdoctorid').patientdoctorid + 1
+
+    newPatientDoctor = PatientDoctor(
+        patientdoctorid=patientdoctirid,
+        patientid=patient,
+        doctorid=doctor,
+        restrictmedicalinformationaccess=medicalInformation,
+        restrictvitalsinformationaccess=vitalRecords,
+        assigneddoctor=0,
+    )
+    newPatientDoctor.save()
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    description = "Patient: " + patient.userid.auth_user_id.first_name + " " + patient.userid.auth_user_id.last_name + ", Allowed you to view their: "
+
+    if medicalInformation == 0:
+        description += "Medical Information Records"
+        if vitalRecords == 0:
+            description += "& Vital Records"
+    else:
+        description += "Vital Records"
+
+    newDoctorNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription=description,
+        datetime=datetime.datetime.now(),
+        userid=doctor.userid,
+        viewed=0
+    )
+    newDoctorNotification.save()
+
+    response = []
+
+    response.append({'response': 'New Doctor Restrictions Created'})
+
+    return JsonResponse(response, safe=False)
+
+
+@login_required()
+def edit_doctor_restriction(request):
+    patientDoctorID = request.GET.get('patientDoctorID', None)
+    medicalInformation = request.GET.get('medicalInformation', None)
+    vitalRecords = request.GET.get('vitalRecords', None)
+
+    patient_doctor = PatientDoctor.objects.get(patientdoctorid=patientDoctorID)
+
+    patient_doctor.restrictmedicalinformationaccess = medicalInformation
+    patient_doctor.restrictvitalsinformationaccess = vitalRecords
+
+    patient_doctor.save()
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    description = "Patient: " + patient_doctor.patientid.userid.auth_user_id.first_name + " " + patient_doctor.patientid.userid.auth_user_id.last_name + ", has: "
+
+    if medicalInformation == 1:
+        description += "Restricted you from accessing their Medical Information Records "
+    else:
+        description += "Allowed you to access their Medical Information Records "
+
+    if vitalRecords == 1:
+        description += "& Restricted you from accessing their Vital Records"
+    else:
+        description += "& Allowed you to access their Vital Records"
+
+    newDoctorNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription=description,
+        datetime=datetime.datetime.now(),
+        userid=patient_doctor.doctorid.userid,
+        viewed=0
+    )
+    newDoctorNotification.save()
+
+    response = []
+
+    response.append({'response': 'Restrictions Updated'})
+
+    return JsonResponse(response, safe=False)
+
+
+def remove_doctor_restriction(request):
+    patientDoctorID = request.GET.get('patientDoctorID', None)
+    patient_doctor = PatientDoctor.objects.get(patientdoctorid=patientDoctorID)
+
+    if Notifications.objects.all().count() == 0:
+        notificationid = 1
+    else:
+        notificationid = Notifications.objects.all().count() + 1
+
+    newDoctorNotification = Notifications(
+        notificationid=notificationid,
+        notificationdescription="Patient: " + patient_doctor.patientid.userid.auth_user_id.first_name + " " + patient_doctor.patientid.userid.auth_user_id.last_name + ", has Restricted you from accessing their Medical and Vital Records",
+        datetime=datetime.datetime.now(),
+        userid=patient_doctor.doctorid.userid,
+        viewed=0
+    )
+    newDoctorNotification.save()
+
+    patient_doctor.delete()
+    response = []
+
+    response.append({'response': 'Restrictions Removed'})
+
+    return JsonResponse(response, safe=False)
+
+
+@login_required()
+def get_notification_count(request):
+    userid = Userdetails.objects.get(userid=request.session['user_id'])
+    notifications = Notifications.objects.filter(userid=userid, viewed=0)
+
+    count = []
+
+    count.append(notifications.count())
+    return JsonResponse(count, safe=False)
+
+
+@login_required()
+def view_notifications(request):
+    userid = Userdetails.objects.get(userid=request.session['user_id'])
+    notifications = Notifications.objects.filter(userid=userid, viewed=0)
+
+    for notification in notifications:
+        notification.viewed = 1
+        notification.save()
+
+    count = []
+
+    count.append(0)
+    return JsonResponse(count, safe=False)
+
+
+@login_required()
+def view_alerts(request):
+    doctorid = Doctor.objects.get(userid=request.session['user_id'])
+    alerts = Alerts.objects.filter(patientdeviceid__patient_patientid__doctorid=doctorid.doctorid, patientdeviceid__inuse=1)
+
+    for alert in alerts:
+        alert.viewed = 1
+        alert.save()
+
+    count = []
+
+    count.append(0)
+    return JsonResponse(count, safe=False)
+
+
+@login_required()
+def check_deadline(request):
+    patientdeviceid = request.GET.get('patientdeviceid', None)
+    currentdate = datetime.date.today()
+    patientid = PatientDevice.objects.get(patientdeviceid=patientdeviceid).patient_patientid.patientid
+    patient_object = Patient.objects.get(patientid=patientid)
+    daysbeforedeadline = patient_object.deadlinereturndate - currentdate
+
+    details = []
+
+    details.append({
+        'daysbeforedeadline': daysbeforedeadline.days,
+        'dateofdeadline': patient_object.deadlinereturndate.strftime('%B %d, %Y'),
+    })
+
+    return JsonResponse(details, safe=False)
+
+
+@login_required()
+def get_schedule(request):
+    patientdeviceid = request.GET.get('patientdeviceid', None)
+    patientschedule = PatientSchedule.objects.filter(patientdeviceid=patientdeviceid).order_by('dayid')
+    scheduleList = []
+
+    if patientschedule.exists():
+        days = patientschedule.values('dayid').distinct()
+
+        for day in days:
+            dayobject = Day.objects.get(dayid=day['dayid'])
+            patientscheduledaytime = PatientSchedule.objects.filter(patientdeviceid=patientdeviceid, dayid=dayobject).order_by('timeid')
+            times = ""
+            scheduleids = ""
+            for patientscheduletime in patientscheduledaytime:
+                times += str(patientscheduletime.timeid.actualtime) + " | "
+                scheduleids += str(patientscheduletime.patientscheduleid) + ","
+            scheduleList.append({
+                'dayData': dayobject.actualday,
+                'timesData': times,
+                'scheduleids': scheduleids,
+            })
+    else:
+        scheduleList.append({
+            'patientscheduleid': -999
+        })
+
+
+    return JsonResponse(scheduleList, safe=False)
+
+
+@login_required()
+def add_schedule(request):
+    patientdeviceid = request.GET.get('patientdeviceid', None)
+    time = request.GET.get('time', None)
+    days = request.GET.get('days', None)
+
+    daysArray = days.split(" ")
+
+    response = []
+
+    for day in daysArray:
+        if PatientSchedule.objects.all().count() == 0:
+            patientscheduleid = 1
+        else:
+            patientscheduleid = PatientSchedule.objects.all().count() + 1
+
+        timeid = Time.objects.get(timeid=time)
+        dayid = Day.objects.get(dayid=day)
+        patientdeviceobject = PatientDevice.objects.get(patientdeviceid=patientdeviceid)
+
+        if PatientSchedule.objects.filter(patientdeviceid=patientdeviceobject, timeid=timeid, dayid=dayid).exists():
+            response.append("Schedule: " + dayid.actualday + " " + timeid.actualtime + " already exists.")
+        else:
+            newSchedule = PatientSchedule(
+                patientscheduleid=patientscheduleid,
+                patientdeviceid=patientdeviceobject,
+                timeid=timeid,
+                dayid=dayid,
+                earlyalert=0,
+                beforerecordalert=0,
+                recordalert=0,
+                latealert=0,
+                lastalert=0,
+            )
+            newSchedule.save()
+
+    if response.__len__() == 0:
+        response.append("Schedule created")
+
+    return JsonResponse(response, safe=False)
+
+
+@login_required()
+def get_specific_schedule(request):
+    scheduleid = request.GET.get('scheduleid', None)
+
+    patientschedule = PatientSchedule.objects.get(patientscheduleid=scheduleid)
+
+    scheduleDayList = []
+
+    scheduleDayList.append({
+        'scheduleid': patientschedule.patientscheduleid,
+        'dayData': patientschedule.dayid.actualday,
+        'timeData': patientschedule.timeid.actualtime
+    })
+
+    return JsonResponse(scheduleDayList, safe=False)
+
+
+@login_required()
+def remove_schedule(request):
+    scheduleid = request.GET.get('scheduleid', None)
+
+    patientschedule = PatientSchedule.objects.get(patientscheduleid=scheduleid)
+
+    patientschedule.delete()
+
+    response = []
+    response.append("Schedule updated")
+
+    return JsonResponse(response, safe=False)
+
+
+def testing(request, patientdevice_id, date):
+    convert_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    patient_device = PatientDevice.objects.get(patientdeviceid=patientdevice_id)
+
+    batch_count = Ecg.objects.raw("SELECT ecgID, COUNT(DISTINCT(batchID)) as 'batchCount' FROM ecg WHERE (patientDeviceID = " + str(
+            patient_device.patientdeviceid) + " AND DATE(timestamp) = '" + str(
+            convert_date.date()) + "');")
+
+
+    print(batch_count[0].batchCount)
+    context={
+        'testing': batch_count,
+    }
+
+    return render(request, 'testing.html', context)

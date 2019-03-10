@@ -17,6 +17,31 @@ $(document).ready(function () {
     }).ajaxStop(function () {
         $("#loading").hide();
     });
+    $('.modal').modal();
+
+    M.textareaAutoResize($('#remarksTextArea'));
+
+    {% with patient_device_list.all|first as patientdevice %}
+    $.ajax({
+            url: '{% url 'check_deadline' %}',
+            data: {
+              'patientdeviceid': {{ patientdevice.patientdeviceid }}
+            },
+            dataType: 'json',
+            success: function (data) {
+                if(data[0].daysbeforedeadline < 0){
+                    $("#aboveSelectThings").show();
+                    $("#aboveSelectThings").html("<h4>Patient's device was due last " + data[0].dateofdeadline + "</h4>");
+                    $("#typeofManage").prop('disabled', true);
+                }
+                else{
+                    $("#aboveSelectThings").hide();
+                    $("#typeofManage").prop('disabled', false);
+                }
+            }
+    });
+    {% endwith %}
+
 });
         $(function() {
             $('#typeofManage').change(function(){
@@ -60,7 +85,6 @@ $(document).ready(function () {
                 </div>
              <div class="col s12 m2 l4"></div>
              </div>
-
              <div class="row">
                 <div class="col s12 m2 l3"></div>
                 <div class="col s12 m4 l3">
@@ -130,12 +154,15 @@ $(document).ready(function () {
                  <div class="row">
                     <div class="col s12 m2 l4"></div>
                     <div class="col s12 m8 l4">
+                        <div id="aboveSelectThings"></div>
                         <h5>Choose Action:</h5><br />
                         <select class="browser-default center col s12" id="typeofManage">
                             <option value="" disabled selected>Choose what to manage</option>
                             <option value="setinterval">Set Duration per Recording</option>
                             <option value="minmaxtemp">Set Min & Max Temperature</option>
                             <option value="minmaxheartrate">Set Min & Max Heart Rate</option>
+                            <option value="setSchedule">Set Schedule of Recording</option>
+                            <option value="remarks">Set Remarks</option>
                             <option value="startstopresume">Start or Stop Recording</option>
                             <option value="presets">Presets</option>
                         </select>
@@ -249,6 +276,121 @@ $(document).ready(function () {
             </div>
             {% endwith %}
 
+        <!------------------------------------- SET SCHEDULE OF RECORDING ------------------------------------------->
+
+            <div id ="setSchedule" class="options setSchedule">
+            <div class="divider"></div>
+                <div class="row">
+                    <div class="col s12 m2 l2"></div>
+                    <div class ="col s12 m8 l8" id="mainSetTimeandDate">
+                        <h5>Set Time and Day/s of Recording</h5><br />
+
+                        <big class="left"><b>Current Scheduled Recording:</b></big></b>
+                        <table id="scheduleTable">
+                            <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Time</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody id="scheduleTableBody">
+                                <tr>
+                                    <td>9:00AM</td>
+                                    <td>Monday, Friday</td>
+                                    <td><button class="btn waves-effect waves-light right">Remove</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <br><br><a class="btn-small right modal-trigger" href="#modalSet">Set A New Schedule</a>
+                        <div id="modalSet" class="modal" style="height: 70%; width: 65%;">
+                        <div class="modal-content">
+                            <h5 class="center"><b><i class="material-icons">schedule</i> Set A New Schedule</b></h5><br/>
+                            <div class="input-field col s12 m6 l6" id="setTime">
+                                <h6 class="left"><B>Set Time</B></h6><br><br>
+                                <!-- <input id="scheduleTime" type="text" class="timepicker" id="default_start_time" /> -->
+                                <select class="browser-default" id="scheduleTime">
+                                    {% for time in time_list %}
+                                        <option value="{{ time.timeid }}">{{ time.actualtime }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col s12 m6 l6"><br>
+                                <h6 class="left"><B>Set Day/s of Recording</B></h6><br><br>
+                                <p>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="1" />
+                                    <span>Monday </span>
+                                  </label>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="2" />
+                                    <span>Tuesday </span>
+                                  </label>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="3" />
+                                    <span>Wednesday </span>
+                                  </label>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="4" />
+                                    <span>Thursday </span>
+                                  </label>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="5" />
+                                    <span>Friday </span>
+                                  </label>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="6" />
+                                    <span>Saturday </span>
+                                  </label>
+                                  <label>
+                                    <input name="day" type="checkbox" class="filled-in" value="7" />
+                                    <span>Sunday </span>
+                                  </label>
+                                </p>
+                            </div>
+
+                           <div class="col s12"></div>
+
+                        <br /> <br /> <br/> <br />
+                        <br /><br />
+                        <div class="col s12" style="margin-top: 16%; padding-right: 3%; padding-bottom: 5%;">
+                            <button class="btn waves-effect waves-light right" id="setScheduleButton">Set Schedule
+                            </button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+
+            <!------------------------------------- REMARKS ------------------------------------------->
+
+            <div id ="remarks" class="options remarks">
+            <div class="divider"></div><br />
+
+
+                <div class ="row">
+
+                    <h5>Set Remarks</h5><br />
+
+                    <div class="input-field col s12 l3"></div>
+                    <div class="input-field col s12 l12">
+                        {% with patient_device_list.all|first as patientdevice %}
+                        <textarea id="remarksTextArea" class="materialize-textarea">{{ patientdevice.remarks }}</textarea>
+                        <label for="remarks">Remarks</label>
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <center>
+                    <button class="btn-large" id="setRemarks">Set Remarks</button>
+                </center>
+
+            </div>
+
             <!------------------------------------- START / STOP / RESUME ------------------------------------------->
 
             <div id ="startstopresume" class="options startstopresume">
@@ -327,10 +469,103 @@ $(document).ready(function () {
         <br />
         <section></section>
         <section></section>
+
         </div>
 
+<div id="modal2" class="modal" style="">
+    <div class="modal-content">
+          <h5 class="center"><b>Edit Schedule</b></h5><br/>
+        <div class="col s12 m6 l6">
+            <h6><B id="dayModal">Day Schedule: </B></h6>
+            <div id="scheduleTimes">
+
+            </div>
+        </div>
+        <button id="removeButtonModal" onclick="" class="center waves-effect waves-light btn-small red lighten-2">Remove All</button>
+        <div class="col s12" style="padding-right: 5%; padding-bottom: 5%;">
+                <button id="saveButtonScheduleModal" onclick="" class="btn waves-effect waves-light right" type="button" name="action">Save
+                <i class="material-icons right">save</i>
+                </button>
+        </div>
+    </div>
+</div>
 
 <script>
+    $("#saveButtonScheduleModal").click(function() {
+        var scheduleids = [];
+        $.each($("input[name='scheduleid']:not(:checked)"), function(){
+            scheduleids.push($(this).val());
+        });
+
+        if(scheduleids.length != 0){
+            for(var i = 0; i < scheduleids.length; i++){
+                $.ajax({
+                url: '{% url 'remove_schedule' %}',
+                data: {
+                  'scheduleid': scheduleids[i]
+                },
+                dataType: 'json',
+                success: function (data){
+                }
+              });
+            }
+            alert('Schedule updated');
+            location.reload()
+        }
+
+    });
+
+    $("#removeButtonModal").click(function() {
+        var scheduleids = [];
+        $.each($("input[name='scheduleid']"), function(){
+            scheduleids.push($(this).val());
+        });
+
+        for(var i = 0; i < scheduleids.length; i++){
+            $.ajax({
+            url: '{% url 'remove_schedule' %}',
+            data: {
+              'scheduleid': scheduleids[i]
+            },
+            dataType: 'json',
+            success: function (data){
+            }
+          });
+        }
+        alert('Schedule updated');
+        location.reload()
+
+    });
+
+    $("#setSchedule").on("click",".editButton", function() {
+        var data = this.value.split(",");
+        data.pop();
+
+        $("#scheduleTimes").html("");
+        for(var i = 0; i < data.length; i++){
+            $.ajax({
+            url: '{% url 'get_specific_schedule' %}',
+            data: {
+              'scheduleid': data[i]
+            },
+            dataType: 'json',
+            success: function (data){
+                $("#dayModal").html(data[0].dayData + " Schedule:");
+                var timesHtml = $("#scheduleTimes").html();
+                timesHtml += '<p><label>\n' +
+                    '                                    <input checked="true" name="scheduleid" type="checkbox" class="filled-in" value="'+data[0].scheduleid+'" />\n' +
+                    '                                    <span>'+data[0].timeData+'</span>\n' +
+                    '                                  </label></p>';
+
+                $("#scheduleTimes").html(timesHtml);
+            }
+          });
+        }
+
+
+    });
+
+
     function promptConfigurationName(){
         var name = prompt("Please enter configuration name");
         if (name != null) {
@@ -492,6 +727,28 @@ $(document).ready(function () {
           }
       });
 
+      $("#setRemarks").click(function() {
+          var remarks = $("#remarksTextArea").val();
+          var deviceid = $("#patientID").val();
+
+
+          $.ajax({
+            url: '{% url 'set_remarks' %}',
+            data: {
+              'deviceid': deviceid,
+              'remarks': remarks,
+            },
+            dataType: 'json',
+            success: function (data) {
+                for(let i = 0; i < data.length; i++){
+                    alert(data[i].response);
+                }
+                location.reload();
+            }
+          });
+
+      });
+
       $("#startTime").change(function() {
           alert($("#startTime").val());
 
@@ -550,9 +807,56 @@ $(document).ready(function () {
                 $("#maxHeartrate").val(data[0].maxheartrate);
                 $("#minTemp").val(data[0].mintemperature);
                 $("#maxTemp").val(data[0].maxtemperature);
+                $("#remarksTextArea").val(data[0].remarks);
+                M.textareaAutoResize($('#remarksTextArea'));
                 }
 
             });
+
+          $.ajax({
+            url: '{% url 'check_deadline' %}',
+            data: {
+              'patientdeviceid': patientdeviceid
+            },
+            dataType: 'json',
+            success: function (data) {
+                if(data[0].daysbeforedeadline < 0){
+                    $("#aboveSelectThings").show();
+                    $("#aboveSelectThings").html("<h4>Patient's device was due last " + data[0].dateofdeadline + "</h4>");
+                    $("#typeofManage").prop('disabled', true);
+                }
+                else{
+                    $("#aboveSelectThings").hide();
+                    $("#typeofManage").prop('disabled', false);
+                }
+            }
+          });
+
+          $.ajax({
+            url: '{% url 'get_schedule' %}',
+              {% with patient_device_list.all|first as patientdevice %}
+            data: {
+              'patientdeviceid': {{ patientdevice.patientdeviceid }}
+            },
+              {% endwith %}
+            dataType: 'json',
+            success: function (data) {
+                var tableData = '';
+                if(data[0].patientscheduleid == -999){
+                    $("#scheduleTable").html("No schedule set");
+                }
+                else{
+                    for(var i = 0; i < data.length; i++){
+                        tableData +="<tr>\n" +
+                        "                                    <td>"+data[i].dayData+"</td>\n" +
+                        "                                    <td>"+data[i].timesData+"</td>\n" +
+                        "                                    <td><button class=\"btn waves-effect waves-light right modal-trigger editButton\" value=" + data[i].scheduleids + " href=\"#modal2\">Edit</button></td>\n" +
+                        "                                </tr>";
+                    }
+                    $("#scheduleTableBody").html(tableData);
+                }
+            }
+          });
 
       });
 
@@ -603,6 +907,60 @@ $(document).ready(function () {
                     alert(data[i].response);
                 }
                 location.reload();
+            }
+          });
+      });
+
+
+      $("#setScheduleButton").click(function() {
+          var days = [];
+          $.each($("input[name='day']:checked"), function(){
+                days.push($(this).val());
+            });
+          var daysLegit = days.join(" ");
+          var time = $("#scheduleTime").val();
+          var patientdeviceid = $("#patientID").val();
+
+          $.ajax({
+            url: '{% url 'add_schedule' %}',
+            data: {
+              'patientdeviceid': patientdeviceid,
+              'days': daysLegit,
+              'time': time,
+            },
+            dataType: 'json',
+            success: function (data) {
+                alert(data);
+                location.reload();
+            }
+          });
+      });
+
+
+      $(document).ready(function () {
+          $.ajax({
+            url: '{% url 'get_schedule' %}',
+              {% with patient_device_list.all|first as patientdevice %}
+            data: {
+              'patientdeviceid': {{ patientdevice.patientdeviceid }}
+            },
+              {% endwith %}
+            dataType: 'json',
+            success: function (data) {
+                var tableData = '';
+                if(data[0].patientscheduleid == -999){
+                    $("#scheduleTable").html("No schedule set");
+                }
+                else{
+                    for(var i = 0; i < data.length; i++){
+                        tableData +="<tr>\n" +
+                        "                                    <td>"+data[i].dayData+"</td>\n" +
+                        "                                    <td>"+data[i].timesData+"</td>\n" +
+                        "                                    <td><button class=\"btn waves-effect waves-light right modal-trigger editButton\" value=" + data[i].scheduleids + " href=\"#modal2\">Edit</button></td>\n" +
+                        "                                </tr>";
+                    }
+                    $("#scheduleTableBody").html(tableData);
+                }
             }
           });
       });

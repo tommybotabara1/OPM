@@ -126,10 +126,12 @@
         if(document.getElementById('id_usertype_0').checked){
             document.getElementById('chooseDoctor').style.display ='none';
             document.getElementById('licenseNumber').style.display ='block';
+            document.getElementById('id_licensenumber').value = '';
         }
         else{
             document.getElementById('chooseDoctor').style.display = 'block';
             document.getElementById('licenseNumber').style.display ='none';
+            document.getElementById('id_licensenumber').value = -1;
         }
 
     }
@@ -145,6 +147,24 @@
           if (data.is_taken) {
             alert("A user with this username already exists.");
             $("#id_username").val("");
+          }
+        }
+      });
+
+    });
+
+    $("#id_email").change(function () {
+      var email = $(this).val();
+      $.ajax({
+        url: '{% url 'validate_email' %}',
+        data: {
+          'email': email
+        },
+        dataType: 'json',
+        success: function (data) {
+          if (data.is_taken) {
+            alert("A user with this email already exists.");
+            $("#id_email").val("");
           }
         }
       });

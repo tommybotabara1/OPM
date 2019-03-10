@@ -1,0 +1,129 @@
+{% extends "home/doctorHeaderFooter.html" %}
+{% load staticfiles%}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
+
+    <title> OPHM - Alerts </title>
+    <style>
+    select{
+        display: block;
+    }
+    </style>
+<div class="col s12 m12 l12  white">
+
+            <div class="row center">
+                <div class="col s3"></div>
+                <div class="col s6">
+                    <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">notification_important</i>&nbsp;&nbsp; Alerts</h3>
+                     Date: <b> {% now "F j, Y" %} </b>
+                <!-- Maglalagay ako ng realtime clock dito -->
+                </div>
+                <div class="col s3"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px; width: 100vw">
+            <h2>Not Viewed Alerts</h2>
+            <table id="unviewedAlerts" class="display">
+                <thead>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>Time</th>
+                        <th>Vital Type Alerted</th>
+                        <th>Value</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                        {% if alert.viewed == 0 %}
+                        <tr>
+                            <td>{{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.first_name }} {{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.last_name }}</td>
+                            <td>{{ alert.timestamp|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ alert.typeofvital.type }}</td>
+                            {% if alert.typeofvital.type == "Temperature" %}
+                                <td>{{ alert.data|floatformat:2 }}°C</td>
+                            {% else %}
+                                <td>{{ alert.data|floatformat:0 }} BPM</td>
+                            {% endif %}
+                            <td>
+                                <center>
+                                    <a href="{% url 'viewalert' alert.alertid alert.patientdeviceid.patientdeviceid alert.timestamp.date|date:"Y-m-d" %}" class="btn-small waves-effect waves-light green lighten-2" href=""> View
+                                         <i class="material-icons left">pageview</i>
+                                    </a>
+                                </center>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button class="btn-large" id="viewAll">Clear Alerts</button>
+        </div>
+        <hr>
+        <div class="col s12 m12 l12 white" style="padding: 0px 40px 0px 40px; width: 100vw">
+        <h2>All Alerts</h2>
+            <table id="allAlerts" class="display">
+                <thead>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>Time</th>
+                        <th>Vital Type Alerted</th>
+                        <th>Value</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                        <tr>
+                            <td>{{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.first_name }} {{ alert.patientdeviceid.patient_patientid.userid.auth_user_id.last_name }}</td>
+                            <td>{{ alert.timestamp|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ alert.typeofvital.type }}</td>
+                            {% if alert.typeofvital.type == "Temperature" %}
+                                <td>{{ alert.data|floatformat:2 }}°C</td>
+                            {% else %}
+                                <td>{{ alert.data|floatformat:0 }} BPM</td>
+                            {% endif %}
+                            <td>
+                                <center>
+                                    <a href="{% url 'viewalert' alert.alertid alert.patientdeviceid.patientdeviceid alert.timestamp.date|date:"Y-m-d" %}" class="btn-small waves-effect waves-light green lighten-2" href=""> View
+                                         <i class="material-icons left">pageview</i>
+                                    </a>
+                                </center>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
+        </div>
+
+    <script>
+            $(document).ready(function() {
+                $('#unviewedAlerts').DataTable({
+                    "autoWidth": true,
+                    "order": [[ 1, "desc" ]]
+                });
+                $('#allAlerts').DataTable({
+                    "autoWidth": true,
+                    "order": [[ 1, "desc" ]]
+                });
+            } );
+
+            $("#viewAll").click(function() {
+                $.ajax({
+                    url: '{% url 'view_alerts' %}',
+                    data: {
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        location.reload();
+                    }
+                });
+            });
+    </script>
+{% endblock %}
+

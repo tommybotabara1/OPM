@@ -2,6 +2,11 @@
 {% load staticfiles%}
 
 {% block content %}
+    <script>
+      $(document).ready(function(){
+        $('.modal').modal();
+      });
+    </script>
     <title> OPMS - History of Records</title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <div class="col s12 m12 l12 center white">
@@ -43,7 +48,7 @@
                         <div id="selectDateMonthYear">
                             <br />
                             <div class="col s3"></div>
-                            <select class="browser-default center col s6" id="typeofSearch">
+                            <select class="browser-default center col s12 m6 l6" id="typeofSearch">
                                 <option value="" disabled selected>Choose by Date or Month and Year</option>
                                 <option value="date">Search by date</option>
                                 <option value="month">Search by month and year</option>
@@ -71,9 +76,7 @@
                     </div>
                 </div>
                 <div class='row center'>
-                    <div class="col s5"></div>
                         <button id="search" type='submit' name='btn_login' class='col s2 btn btn-large waves-effect'>Search</button>
-                    <div class="col s5"></div>
                 </div>
                 <div class="section"></div>
             </div>
@@ -81,7 +84,7 @@
     <div class="divider"></div>
     <br>
     <div class="col s12 white" style="display: block;">
-
+<center><div id="loading" style="display: none">Loading</div></center>
             <div class ="row">
 
             <div id="medicalForms">
@@ -115,7 +118,10 @@
                         {% for patientdeviceid_dates in vitals_patientdeviceid_dates_list %}
                             <tr>
                                 <th>{{ patientdeviceid_dates.date|date:"F d, Y" }}</th>
-                                <td style="padding-right:3%;"><a href="{% url 'viewhistoryofvitalvitalrecords' patientdeviceid_dates.patientdeviceid patientdeviceid_dates.date|date:"Y-m-d" %}" class="waves-effect waves-light btn right"><i class="material-icons left">pageview</i>View</a></td>
+                                <td style="padding-right:3%;">
+                                    <a href="{% url 'viewhistoryofvitalvitalrecords' patientdeviceid_dates.patientdeviceid patientdeviceid_dates.date|date:"Y-m-d" %}" class="waves-effect waves-light btn-small right" style="margin-right: 2%;"><i class="material-icons left">pageview</i>View</a>
+                                    <button value="{{ patientdeviceid_dates.patientdeviceid }} {{ patientdeviceid_dates.date|date:"Y-m-d" }}" class="center waves-effect waves-light btn-small detailButton right" style="margin-right: 2%;">Summary</button>
+                                </td>
 
                             </tr>
                         {% endfor %}
@@ -129,8 +135,120 @@
 
         </div>
 
+<!---------------- MODAL HERE ---------------->
+<div id="modal1" class="modal">
+            <div class="modal-content">
+                <h4><i class="small material-icons left">list_alt</i><b>Summary of Vitals</b></h4>
+
+                <table>
+
+                    <tr>
+                        <th>Date: </th>
+                        <td id="dateModal">February 28, 2019</td>
+                    </tr>
+
+                    <tr>
+                        <th>Name: </th>
+                        <td id="name">Tommy Botabara</td>
+                    </tr>
+
+                    <tr>
+                        <th>Device: </th>
+                        <td id="device">1</td>
+                    </tr>
+
+                    <tr>
+                        <th>Min Temperature: </th>
+                        <td id="minTemperature">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Max Temperature: </th>
+                        <td id="maxTemperature">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Min Heart Rate: </th>
+                        <td id="minHeartRate">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Max Heart Rate: </th>
+                        <td id="maxHeartRate">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Average Temperature: </th>
+                        <td id="averageTemperature">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Average Heart Rate: </th>
+                        <td id="averageHeartRate">75.5</td>
+                    </tr>
+
+                    <tr>
+                        <th>Last Recording Time: </th>
+                        <td id="lastRecordingTime">36.5°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Last Recorded Temperature: </th>
+                        <td id="lastRecordedTemperature">36.5°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Last Recorded Heart Rate: </th>
+                        <td id="lastRecordedHeartRate">72</td>
+                    </tr>
+
+                    <tr>
+                        <th>Times Recorded: </th>
+                        <td id="count">Ayun</td>
+                    </tr>
+
+
+                </table>
+            </div>
+            <div class="modal-footer">
+              <a href="#!" class="modal-close waves-effect  waves-green btn-flat">CLOSE</a>
+            </div>
+ </div>
+
 
     <script>
+    $("#vitalRecords").on("click",".detailButton", function(){
+        var data = this.value.split(" ");
+        var patientDeviceID = data[0];
+        var date = data[1];
+
+        $.ajax({
+            url: '{% url 'summary' %}',
+            data: {
+              'patientDeviceID': patientDeviceID,
+              'date': date
+            },
+            dataType: 'json',
+            success: function (data) {
+                $("#dateModal").html(data[0].date);
+                $("#name").html(data[0].name);
+                $("#device").html(data[0].device);
+                $("#minTemperature").html(Math.round(parseFloat(data[0].min_temperature) * 100) / 100 + "°C (" + data[0].min_temperature_time + ")");
+                $("#maxTemperature").html(Math.round(parseFloat(data[0].max_temperature) * 100) / 100 + "°C (" + data[0].max_temperature_time + ")");
+                $("#minHeartRate").html(Math.round(parseFloat(data[0].min_heartrate) * 100) / 100 + " BPM (" + data[0].min_heartrate_time + ")");
+                $("#maxHeartRate").html(Math.round(parseFloat(data[0].max_heartrate) * 100) / 100 + " BPM (" + data[0].max_heartrate_time + ")");
+                $("#averageTemperature").html(Math.round(parseFloat(data[0].average_temperature.data__avg) * 100) / 100 + "°C");
+                $("#averageTemperature").html(Math.round(parseFloat(data[0].average_temperature.data__avg) * 100) / 100 + "°C");
+                $("#averageHeartRate").html(Math.round(parseFloat(data[0].average_heartrate.data__avg) * 100) / 100 + " BPM");
+                $("#lastRecordingTime").html(data[0].last_recorded_time);
+                $("#lastRecordedTemperature").html(data[0].latest_temperature + "°C");
+                $("#lastRecordedHeartRate").html(data[0].latest_heartrate + " BPM");
+                $("#count").html(data[0].batch_count);
+                $('.modal').modal('open');
+            }
+        });
+    });
+
         $(function() {
           $('#typeofSearch').change(function(){
             $('.optionx').hide();
@@ -140,6 +258,12 @@
 
     $(document).ready(function(){
         $('.sidenav').sidenav();
+
+        $(document).ajaxStart(function () {
+                $("#loading").show();
+            }).ajaxStop(function () {
+                $("#loading").hide();
+            });
     });
 
     $("#search").click(function () {
@@ -233,7 +357,8 @@
                         else{
                             vitalRecords += "<tr>";
                             vitalRecords += "<th>"+ data[i].date +"</th>\n";
-                            vitalRecords += "<td style=\"padding-right:3%;\"><a href="+link+" class=\"waves-effect waves-light btn right\"><i class=\"material-icons left\">pageview</i>View</a></td>\n";
+                            vitalRecords += "<td style=\"padding-right:3%;\"><a href="+link+" class=\"waves-effect waves-light btn-small right\" style=\"margin-right: 2%;\"><i class=\"material-icons left\">pageview</i>View</a>" +
+                                "<button value='"+ data[i].patientdeviceid + " " + data[i].data + "' class='center waves-effect waves-light btn-small detailButton right' style=\"margin-right: 2%;\">Summary</button></td>\n";
                             vitalRecords += "</tr>";
                         }
                     }

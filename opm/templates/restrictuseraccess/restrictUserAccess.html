@@ -2,6 +2,13 @@
 {% load staticfiles%}
 
 {% block content %}
+    <style>
+    select{
+        display: block;
+    }
+    </style>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
     <title> OPHM - Restrict User Access </title>
         <!------------------------------------------------------- BODY STARTS HERE ------------------------------------------------------------->
     <div class="col s12 m12 l12  white">
@@ -16,12 +23,16 @@
             <div class="divider"></div>
             <div class="section"></div>
 
-
-
             <div class = "row">
                 <div class="col s3 white"></div>
-                <div class="col s6 white left">
-                        <h5><B>Doctor</B> can:</h5>
+                <div class="col s3 white left">
+                        <h5><B>Assigned doctor</B>:</h5><br />
+                        <b>Name:</b> {{ assigneddoctor.userid.auth_user_id.first_name }} {{ assigneddoctor.userid.auth_user_id.last_name }}<br />
+                        <b>Contact Number:</b> {{ assigneddoctor.userid.contactno }}<br />
+                        <b>Email:</b> {{ assigneddoctor.userid.auth_user_id.email }}
+                </div>
+                <div class="col s3 white left">
+                        <h5><B>Assigned Doctor</B> can:</h5>
                         {% if patient.restrictmedicalinformationaccess == 0 %}
                             <p><label><input id="medicalInformation" type="checkbox" class="filled-in" checked="checked" /><span>View Past Medical Information</span></label></p>
                         {% else %}
@@ -33,18 +44,184 @@
                         {% else %}
                             <p><label><input id="vitalRecords" type="checkbox" class="filled-in" /><span>View Past Historical Vital Records</span></label></p>
                         {% endif %}
-
                 </div>
-                <div class="col s3 white"></div>
                 <div class="col s12 white">
                     <div class="row center">
+                        <br>
                         <button id="saveButton" class="btn btn-large waves-effect red lighten-2 center" type="submit">Save</button>
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col s3 white"></div>
+                <div class="col s6 white left">
+                        <h5><B>Other Doctors who are allowed to access my data</B>:</h5><br />
+                        <a class="center waves-effect waves-light btn-small modal-trigger" href="#modal1">Add New Doctor</a><br><br>
+                        <table id="doctorsTable" class="cell-border" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <th>Doctor can</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doctor in patientdoctorlist %}
+                                    {% if doctor.doctorid.doctorid != assigneddoctor.doctorid %}
+                                        <tr>
+                                            <td>{{ doctor.doctorid.userid.auth_user_id.first_name }} {{ doctor.doctorid.userid.auth_user_id.last_name }}</td>
+                                            <td>
+                                            {% if doctor.restrictmedicalinformationaccess == 0 %}
+                                                View Past Medical Information<br>
+                                            {% endif %}
+                                            {% if doctor.restrictvitalsinformationaccess == 0 %}
+                                                View Past Historical Vital Records<br>
+                                            {% endif %}
+                                            </td>
+                                            <td>
+                                                <button value="{{ doctor.patientdoctorid }} {{ doctor.restrictmedicalinformationaccess }} {{ doctor.restrictvitalsinformationaccess }} {{ doctor.doctorid.userid.auth_user_id.first_name }} {{ doctor.doctorid.userid.auth_user_id.last_name }}" class="center waves-effect waves-light btn-small modal-trigger editButton" href="#modal2">Edit</button>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                </div>
+            </div>
     </div>
+<div id="modal1" class="modal" style="">
+    <div class="modal-content">
+          <h5 class="center"><b>Add New Doctor Access</b></h5><br/>
+          <div class="input-field col s12 m6 l6">
+              <h6><B>Choose a new Doctor: </B></h6>
+          <input id="inputDoctors" list="doctors" name="doctors">
+          <datalist id="doctors">
+            {% for doctor in doctorlist %}
+                {% if doctor.doctorid != assigneddoctor.doctorid %}
+                    <option id="{{ doctor.userid.auth_user_id.first_name }} {{ doctor.userid.auth_user_id.last_name }}" value="{{ doctor.userid.auth_user_id.first_name }} {{ doctor.userid.auth_user_id.last_name }}">{{ doctor.doctorid }}</option>
+                {% endif %}
+            {% endfor %}
+          </datalist>
+          </div>
+        <div class="col s12 m6 l6">
+            <h6><B>New Doctor can: </B></h6>
+            <p><label><input id="newDoctorMedicalInformation" type="checkbox" class="filled-in" checked="checked" /><span>View Previous Medical Information</span></label></p>
+            <p><label><input id="newDoctorVitalRecords" type="checkbox" class="filled-in" checked="checked" /><span>View Past Historical Vital Records</span></label></p>
+        </div>
+        <div class="col s12" style="padding-right: 5%; padding-bottom: 5%;">
+                <button id="assignButtonModal" onclick="" class="btn waves-effect waves-light right" type="button" name="action">Save
+                <i class="material-icons right">save</i>
+                </button>
+        </div>
+    </div>
+</div>
+
+<div id="modal2" class="modal" style="">
+    <div class="modal-content">
+          <h5 class="center"><b>Edit Doctor Access</b></h5><br/>
+        <div class="col s12 m6 l6">
+            <h6><B id="doctorName">Doctor can: </B></h6>
+            <p><label><input id="editDoctorMedicalInformation" type="checkbox" class="filled-in" checked="checked" /><span>View Previous Medical Information</span></label></p>
+            <p><label><input id="editDoctorVitalRecords" type="checkbox" class="filled-in" checked="checked" /><span>View Past Historical Vital Records</span></label></p>
+        </div>
+        <button id="removeButtonModal" onclick="" class="center waves-effect waves-light btn-small red lighten-2">Remove All Access</button>
+        <div class="col s12" style="padding-right: 5%; padding-bottom: 5%;">
+                <button id="editButtonModal" onclick="" class="btn waves-effect waves-light right" type="button" name="action">Save
+                <i class="material-icons right">save</i>
+                </button>
+        </div>
+    </div>
+</div>
 
 <script>
+        $(document).ready(function() {
+                $('#doctorsTable').DataTable({
+                "order": [[ 1, "asc" ]]
+            });
+        });
+        $(document).ready(function(){
+            $('.modal').modal();
+        });
+
+</script>
+<script>
+    $(".editButton").click(function(){
+        var data = this.value.split(" ");
+        var patientDoctorID = data[0];
+        var restrictmedicalinformationaccess = data[1];
+        var restrictvitalsinformationaccess = data[2];
+        var doctorName = data[3] + " " + data[4];
+
+        if(restrictmedicalinformationaccess == 1){
+            $("#editDoctorMedicalInformation").prop('checked', false);
+        }else{
+            $("#editDoctorMedicalInformation").prop('checked', true);
+        }
+
+        if(restrictvitalsinformationaccess == 1){
+            $("#editDoctorVitalRecords").prop('checked', false);
+        }
+        else{
+            $("#editDoctorVitalRecords").prop('checked', true);
+        }
+
+        $("#doctorName").html("Doctor " + doctorName + " can:");
+        $("#editButtonModal").attr('onclick', 'editDoctorRestriction('+patientDoctorID+')');
+        $("#removeButtonModal").attr('onclick', 'removeDoctorRestriction('+patientDoctorID+')');
+    });
+
+    function editDoctorRestriction(patientDoctorID){
+        var editDoctorVitalRecords = -1;
+        var editDoctorMedicalInformation = -1;
+
+        if($("#editDoctorMedicalInformation").is(':checked'))
+            editDoctorMedicalInformation = 0;
+        else
+            editDoctorMedicalInformation = 1;
+
+        if($("#editDoctorVitalRecords").is(':checked'))
+            editDoctorVitalRecords = 0;
+        else
+            editDoctorVitalRecords = 1;
+
+        console.log(editDoctorMedicalInformation);
+        console.log(editDoctorVitalRecords);
+        console.log(patientDoctorID);
+
+        if(editDoctorMedicalInformation == 1 && editDoctorVitalRecords == 1){
+            alert("Please select one or more options!");
+        }
+        else{
+            $.ajax({
+                url: '{% url 'edit_doctor_restriction' %}',
+                data: {
+                  'patientDoctorID': patientDoctorID,
+                  'medicalInformation': editDoctorVitalRecords,
+                  'vitalRecords': editDoctorMedicalInformation,
+                },
+                dataType: 'json',
+                success: function (data) {
+                    alert(data[0].response);
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    function removeDoctorRestriction(patientDoctorID){
+        $.ajax({
+            url: '{% url 'remove_doctor_restriction' %}',
+            data: {
+              'patientDoctorID': patientDoctorID,
+            },
+            dataType: 'json',
+            success: function (data) {
+                alert(data[0].response);
+                location.reload();
+            }
+        });
+    }
+
     $("#saveButton").click(function() {
         var medicalInformation = -1;
         var vitalRecords = -1;
@@ -74,6 +251,45 @@
 
         });
 
+    });
+    $("#assignButtonModal").click(function() {
+        var id = $("#inputDoctors").val();
+        if(document.getElementById(id) == null)
+            alert("Doctor not found");
+        else{
+            var medicalInformation = -1;
+            var vitalRecords = -1;
+            var doctor_id = document.getElementById(id).innerHTML;
+            if($("#newDoctorMedicalInformation").is(':checked'))
+                medicalInformation = 0;
+            else
+                medicalInformation = 1;
+
+            if($("#newDoctorVitalRecords").is(':checked'))
+                vitalRecords = 0;
+            else
+                vitalRecords = 1;
+
+            if(medicalInformation == 1 && vitalRecords == 1){
+                alert("Please select one or more options!");
+            }
+            else{
+                $.ajax({
+                    url: '{% url 'add_new_doctor_restriction' %}',
+                    data: {
+                      'patient_id': {{ patient.patientid }},
+                      'medicalInformation': medicalInformation,
+                      'vitalRecords': vitalRecords,
+                      'doctor_id': doctor_id,
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        alert(data[0].response);
+                        location.reload();
+                    }
+                });
+            }
+        }
     });
 </script>
 

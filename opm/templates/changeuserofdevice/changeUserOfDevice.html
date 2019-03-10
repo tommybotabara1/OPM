@@ -2,9 +2,18 @@
 {% load staticfiles%}
 
 {% block content %}
-    <title> OPMS - Change User of Device </title>
+    <style>
+    select{
+        display: block;
+    }
+    </style>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/b-1.5.4/datatables.min.js"></script>
+
+
+    <title> OPMS - Manage Devices </title>
         <div class="col s12 white"><div class="col s12 m12 l12 center white">
-            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">smartphone</i>&nbsp;&nbsp; Change User of Device</h3>
+            <h3 id="greeting"><i class="material-icons" style="font-size: 40px;">smartphone</i>&nbsp;&nbsp; Manage Devices</h3>
             <div class="divider"></div>
             <div class="section"></div>
 
@@ -13,162 +22,174 @@
         <div class="col s12 m12 l12  white" style="padding: 0px 20px 0px 30px">
             <div class="row">
 
-                <div id="devices" class="col s4">
-                    <h5 class="center light-green lighten-4">Devices Currently In Use</h5>
-                    <div style="height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;">
-                        {% if device_list.count == 0 %}
-                            <b>No devices</b>
-                        {% else %}
-                            {% for device in device_list %}
-                            <b>Device {{ device.deviceid }}</b>
-                            <ol>
-                                {% for patient in patient_device_list %}
-                                    {% if patient.device_deviceid.deviceid == device.deviceid and patient.inuse == 1 %}
-                                        <li>{{ patient.patient_patientid.userid.auth_user_id.first_name }} {{ patient.patient_patientid.userid.auth_user_id.last_name }}</li>
-                                    {% endif %}
+                <div id="devices" class="col s12">
+                    <h5 class="center light-green lighten-4">Devices</h5>
+                    <div>
+                        <table id="devicesTable" class="cell-border" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Device ID</th>
+                                    <th>MAC Address</th>
+                                    <th>Status</th>
+                                    <th>Date Borrowed</th>
+                                    <th>Date Returned</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in device_list %}
+                                    <tr>
+                                        <td>{{ device.deviceid }}</td>
+                                        <td>{{ device.macaddress }}</td>
+                                        {% if device.status == 1 %}
+                                            <td>In Use</td>
+                                        {% else %}
+                                            <td>Not In Use</td>
+                                        {% endif %}
+                                        <td>{{ device.borroweddate }}</td>
+                                        <td>{{ device.returneddate }}</td>
+                                    </tr>
                                 {% endfor %}
-                            </ol>
+                            </tbody>
+                        </table>
+                    </div>
+                    <br />
+                    <div class='row center'>
+                        <button id='addNewDevice' onclick="promptMACAddressForNewDevice()" class='btn btn-small waves-effect'>Add New Device</button>
+                    </div>
+                </div>
+                <div class = "col s12 center">
+                    <h5 class="center light-green lighten-4">Patients</h5>
+                    <div id="loading" style="display: none"><img src="{% static 'img/Preloader_4.gif' %}"></img><br>Loading</div>
+                        <table id="patientsTable" class="cell-border" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Device Assigned</th>
+                                <th>Doctor Assigned</th>
+                                <th>Device Return Deadline Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in patient_list %}
+                                <tr>
+                                    <td>{{ patient.userid.auth_user_id.first_name }} {{ patient.userid.auth_user_id.last_name }}</td>
+                                    {% if patient.currentdeviceid == 0 %}
+                                        <td>N/A</td>
+                                        <td>{{ patient.doctorid.userid.auth_user_id.first_name }} {{ patient.doctorid.userid.auth_user_id.last_name }}</td>
+                                        <td>N/A</td>
+                                        <td><button value="{{ patient.patientid }} {{ patient.userid.auth_user_id.first_name }} {{ patient.userid.auth_user_id.last_name }}" class="center waves-effect waves-light btn-small modal-trigger" href="#modal1">ASSIGN A DEVICE</button></td>
+                                    {% else %}
+                                        <td>{{ patient.currentdeviceid }}</td>
+                                        <td>{{ patient.doctorid.userid.auth_user_id.first_name }} {{ patient.doctorid.userid.auth_user_id.last_name }}</td>
+                                        <td>{{ patient.deadlinereturndate }}</td>
+                                        <td><button onclick="unAssignDevice({{ patient.currentdeviceid }})" class="waves-effect waves-light btn-small">UNASSIGN DEVICE</button></td>
+                                    {% endif %}
+                                </tr>
                             {% endfor %}
-                        {% endif %}
-                    </div>
-                    <br />
-                    <div class='row center'>
-                        <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
-
-                <div class = "col s4 center">
-                    <h5 class="">Choose Device ID</h5>
-                      <div id="chooseDevice">
-                          <select name="device" class="browser-default" id="deviceid">
-                              {% if device_list.count == 0 %}
-                                  No devices
-                              {% else %}
-                                  {% for device in device_list %}
-                                     <option value="{{ device.deviceid }}">{{ device.deviceid }}</option>
-                                 {% endfor %}
-                              {% endif %}
-                          </select>
-                      </div>
-                    <br />
-                    <div class='row center'>
-                        <button id='unassignPatient' class='btn btn-small waves-effect'>Unassign Patient (if any)</button>
-                    </div>
-                </div>
-
-                <div class="col s4 center">
-                <div id="patients">
-                    <h5 class="green lighten-5">Select patient</h5>
-                    <div style="height: 130px;border:1px solid #ccc; overflow:auto;">
-                        {% for patient in patient_list %}
-                            <p>
-                                <label>
-                                    <input name="patientID" type="radio" class="filled-in" value="{{ patient.patientid }}">
-                                    <span>{{ patient.userid.auth_user_id.first_name }} {{ patient.userid.auth_user_id.last_name }}</span>
-                                </label>
-                            </p>
-                        {% endfor %}
-                    </div>
-                </div>
-                <br>
-                    <button id='setDeviceToPatient' class='btn btn-small waves-effect'>Set Device to Patient</button>
-
-                    <br>
-                 <div class='input-field col m12 s7'>
-                    <i class="material-icons iconis prefix">person_add</i>
-                    <input class='validate' type='text' name='text' id='searchPatient' />
-              </div>
-
             </div>
         </div>
         <section></section>
         <section></section>
             </div></div>
 
+    <!------------------------------------------MODAL FOR ASSIGNING----------------------------------->
+
+        <div id="modal1" class="modal">
+            <div class="modal-content">
+                <h5>Assign a Device to <b id="patientName"></b></h5><br/>
+                <h6><b>Available Devices</b></h6>
+              <div class="input-field col s12 m6 l6">
+                <select id="deviceid">
+                  {% for device in device_list %}
+                      {% if device.status == 0 %}
+                        <option value="{{ device.deviceid }}">Device {{ device.deviceid }}</option>
+                      {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="input-field col s12 m6 l6">
+                  <h6><b>Return Date</b></h6>
+                <input id="returnDate" type="date">
+              </div>
+            </div>
+            <div id="loadingModal" style="display: none"><center><img src="{% static 'img/Preloader_4.gif' %}"></img><br>Loading</center></div>
+            <div class="col s12" style="padding-right: 5%; padding-bottom: 5%;">
+                <button id="assignButtonModal" onclick="" class="btn waves-effect waves-light right" type="button" name="action">Assign
+                <i class="material-icons right">save</i>
+                </button>
+            </div>
+        </div>
+
+                                <!---------------------------------------END MODAL FOR ASSIGNING----------------------------------->
+
+
+
     <script>
-    $("#addNewDevice").click(function () {
-
-      $.ajax({
-        url: '{% url 'add_device' %}',
-        data: {
-        },
-        dataType: 'json',
-        success: function (data) {
-            var devices = "<h5 class=\"center light-green lighten-4\">Devices Currently In Use</h5>\n";
-            devices += "<div style=\"height: 130px;border:1px solid #ccc; overflow:auto; padding: 1%;\">";
-            var selectbox = "<select name=\"device\" class=\"browser-default\" id=\"deviceid\">";
-
-            for(var i = 0; i < data.length; i++){
-                if(i == 0){
-                    devices += "<b>Device " + data[i].deviceid + "</b>\n";
-                    devices += "<ol>\n";
-
-                    if(data[i].patient != "none"){
-                        devices += "<li>" + data[i].patient + "</li>\n";
-                    }
-
-                    selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
-                }
-                else if(data[i - 1].deviceid == data[i].deviceid){
-                    devices += "<li>" + data[i].patient + "</li>\n";
-                }
-                else if(data[i - 1].deviceid != data[i].deviceid){
-                    devices += "</ol>\n";
-                    devices += "<b>Device " + data[i].deviceid + "</b>\n";
-                    devices += "<ol>\n";
-
-                    if(data[i].patient != "none"){
-                        devices += "<li>" + data[i].patient + "</li>\n";
-                    }
-
-                    selectbox += "<option value='" + data[i].deviceid + "'>" + data[i].deviceid + "</option>\n";
-                }
+    function promptMACAddressForNewDevice(){
+        let macAddress = prompt("Please enter Device's MAC Address");
+        if (macAddress != null) {
+          $.ajax({
+            url: '{% url 'add_device' %}',
+            data: {
+                'macaddress': macAddress
+            },
+            dataType: 'json',
+            success: function (data) {
+                location.reload();
             }
-
-            devices += "</div>\n" +
-                "                    <br />\n" +
-                "                    <div class='row center'>\n" +
-                "                        <button id='addNewDevice' class='btn btn-small waves-effect'>Add New Device</button>\n" +
-                "                    </div>";
-
-            selectbox += "</select>";
-
-            $("#devices").html(devices);
-            $("#chooseDevice").html(selectbox);
-
+        });
         }
-      });
+    }
+
+    function unAssignDevice(deviceID){
+        $.ajax({
+            url: '{% url 'unassign_patient' %}',
+            data: {
+                'deviceID': deviceID,
+            },
+            dataType: 'json',
+            success: function (data) {
+                var message = data[0].outcome;
+                alert(message);
+                location.reload();
+            }
+          });
+    }
+
+    function assignDevice(patientID){
+        var deviceID = $("#deviceid").val();
+        var returnDate = $("#returnDate").val();
+        console.log(returnDate);
+        $.ajax({
+            url: '{% url 'set_patient_to_device' %}',
+            data: {
+                'deviceID': deviceID,
+                'patientID': patientID,
+                'returnDate': returnDate,
+            },
+            dataType: 'json',
+            success: function (data) {
+                var message = data[0].outcome;
+                alert(message);
+                console.log(message);
+                location.reload();
+            }
+        });
+    }
+
+    $(".modal-trigger").click(function () {
+        var split = this.value.split(" ");
+        var patientID = split[0];
+        var patientName = split[1] + ' ' + split[2];
+
+        $("#patientName").html(patientName);
+        $("#assignButtonModal").attr('onclick', 'assignDevice('+patientID+')');
     });
 
-    $("#searchPatient").keyup(function () {
-        var search = $(this).val();
-
-      $.ajax({
-        url: '{% url 'search_patients' %}',
-        data: {
-            'search': search
-        },
-        dataType: 'json',
-        success: function (data) {
-            var patients = "<h5 class=\"green lighten-5\">Select patient</h5>\n";
-
-            patients += "<div style=\"height: 130px;border:1px solid #ccc; overflow:auto;\">\n";
-
-            for(var i = 0; i < data.length; i++){
-                patients += "<p>\n";
-                patients += "<label>\n";
-                patients += "<input name='patientID' type='radio' class='filled-in' value='" + data[i].patientid + "'/>\n";
-                patients += "<span>" + data[i].patientname + "</span>\n";
-                patients += "</label>\n";
-                patients += "</p>\n";
-            }
-
-            patients += "</div>";
-            console.log(patients);
-            $("#patients").html(patients);
-        }
-      });
-    });
 
     $("#setDeviceToPatient").click(function () {
         var deviceID = $("#deviceid").val();
@@ -185,27 +206,7 @@
         },
         dataType: 'json',
         success: function (data) {
-            var message = data[0].outcome
-            alert(message);
-            console.log(message);
-            location.reload();
-            //$("#patients").html(patients);
-        }
-      });
-    });
-
-
-    $("#unassignPatient").click(function () {
-      var deviceID = $("#deviceid").val();
-
-      $.ajax({
-        url: '{% url 'unassign_patient' %}',
-        data: {
-            'deviceID': deviceID,
-        },
-        dataType: 'json',
-        success: function (data) {
-            var message = data[0].outcome
+            var message = data[0].outcome;
             alert(message);
             console.log(message);
             location.reload();
@@ -213,5 +214,34 @@
       });
     });
 
+
+
+
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $('#patientsTable').DataTable({
+            "order": [[ 1, "asc" ]]
+        });
+        });
+        $(document).ready(function() {
+            $('#devicesTable').DataTable();
+        });
+        $(document).ready(function(){
+            $('.modal').modal();
+        });
+        $(document).ready(function(){
+            var outcome = '{{ outcome }}';
+            if(outcome != '')
+                alert(outcome);
+        });
+        $(document).ajaxStart(function () {
+            $("#loading").show();
+            $("#loadingModal").show();
+        }).ajaxStop(function () {
+            $("#loading").hide();
+            $("#loadingModal").hide();
+        });
     </script>
 {% endblock %}

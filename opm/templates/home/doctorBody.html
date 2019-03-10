@@ -12,6 +12,11 @@
             });
         });
     </script>
+    <script>
+      $(document).ready(function(){
+        $('.modal').modal();
+      });
+    </script>
     <div class ="white">
             <div class="row white">
 
@@ -34,22 +39,22 @@
 
                     <h5><i class="material-icons left">access_time</i><b>Clock</b></h5><br/>
 
-                    <div class="col s12 yellow lighten-3 z-depth-1 center" style="padding: 2%; border-radius: 10px;">
+                    <div class="col s12 teal lighten-2 z-depth-1 center" style="padding: 2%; border-radius: 10px;">
 
-                        <h6><center>{% now "F t, Y" %}</center></h6>
-                        <big><b><p id="txt" align="center"></p></b></big>
+                        <h6 class="white-text"><center>{% now "F t, Y" %}</center></h6>
+                        <big><b><p id="txt" class="white-text" align="center"></p></b></big>
 
                     </div>
 
                 </div>
                 <div class="col s12 m4 l4 white">
 
-                    <h5><i class="material-icons left">notification_important</i><b>Notifications</b></h5><br/>
+                    <h5><i class="material-icons left">notification_important</i><b>Alerts</b></h5><br/>
 
-                    <div class="col s12 green lighten-2 z-depth-1" style="padding: 3.5%; border-radius: 10px;">
+                    <div class="col s12 teal z-depth-1" style="padding: 3.5%; border-radius: 10px;">
                          <span class="white-text">
-                             <b id="notificationCountDashboard"> No notifications.</b><br/>
-                             <br/><div class="right"><a href="{% url 'notifications' %}" class="waves-effect waves-light btn green darken-2">View All</a>
+                             <b id="notificationCountDashboard"> No new alerts.</b><br/>
+                             <br/><div class="right"><a href="{% url 'alerts' %}" class="waves-effect waves-light btn teal darken-2">View All</a>
                             </div>
                         </span>
                     </div>
@@ -60,10 +65,10 @@
 
             </div>
 
-            <div class="row" style="padding: 20px;">
+            <div id="vitalRecords" class="row" style="padding: 20px;">
                 <div class="col s12 m6 l6 white">
 
-                    <h5><i class="material-icons left">group</i><b>Assigned Patients</b></h5>
+                    <h5><i class="material-icons left">group</i><b>Assigned Patients (with devices)</b></h5>
                     Last Recorded Vitals
 
                     <div class ="col s12">
@@ -91,15 +96,18 @@
                                         {% if patientdevice.ecg_set.last is none %}
                                             <td>N/A</td>
                                         {% else %}
-                                            <td><a class="waves-effect waves-light btn" href="{% url 'patientvitals' patientdevice.patient_patientid.patientid %}">View Full Results</a></td>
+                                            <td>
+                                                <a class="waves-effect waves-light btn" href="{% url 'patientvitals' patientdevice.patient_patientid.patientid %}">View Full Results</a>
+                                                <button value="{{ patientdevice.patientdeviceid }} {{ patientdevice.ecg_set.last.timestamp|date:"Y-m-d" }}" class="waves-effect waves-light btn detailButton">Summary</button>
+                                            </td>
                                         {% endif %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                         </center>
+                    <a href="{% url 'viewassignedpatients' %}">View all assigned patients</a>
                     </div>
-
                 </div>
 
 
@@ -140,5 +148,119 @@
 
             </div>
         </div>
+
+<div id="modal1" class="modal">
+            <div class="modal-content">
+                <h4><i class="small material-icons left">list_alt</i><b>Summary of Vitals</b></h4>
+
+                <table>
+
+                    <tr>
+                        <th>Date: </th>
+                        <td id="dateModal">February 28, 2019</td>
+                    </tr>
+
+                    <tr>
+                        <th>Name: </th>
+                        <td id="name">Tommy Botabara</td>
+                    </tr>
+
+                    <tr>
+                        <th>Device: </th>
+                        <td id="device">1</td>
+                    </tr>
+
+                    <tr>
+                        <th>Min Temperature: </th>
+                        <td id="minTemperature">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Max Temperature: </th>
+                        <td id="maxTemperature">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Min Heart Rate: </th>
+                        <td id="minHeartRate">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Max Heart Rate: </th>
+                        <td id="maxHeartRate">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Average Temperature: </th>
+                        <td id="averageTemperature">37°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Average Heart Rate: </th>
+                        <td id="averageHeartRate">75.5</td>
+                    </tr>
+
+                    <tr>
+                        <th>Last Recording Time: </th>
+                        <td id="lastRecordingTime">36.5°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Last Recorded Temperature: </th>
+                        <td id="lastRecordedTemperature">36.5°C</td>
+                    </tr>
+
+                    <tr>
+                        <th>Last Recorded Heart Rate: </th>
+                        <td id="lastRecordedHeartRate">72</td>
+                    </tr>
+
+                    <tr>
+                        <th>Times Recorded: </th>
+                        <td id="count">Ayun</td>
+                    </tr>
+
+
+                </table>
+            </div>
+            <div class="modal-footer">
+              <a href="#!" class="modal-close waves-effect  waves-green btn-flat">CLOSE</a>
+            </div>
+ </div>
+
+    <script>
+        $("#vitalRecords").on("click",".detailButton", function() {
+            var data = this.value.split(" ");
+            var patientDeviceID = data[0];
+            var date = data[1];
+
+            $.ajax({
+                url: '{% url 'summary' %}',
+                data: {
+                  'patientDeviceID': patientDeviceID,
+                  'date': date
+                },
+                dataType: 'json',
+                success: function (data) {
+                    $("#dateModal").html(data[0].date);
+                    $("#name").html(data[0].name);
+                    $("#device").html(data[0].device);
+                    $("#minTemperature").html(Math.round(parseFloat(data[0].min_temperature) * 100) / 100 + "°C (" + data[0].min_temperature_time + ")");
+                    $("#maxTemperature").html(Math.round(parseFloat(data[0].max_temperature) * 100) / 100 + "°C (" + data[0].max_temperature_time + ")");
+                    $("#minHeartRate").html(Math.round(parseFloat(data[0].min_heartrate) * 100) / 100 + " BPM (" + data[0].min_heartrate_time + ")");
+                    $("#maxHeartRate").html(Math.round(parseFloat(data[0].max_heartrate) * 100) / 100 + " BPM (" + data[0].max_heartrate_time + ")");
+                    $("#averageTemperature").html(Math.round(parseFloat(data[0].average_temperature) * 100) / 100 + "°C");
+                    $("#averageHeartRate").html(Math.round(parseFloat(data[0].average_heartrate) * 100) / 100 + " BPM");
+                    $("#lastRecordingTime").html(data[0].last_recorded_time);
+                    $("#lastRecordedTemperature").html(data[0].latest_temperature + "°C");
+                    $("#lastRecordedHeartRate").html(data[0].latest_heartrate + " BPM");
+                    $("#count").html(data[0].batch_count);
+                    $('.modal').modal('open');
+
+
+                }
+            });
+         });
+    </script>
 {% endblock %}
 

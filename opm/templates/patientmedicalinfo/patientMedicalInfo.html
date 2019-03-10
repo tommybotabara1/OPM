@@ -105,6 +105,8 @@
                     <a href="{% url 'viewassignedpatients' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% elif pagefrom == 2 %}
                     <a href="{% url 'patientrecords' patient.patientid %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
+                {% elif pagefrom == 3 %}
+                    <a href="{% url 'otherpatientrecords' patient.patientid access_medicalforms access_vitalrecords %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% else %}
                     <a href="{% url 'viewhistoryofvitals' %}" class="waves-effect waves-light btn"><i class="material-icons left">keyboard_backspace</i>go back</a>
                 {% endif %}
